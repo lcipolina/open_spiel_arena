@@ -6,12 +6,15 @@ using OpenSpiel and Large Language Models (LLMs). It supports command-line
 arguments to specify the game and simulation configurations.
 """
 
+import os
+# Force Hugging Face Transformers to use PyTorch backend instead of TensorFlow
+os.environ["TRANSFORMERS_BACKEND"] = "pt"
+
 import argparse
 from transformers import pipeline
 from open_spiel_simulation.simulators.tic_tac_toe_simulator import TicTacToeSimulator
 from open_spiel_simulation.simulators.prisoners_dilemma_simulator import PrisonersDilemmaSimulator
 from open_spiel_simulation.simulators.rock_paper_scissors_simulator import RockPaperScissorsSimulator
-from open_spiel_simulation.utils.llm_utils import generate_prompt, llm_decide_move
 from open_spiel_simulation.games.tic_tac_toe import get_tic_tac_toe_game
 from open_spiel_simulation.games.prisoners_dilemma import get_prisoners_dilemma_game
 from open_spiel_simulation.games.rock_paper_scissors import get_rps_game
@@ -59,4 +62,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
