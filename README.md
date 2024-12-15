@@ -1,4 +1,4 @@
-# Project: Open Spiel LLM Arena
+# Project: OpenSpiel LLM Arena
 
 ## 0. Project Goal
 The goal of this project is to evaluate the decision-making capabilities of Large Language Models (LLMs) by engaging them in simple games implemented using Google's OpenSpiel framework. The LLMs can play against:
@@ -15,9 +15,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 ### Prerequisites
 1. **Python Environment**:
    - Python 3.7 or higher.
-   - Install the required dependencies using pip:
+   - Install the required dependencies:
      ```bash
-     pip install transformers open_spiel
+     pip install -r requirements.txt
      ```
 
 2. **Install OpenSpiel Framework**:
@@ -28,30 +28,50 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      ./install.sh
      ```
 
-### Running the Simulator
-1. Clone this repository:
-   ```bash
-   git clone <repository-url>
-   cd <repository-folder>
-   ```
-
-2. Run the main script:
-   ```bash
-   python game_simulator.py
-   ```
-
-3. Follow the prompts:
-   - Select the games to simulate by entering their numbers.
-   - Choose the opponent type for each game:
-     1. Random Bot.
-     2. Another LLM.
-     3. Self-Play.
-
-4. Observe the game states, LLM decisions, and final results printed to the console.
+3. **Project Setup**:
+   - Clone this repository:
+     ```bash
+     git clone <repository-url>
+     cd <repository-folder>
+     ```
 
 ---
 
-## 2. Games Available (for now)
+### Running the Simulator
+1. Use the main binary:
+   ```bash
+   python scripts/run_simulation.py --game tic_tac_toe
+   ```
+
+2. Command-line options:
+   - `--game`: Specify the game to simulate. Available options:
+     - `tic_tac_toe`
+     - `prisoners_dilemma`
+     - `rps`
+   - Example usage:
+     ```bash
+     python scripts/run_simulation.py --game tic_tac_toe
+     ```
+
+---
+
+## 2. Directory Structure
+
+### Packages
+- **`open_spiel_simulation/`**: Root package containing all simulation logic.
+  - **`games/`**: Game-specific logic (e.g., rules for Tic-Tac-Toe).
+  - **`simulators/`**: Simulator logic for each game.
+  - **`utils/`**: Shared utility functions (e.g., prompt generation, LLM integration).
+
+### Binary
+- **`scripts/run_simulation.py`**: The main script to run simulations. This is the entry point for the project.
+
+### Tests
+- **`tests/`**: Unit tests for utilities and simulators.
+
+---
+
+## 3. Games Available
 
 ### List of Supported Games
 1. **Tic-Tac-Toe**:
@@ -63,12 +83,12 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 3. **Rock-Paper-Scissors**:
    - A simultaneous-move game where rock beats scissors, scissors beats paper, and paper beats rock.
 
-4. **Matching Pennies**:
+4. **Matching Pennies** (Planned):
    - A simple two-player game where Player 1 wins if both players’ choices match, and Player 2 wins if they differ.
 
 ---
 
-## 3. Features
+## 4. Features
 - **LLM Integration**:
   - Uses Hugging Face Transformers to incorporate open-source LLMs (e.g., GPT-2, FLAN-T5).
   - Converts game states into natural language prompts for LLM decision-making.
@@ -81,7 +101,18 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 ---
 
-## 4. Example Output
+## 5. Contribution Guidelines
+
+### Steps to Contribute:
+1. Fork this repository.
+2. Create a feature branch.
+3. Follow the directory structure and coding style outlined in this README.
+4. Add appropriate unit tests for your contribution.
+5. Submit a pull request with a detailed explanation of your changes.
+
+---
+
+## 6. Example Output
 
 ### Game: Tic-Tac-Toe
 ```
@@ -97,26 +128,4 @@ x.o
 .o.
 Scores: {'LLM_1': 1.0, 'Random_Bot': -1.0}
 ```
-
-### Game: Matching Pennies
-```
-Current state of Matching Pennies:
-p0: Heads
-p1: Tails
-Final state of Matching Pennies:
-p0: Heads
-p1: Tails
-Scores: {'google/flan-t5-small': 1.0, 'gpt2': -1.0}
-```
-
----
-
-## 5. Contribution Guidelines
-Contributions are welcome! To contribute:
-1. Fork this repository.
-2. Create a feature branch.
-3. Submit a pull request with a detailed explanation of your changes.
-
----
-
 
