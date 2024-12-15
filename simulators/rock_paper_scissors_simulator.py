@@ -6,7 +6,8 @@ Rock-Paper-Scissors using the OpenSpiel framework.
 """
 
 import random
-from .base_simulator import GameSimulator
+from simulators.base_simulator import GameSimulator
+from utils.llm_utils import generate_prompt, llm_decide_move
 from typing import List, Dict, Any
 
 class RockPaperScissorsSimulator(GameSimulator):
@@ -36,7 +37,3 @@ class RockPaperScissorsSimulator(GameSimulator):
         print(f"Final state of {self.game_name}:\n{state}")
         print(f"Scores: {scores}")
         return scores
-
-
-
-

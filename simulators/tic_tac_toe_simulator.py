@@ -6,7 +6,8 @@ Tic-Tac-Toe using the OpenSpiel framework.
 """
 
 import random
-from .base_simulator import GameSimulator
+from simulators.base_simulator import GameSimulator
+from utils.llm_utils import generate_prompt, llm_decide_move
 from typing import List, Dict, Any
 
 class TicTacToeSimulator(GameSimulator):
@@ -75,4 +76,3 @@ class TicTacToeSimulator(GameSimulator):
         llm = self.llms[model_name]
         prompt = generate_prompt(self.game_name, str(state), legal_actions)
         return llm_decide_move(llm, prompt, legal_actions)
-
