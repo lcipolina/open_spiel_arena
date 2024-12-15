@@ -33,6 +33,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      ```bash
      git clone <repository-url>
      cd <repository-folder>
+
+    pip3 install -e .
+
      ```
 
 ---
@@ -128,4 +131,3 @@ x.o
 .o.
 Scores: {'LLM_1': 1.0, 'Random_Bot': -1.0}
 ```
-
