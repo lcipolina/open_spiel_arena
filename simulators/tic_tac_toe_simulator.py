@@ -61,6 +61,7 @@ class TicTacToeSimulator(GameSimulator):
             return self._llm_decide(player, state, legal_actions)
         return legal_actions[0]
 
+    # TODO: this seems to be redundant, as it is imported!!! - check
     def _llm_decide(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Uses an LLM to decide the next move.
 
@@ -75,4 +76,4 @@ class TicTacToeSimulator(GameSimulator):
         model_name = list(self.llms.keys())[player]
         llm = self.llms[model_name]
         prompt = generate_prompt(self.game_name, str(state), legal_actions)
-        return llm_decide_move(llm, prompt, legal_actions)
+        return llm_decide_move(llm, prompt, tuple(legal_actions))

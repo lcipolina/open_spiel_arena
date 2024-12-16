@@ -49,3 +49,28 @@ class PrisonersDilemmaSimulator(GameSimulator):
         print(f"Final state of {self.game_name}:\n{state}")
         print(f"Scores: {scores}")
         return scores
+
+    def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
+        """Gets the action for the current player.
+
+        Args:
+            player: The index of the current player.
+            state: The current game state.
+            legal_actions: The legal actions available for the player.
+
+        Returns:
+            int: The action selected by the player.
+        """
+        if self.random_bot and player == 1:
+            return random.choice(legal_actions)
+        elif self.play_against_itself:
+            model_name = list(self.llms.keys())[player % len(self.llms)]
+            llm = self.llms[model_name]
+            prompt = generate_prompt(self.game_name, str(state), legal_actions)
+            return llm_decide_move(llm, prompt, tuple(legal_actions))  # Convert to tuple
+        elif player < len(self.llms):
+            model_name = list(self.llms.keys())[player]
+            llm = self.llms[model_name]
+            prompt = generate_prompt(self.game_name, str(state), legal_actions)
+            return llm_decide_move(llm, prompt, tuple(legal_actions))  # Convert to tuple
+        return legal_actions[0]  # Default fallback action
