@@ -34,13 +34,24 @@ class PrisonersDilemmaSimulator(GameSimulator):
                 print(f"Reached maximum iterations: {self.max_iterations}. Ending simulation.")
                 break
 
+            # Handle chance nodes
+            if state.is_chance_node():
+                print("Chance node encountered. Applying random action.")
+                action = state.legal_actions()[0]  # Use the default chance action
+                state.apply_action(action)
+                continue
+
+            # Get actions for all players
             actions = [
                 self._get_action(player, state, state.legal_actions(player))
                 for player in range(2)
             ]
+
+            # Apply the actions simultaneously
             state.apply_actions(actions)
             iteration += 1
 
+        # Gather final scores
         final_scores = state.returns()
         for i, score in enumerate(final_scores):
             if i < len(self.llms):

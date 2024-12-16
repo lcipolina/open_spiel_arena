@@ -43,7 +43,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 ### Running the Simulator
 1. Use the main binary:
    ```bash
-   python scripts/run_simulation.py --game tic_tac_toe
+   python3 scripts/run_simulation.py --game tic_tac_toe
    ```
 
 2. Command-line options:
