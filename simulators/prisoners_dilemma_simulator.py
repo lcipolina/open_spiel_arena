@@ -26,7 +26,6 @@ class PrisonersDilemmaSimulator(GameSimulator):
             Dict[str, int]: The scores for each LLM.
         """
         state = self.game.new_initial_state()
-        scores = {name: 0 for name in self.llms.keys()}
         iteration = 0
 
         while not state.is_terminal():
@@ -37,17 +36,17 @@ class PrisonersDilemmaSimulator(GameSimulator):
             # Handle chance nodes
             if state.is_chance_node():
                 print("Chance node encountered. Applying random action.")
-                action = state.legal_actions()[0]  # Use the default chance action
+                action = state.legal_actions()[0]
                 state.apply_action(action)
                 continue
 
-            # Get actions for all players
+            # Collect actions for both players
             actions = [
                 self._get_action(player, state, state.legal_actions(player))
                 for player in range(2)
             ]
 
-            # Apply the actions simultaneously
+            # Apply actions simultaneously
             state.apply_actions(actions)
             iteration += 1
 
@@ -55,12 +54,11 @@ class PrisonersDilemmaSimulator(GameSimulator):
         final_scores = state.returns()
         for i, score in enumerate(final_scores):
             if i < len(self.llms):
-                scores[list(self.llms.keys())[i]] += score
+                self.scores[list(self.llms.keys())[i]] += score
 
-        print(f"Final state of {self.game_name}:\n{state}")
-        print(f"Scores: {scores}")
-        return scores
-
+        self.save_results(state, final_scores)  # Save results
+        return self.scores
+    
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Gets the action for the current player.
 

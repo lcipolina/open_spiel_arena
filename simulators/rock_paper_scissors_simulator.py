@@ -20,26 +20,27 @@ class RockPaperScissorsSimulator(GameSimulator):
             Dict[str, int]: The scores for each LLM.
         """
         state = self.game.new_initial_state()
-        scores = {name: 0 for name in self.llms.keys()}
 
         while not state.is_terminal():
+            self.log_progress(state)  # Use the base class logging
+
             # Collect actions for all players
             actions = [
                 self._get_action(player, state, state.legal_actions(player))
                 for player in range(2)
             ]
-            # Apply the actions simultaneously
+
+            # Apply actions simultaneously
             state.apply_actions(actions)
 
         # Gather final scores
         final_scores = state.returns()
         for i, score in enumerate(final_scores):
             if i < len(self.llms):
-                scores[list(self.llms.keys())[i]] += score
+                self.scores[list(self.llms.keys())[i]] += score
 
-        print(f"Final state of {self.game_name}:\n{state}")
-        print(f"Scores: {scores}")
-        return scores
+        self.save_results(state, final_scores)  # Save results
+        return self.scores
 
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Gets the action for the current player.
