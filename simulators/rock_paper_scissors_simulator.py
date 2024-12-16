@@ -39,6 +39,7 @@ class RockPaperScissorsSimulator(GameSimulator):
             if i < len(self.llms):
                 self.scores[list(self.llms.keys())[i]] += score
 
+        # Save results and return scores
         self.save_results(state, final_scores)  # Save results
         return self.scores
 
