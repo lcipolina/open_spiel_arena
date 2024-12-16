@@ -27,14 +27,15 @@ def generate_prompt(game_name: str, state: str, legal_actions: List[int]) -> str
         "Choose the next action (provide the action number)."
     )
 
+
 @lru_cache(maxsize=128)
-def llm_decide_move(llm: Any, prompt: str, legal_actions: List[int]) -> int:
+def llm_decide_move(llm: Any, prompt: str, legal_actions: tuple) -> int:
     """Use an LLM to decide the next move, with caching for repeated prompts.
 
     Args:
         llm: The LLM pipeline instance (e.g., from Hugging Face).
         prompt: The prompt string provided to the LLM.
-        legal_actions: The list of legal actions available.
+        legal_actions: The list of legal actions available (converted to tuple).
 
     Returns:
         int: The action selected by the LLM.
@@ -43,10 +44,9 @@ def llm_decide_move(llm: Any, prompt: str, legal_actions: List[int]) -> int:
     for word in response.split():
         try:
             move = int(word)
-            if move in legal_actions:
+            if move in legal_actions:  # Validate the move against legal actions
                 return move
         except ValueError:
             continue
     return legal_actions[0]  # Fallback to the first legal action if no valid move is found
-
 
