@@ -33,27 +33,27 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      ```bash
      git clone <repository-url>
      cd <repository-folder>
-
-    pip3 install -e .
-
+     pip3 install -e .
      ```
 
 ---
 
 ### Running the Simulator
-1. Use the main binary:
-   ```bash
-   python3 scripts/run_simulation.py --game tic_tac_toe
-
-   python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma
-   ```
+1. Use the main binary to run simulations:
+   - To simulate a single game:
+     ```bash
+     python3 scripts/run_simulation.py --games tic_tac_toe
+     ```
+   - To simulate multiple games:
+     ```bash
+     python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma
+     ```
 
 2. Command-line options:
-   - `--game`: Specify the game to simulate. Available options:
+   - `--games`: Specify one or more games to simulate. Available options:
      - `tic_tac_toe`
      - `prisoners_dilemma`
      - `rps`
-     ```
 
 ---
 
@@ -64,6 +64,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
   - **`games/`**: Game-specific logic (e.g., rules for Tic-Tac-Toe).
   - **`simulators/`**: Simulator logic for each game.
   - **`utils/`**: Shared utility functions (e.g., prompt generation, LLM integration).
+
+### Results
+- **`results/`**: Stores the JSON files with simulation results.
 
 ### Binary
 - **`scripts/run_simulation.py`**: The main script to run simulations. This is the entry point for the project.
@@ -91,6 +94,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 ---
 
 ## 4. Features
+
 - **LLM Integration**:
   - Uses Hugging Face Transformers to incorporate open-source LLMs (e.g., GPT-2, FLAN-T5).
   - Converts game states into natural language prompts for LLM decision-making.
@@ -100,6 +104,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 - **Extensible Framework**:
   - Supports adding new OpenSpiel games by defining custom simulators and integrating them into the pipeline.
+
+- **Results Logging**:
+  - Saves simulation results in JSON format inside the `results/` folder for easy analysis and review.
 
 ---
 
@@ -129,4 +136,14 @@ x.o
 ..x
 .o.
 Scores: {'LLM_1': 1.0, 'Random_Bot': -1.0}
+```
+
+### Game: Rock-Paper-Scissors
+```
+Final state of Rock-Paper-Scissors:
+Terminal? true
+History: 0, 1
+Returns: -1,1
+Scores: {'google/flan-t5-small': -1.0, 'gpt2': 1.0}
+Results saved to results/rock_paper_scissors_results.json
 ```
