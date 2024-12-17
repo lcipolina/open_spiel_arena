@@ -44,6 +44,8 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 1. Use the main binary:
    ```bash
    python3 scripts/run_simulation.py --game tic_tac_toe
+
+   python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma
    ```
 
 2. Command-line options:
@@ -51,9 +53,6 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      - `tic_tac_toe`
      - `prisoners_dilemma`
      - `rps`
-   - Example usage:
-     ```bash
-     python scripts/run_simulation.py --game tic_tac_toe
      ```
 
 ---

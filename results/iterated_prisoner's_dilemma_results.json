@@ -1,0 +1,13 @@
+{
+    "game_name": "Iterated Prisoner's Dilemma",
+    "final_state": "p0:CCCCCCCCCC p1:CCDCCCCCDC",
+    "scores": {
+        "google/flan-t5-small": 40.0,
+        "gpt2": 60.0
+    },
+    "returns": [
+        40.0,
+        60.0
+    ],
+    "history": "0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0"
+}

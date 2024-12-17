@@ -25,6 +25,7 @@ class PrisonersDilemmaSimulator(GameSimulator):
         Returns:
             Dict[str, int]: The scores for each LLM.
         """
+        self.scores = {name: 0 for name in self.llms.keys()}  # Reset scores
         state = self.game.new_initial_state()
         iteration = 0
 
@@ -58,7 +59,7 @@ class PrisonersDilemmaSimulator(GameSimulator):
 
         self.save_results(state, final_scores)  # Save results
         return self.scores
-    
+
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Gets the action for the current player.
 

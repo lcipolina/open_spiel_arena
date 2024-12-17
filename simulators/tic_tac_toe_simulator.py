@@ -19,6 +19,7 @@ class TicTacToeSimulator(GameSimulator):
         Returns:
             Dict[str, int]: The scores for each LLM.
         """
+        self.scores = {name: 0 for name in self.llms.keys()}  # Reset scores
         state = self.game.new_initial_state()
 
         while not state.is_terminal():

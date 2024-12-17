@@ -19,6 +19,7 @@ class RockPaperScissorsSimulator(GameSimulator):
         Returns:
             Dict[str, int]: The scores for each LLM.
         """
+        self.scores = {name: 0 for name in self.llms.keys()}  # Reset scores
         state = self.game.new_initial_state()
 
         while not state.is_terminal():
@@ -40,7 +41,7 @@ class RockPaperScissorsSimulator(GameSimulator):
                 self.scores[list(self.llms.keys())[i]] += score
 
         # Save results and return scores
-        self.save_results(state, final_scores)  # Save results
+        self.save_results(state, final_scores)
         return self.scores
 
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:

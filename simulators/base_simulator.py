@@ -1,3 +1,4 @@
+import os
 import json
 from typing import Dict, Any, List
 from abc import ABC, abstractmethod
@@ -45,7 +46,14 @@ class GameSimulator(ABC):
             state: The final game state.
             final_scores: The final scores for each player.
         """
-        # Convert NumPy arrays to lists
+        # Ensure results directory exists
+        results_dir = "results"
+        os.makedirs(results_dir, exist_ok=True)
+        filename = os.path.join(
+            results_dir, f"{self.game_name.lower().replace(' ', '_')}_results.json"
+        )
+
+        # Convert NumPy arrays to lists for JSON serialization
         final_scores = final_scores.tolist() if hasattr(final_scores, "tolist") else final_scores
 
         results = {
@@ -55,7 +63,8 @@ class GameSimulator(ABC):
             "returns": final_scores,
             "history": state.history_str(),
         }
-        filename = f"{self.game_name}_results.json"
+
+        # Save results to a JSON file
         with open(filename, "w") as f:
             json.dump(results, f, indent=4)
         print(f"Results saved to {filename}")
