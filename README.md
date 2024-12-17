@@ -34,8 +34,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      git clone <repository-url>
      cd <repository-folder>
      pip3 install -e .
-   ```
-
+     ```
 ---
 
 ### Running the Simulator
