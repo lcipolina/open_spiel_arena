@@ -35,6 +35,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      cd <repository-folder>
      pip3 install -e .
      ```
+
 ---
 
 ### Running the Simulator
@@ -59,10 +60,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 ## 2. Directory Structure
 
 ### Packages
-- **`open_spiel_simulation/`**: Root package containing all simulation logic.
-  - **`games/`**: Game-specific logic (e.g., rules for Tic-Tac-Toe).
-  - **`simulators/`**: Simulator logic for each game.
-  - **`utils/`**: Shared utility functions (e.g., prompt generation, LLM integration).
+- **`games/`**: Game-specific logic (e.g., rules for Tic-Tac-Toe).
+- **`simulators/`**: Simulator logic for each game.
+- **`utils/`**: Shared utility functions (e.g., prompt generation, LLM integration).
 
 ### Results
 - **`results/`**: Stores the JSON files with simulation results.
@@ -72,6 +72,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 ### Tests
 - **`tests/`**: Unit tests for utilities and simulators.
+
+### Game Registry
+- **`games_registry.py`**: Centralized file for managing all available games and their simulators.
 
 ---
 
@@ -92,7 +95,74 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 ---
 
-## 4. Features
+## 4. Adding a New Game
+To add a new game to the OpenSpiel LLM Arena, follow these steps:
+
+### Step 1: Implement the Game Loader
+1. Create a new Python file for the game in the **`games/`** folder.
+   - For example, to add **Matching Pennies**:
+     - Create `games/matching_pennies.py`:
+       ```python
+       def get_matching_pennies_game():
+           from open_spiel.python.games import matching_pennies
+           return matching_pennies.MatchingPenniesGame()
+       ```
+
+### Step 2: Implement the Game Simulator
+2. Create a corresponding simulator file in the **`simulators/`** folder.
+   - The simulator should inherit from the base `GameSimulator` class.
+   - Example: `simulators/matching_pennies_simulator.py`:
+     ```python
+     from .base_simulator import GameSimulator
+
+     class MatchingPenniesSimulator(GameSimulator):
+         """Simulator for Matching Pennies."""
+
+         def simulate(self):
+             state = self.game.new_initial_state()
+             while not state.is_terminal():
+                 self.log_progress(state)
+                 actions = [
+                     self._get_action(player, state, state.legal_actions(player))
+                     for player in range(2)
+                 ]
+                 state.apply_actions(actions)
+
+             final_scores = state.returns()
+             for i, score in enumerate(final_scores):
+                 self.scores[list(self.llms.keys())[i]] += score
+
+             self.save_results(state, final_scores)
+             return self.scores
+     ```
+
+### Step 3: Register the Game
+3. Add the new game to the **`games_registry.py`** file.
+   - Example:
+     ```python
+     from games.matching_pennies import get_matching_pennies_game
+     from simulators.matching_pennies_simulator import MatchingPenniesSimulator
+
+     GAMES_REGISTRY["matching_pennies"] = {
+         "loader": get_matching_pennies_game,
+         "simulator": MatchingPenniesSimulator,
+         "display_name": "Matching Pennies",
+     }
+     ```
+
+### Step 4: Run the New Game
+4. Use the `run_simulation.py` script to test the new game:
+   ```bash
+   python3 scripts/run_simulation.py --games matching_pennies
+   ```
+
+### Step 5: Add Tests (Optional but Recommended)
+5. Write unit tests for your game loader and simulator in the **`tests/`** folder.
+   - Example: `tests/test_matching_pennies.py`
+
+---
+
+## 5. Features
 
 - **LLM Integration**:
   - Uses Hugging Face Transformers to incorporate open-source LLMs (e.g., GPT-2, FLAN-T5).
@@ -109,7 +179,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 ---
 
-## 5. Contribution Guidelines
+## 6. Contribution Guidelines
 
 ### Steps to Contribute:
 1. Fork this repository.
@@ -120,7 +190,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 ---
 
-## 6. Example Output
+## 7. Example Output
 
 ### Game: Tic-Tac-Toe
 ```

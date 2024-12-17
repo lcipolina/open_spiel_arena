@@ -9,12 +9,8 @@ arguments to specify the game and simulation configurations.
 import os
 import argparse
 from transformers import pipeline
-from simulators.tic_tac_toe_simulator import TicTacToeSimulator
-from simulators.prisoners_dilemma_simulator import PrisonersDilemmaSimulator
-from simulators.rock_paper_scissors_simulator import RockPaperScissorsSimulator
-from games.tic_tac_toe import get_tic_tac_toe_game
-from games.prisoners_dilemma import get_prisoners_dilemma_game
-from games.rock_paper_scissors import get_rps_game
+from games_registry import GAMES_REGISTRY # Import the game loaders available
+
 
 # Force Hugging Face Transformers to use PyTorch backend instead of TensorFlow
 os.environ["TRANSFORMERS_BACKEND"] = "pt"
@@ -47,20 +43,13 @@ def main() -> None:
         print(f"\nStarting simulation for {game_name}...")
 
         # Select the game and simulator
-        if game_name == "tic_tac_toe":
-            game = get_tic_tac_toe_game()
-            simulator = TicTacToeSimulator(game, "Tic-Tac-Toe", llms, random_bot=True)
-        elif game_name == "prisoners_dilemma":
-            game = get_prisoners_dilemma_game()
-            simulator = PrisonersDilemmaSimulator(
-                game, "Iterated Prisoner's Dilemma", llms, play_against_itself=True, max_iterations=10
-            )
-        elif game_name == "rps":
-            game = get_rps_game()
-            simulator = RockPaperScissorsSimulator(game, "Rock-Paper-Scissors", llms)
-        else:
-            print(f"Unsupported game: {game_name}")
-            continue
+        game_info = GAMES_REGISTRY[game_name]
+
+        # Load the game and create the simulator dynamically
+        game_instance = game_info["loader"]()
+        simulator_class = game_info["simulator"]
+        simulator = simulator_class(game_instance, game_info["display_name"], llms)
+
 
         # Run the simulation and update leaderboard
         game_results = simulator.simulate()
