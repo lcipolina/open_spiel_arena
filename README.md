@@ -46,17 +46,18 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      ```
    - To simulate multiple games:
      ```bash
-     python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma
+     python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma connect_four kuhn_poker matching_pennies_3p
      ```
 
 2. Command-line options:
    - `--games`: Specify one or more games to simulate.
+
 ---
 
 ## 2. Directory Structure
 
 ### Packages
-- **`games/`**: Game-specific logic (e.g., rules for Tic-Tac-Toe).
+- **`games/`**: Game-specific logic (e.g., rules for Tic-Tac-Toe, Connect Four, Matrix Games, etc.).
 - **`simulators/`**: Simulator logic for each game.
 - **`utils/`**: Shared utility functions (e.g., prompt generation, LLM integration).
 
@@ -86,8 +87,20 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 3. **Rock-Paper-Scissors**:
    - A simultaneous-move game where rock beats scissors, scissors beats paper, and paper beats rock.
 
-4. **Matching Pennies** (Planned):
-   - A simple two-player game where Player 1 wins if both players’ choices match, and Player 2 wins if they differ.
+4. **Connect Four**:
+   - A two-player game where players drop colored discs into a 7x6 grid, aiming to connect four of their own discs in a line.
+
+5. **Matrix Rock-Paper-Scissors**:
+   - A variant of RPS represented as a payoff matrix.
+
+6. **Matrix Prisoner’s Dilemma**:
+   - A matrix version of Prisoner’s Dilemma, emphasizing strategic interactions between players.
+
+7. **Kuhn Poker**:
+   - A simplified poker game with limited betting rounds and a small deck.
+
+8. **Matching Pennies (3-player)**:
+   - A three-player game where each player aims to match or mismatch the choices of others to achieve a payoff.
 
 ---
 
@@ -110,13 +123,23 @@ To add a new game to the OpenSpiel LLM Arena, follow these steps:
 
 ### Step 3: Register the Game
 3. Add the new game to the **`games_registry.py`** file.
+   - Example:
+     ```python
+     from games.matching_pennies import get_matching_pennies_game
+     from simulators.matching_pennies_simulator import MatchingPenniesSimulator
+
+     GAMES_REGISTRY["matching_pennies"] = {
+         "loader": get_matching_pennies_game,
+         "simulator": MatchingPenniesSimulator,
+         "display_name": "Matching Pennies",
+     }
+     ```
 
 ### Step 4: Run the New Game
 4. Use the `run_simulation.py` script to test the new game. Example:
    ```bash
    python3 scripts/run_simulation.py --games matching_pennies
    ```
-
 
 ---
 
@@ -173,4 +196,19 @@ History: 0, 1
 Returns: -1,1
 Scores: {'google/flan-t5-small': -1.0, 'gpt2': 1.0}
 Results saved to results/rock_paper_scissors_results.json
+```
+
+### Game: Connect Four
+```
+Current state of Connect Four:
+.....
+.....
+...o.
+..x..
+.....
+.....
+...
+Final state of Connect Four:
+x wins!
+Scores: {'google/flan-t5-small': 1.0, 'Random_Bot': -1.0}
 ```
