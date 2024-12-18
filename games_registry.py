@@ -55,7 +55,7 @@ GAMES_REGISTRY = {
         "simulator": KuhnPokerSimulator,
         "display_name": "Kuhn Poker",
     },
-    "matching_pennies_3p": {
+    "matching_pennies": {
         "loader": get_matching_pennies_game,
         "simulator": MatchingPenniesSimulator,
         "display_name": "Matching Pennies (3P)",

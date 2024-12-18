@@ -19,13 +19,16 @@ os.environ["TRANSFORMERS_BACKEND"] = "pt"
 def main() -> None:
     """Main function for running game simulations."""
     parser = argparse.ArgumentParser(description="Run OpenSpiel simulations.")
+   # Dynamically extract available games from the registry
+    available_games = list(GAMES_REGISTRY.keys())
+
     parser.add_argument(
         "--games",
         type=str,
-        nargs="+",
-        choices=["tic_tac_toe", "prisoners_dilemma", "rps"],
+        choices=available_games,
         required=True,
-        help="The list of games to simulate (e.g., tic_tac_toe rps)."
+        nargs="+",
+        help=f"The name(s) of the game(s) to simulate. Available options: {', '.join(available_games)}",
     )
     args = parser.parse_args()
 

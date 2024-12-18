@@ -2,6 +2,8 @@ import os
 import json
 from typing import Dict, Any, List
 from abc import ABC, abstractmethod
+import random
+from utils.llm_utils import generate_prompt, llm_decide_move
 
 class GameSimulator(ABC):
     """Base class for simulating games with LLMs.
@@ -73,3 +75,29 @@ class GameSimulator(ABC):
     def log_progress(self, state: Any) -> None:
         """Log the current game state."""
         print(f"Current state of {self.game_name}:\n{state}")
+
+
+    def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
+        """Gets the action for the current player.
+
+        Args:
+            player: The index of the current player.
+            state: The current game state.
+            legal_actions: The legal actions available for the player.
+
+        Returns:
+            int: The action selected by the player.
+        """
+        if self.random_bot and player == 1:
+            return random.choice(legal_actions)
+        elif self.play_against_itself:
+            model_name = list(self.llms.keys())[player % len(self.llms)]
+            llm = self.llms[model_name]
+            prompt = generate_prompt(self.game_name, str(state), legal_actions)
+            return llm_decide_move(llm, prompt, tuple(legal_actions))  # Convert to tuple
+        elif player < len(self.llms):
+            model_name = list(self.llms.keys())[player]
+            llm = self.llms[model_name]
+            prompt = generate_prompt(self.game_name, str(state), legal_actions)
+            return llm_decide_move(llm, prompt, tuple(legal_actions))  # Convert to tuple
+        return legal_actions[0]  # Default fallback action
