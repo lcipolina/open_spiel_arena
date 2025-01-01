@@ -10,6 +10,7 @@ import os
 import argparse
 from transformers import pipeline
 from games_registry import GAMES_REGISTRY # Import the game loaders available
+from simulators.base_simulator import PlayerType
 
 
 # Force Hugging Face Transformers to use PyTorch backend instead of TensorFlow
@@ -30,7 +31,23 @@ def main() -> None:
         nargs="+",
         help=f"The name(s) of the game(s) to simulate. Available options: {', '.join(available_games)}",
     )
+    parser.add_argument(
+        "--rounds",
+        type=int,
+        default=1,
+        help="Number of rounds to play for each game."
+    )
+    parser.add_argument(
+        "--player-type",
+        type=str,
+        choices=["human", "random_bot", "llm", "self_play"],
+        default="llm",
+        help="Type of player for the simulation (default: llm)."
+    )
     args = parser.parse_args()
+
+    # Convert player type to enum
+    player_type = PlayerType(args.player_type)
 
     # Load LLMs
     llms = {
@@ -51,8 +68,13 @@ def main() -> None:
         # Load the game and create the simulator dynamically
         game_instance = game_info["loader"]()
         simulator_class = game_info["simulator"]
-        simulator = simulator_class(game_instance, game_info["display_name"], llms)
+        simulator = simulator_class(game_instance,
+                                    game_info["display_name"],
+                                    llms,
+                                    player_type=player_type
+                                    )
 
+        print(f"Starting simulation for {game_name} with player type: {args.player_type}...")
 
         # Run the simulation and update leaderboard
         game_results = simulator.simulate()

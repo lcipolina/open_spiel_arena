@@ -4,6 +4,15 @@ from typing import Dict, Any, List
 from abc import ABC, abstractmethod
 import random
 from utils.llm_utils import generate_prompt, llm_decide_move
+from enum import Enum
+
+
+class PlayerType(Enum):
+    HUMAN = "human"
+    RANDOM_BOT = "random_bot"
+    LLM = "llm"
+    SELF_PLAY = "self_play"
+
 
 class GameSimulator(ABC):
     """Base class for simulating games with LLMs.
@@ -12,70 +21,53 @@ class GameSimulator(ABC):
     """
 
     def __init__(self, game: Any, game_name: str, llms: Dict[str, Any],
-                 random_bot: bool = False, play_against_itself: bool = False):
+                 player_type: PlayerType = PlayerType.LLM):
         self.game = game
         self.game_name = game_name
         self.llms = llms
-        self.random_bot = random_bot
-        self.play_against_itself = play_against_itself
+        self.player_type = player_type
         self.scores = {name: 0 for name in self.llms.keys()}  # Initialize scores
 
-    @abstractmethod
-    def simulate(self) -> Dict[str, int]:
-        """Simulates the game. To be overridden by subclasses."""
-        pass
-
-    @staticmethod
-    def update_leaderboard(leaderboard: Dict[str, float], scores: Dict[str, float]) -> Dict[str, float]:
-        """Update the leaderboard with scores from a single game.
+    def simulate(self, rounds: int = 1) -> Dict[str, Any]:
+        """Simulates the game for multiple rounds.
 
         Args:
-            leaderboard: A dictionary of cumulative scores for LLMs.
-            scores: A dictionary of scores from the current game.
+            rounds: Number of times the game should be played.
 
         Returns:
-            Dict[str, float]: Updated leaderboard.
+            Dict[str, Any]: Summary of results for all rounds.
         """
-        for llm, score in scores.items():
-            leaderboard[llm] = leaderboard.get(llm, 0) + score
-        return leaderboard
+        outcomes = self._initialize_outcomes()
 
+        for _ in range(rounds):
+            # Reset scores for a single round
+            self.scores = {name: 0 for name in self.llms.keys()}
+            state = self.game.new_initial_state()
 
-    def save_results(self, state: Any, final_scores: List[float]) -> None:
-        """Save simulation results to a JSON file.
+            while not state.is_terminal():
+                self.log_progress(state)
+                current_player = state.current_player()
 
-        Args:
-            state: The final game state.
-            final_scores: The final scores for each player.
-        """
-        # Ensure results directory exists
-        results_dir = "results"
-        os.makedirs(results_dir, exist_ok=True)
-        filename = os.path.join(
-            results_dir, f"{self.game_name.lower().replace(' ', '_')}_results.json"
-        )
+                if current_player < 0:
+                    self._apply_default_action(state)
+                    continue
 
-        # Convert NumPy arrays to lists for JSON serialization
-        final_scores = final_scores.tolist() if hasattr(final_scores, "tolist") else final_scores
+                legal_actions = state.legal_actions(current_player)
+                action = self._get_action(current_player, state, legal_actions)
+                state.apply_action(action)
 
-        results = {
-            "game_name": self.game_name,
-            "final_state": str(state),
-            "scores": self.scores,
-            "returns": final_scores,
-            "history": state.history_str(),
-        }
+            # Record outcomes
+            final_scores = state.returns()
+            winner = self._record_outcomes(final_scores, outcomes)
+            self.log_result(state, winner)
 
-        # Save results to a JSON file
-        with open(filename, "w") as f:
-            json.dump(results, f, indent=4)
-        print(f"Results saved to {filename}")
+        return outcomes
 
-
-    def log_progress(self, state: Any) -> None:
-        """Log the current game state."""
-        print(f"Current state of {self.game_name}:\n{state}")
-
+    def _initialize_outcomes(self) -> Dict[str, Any]:
+        """Initializes the outcomes dictionary."""
+        return {"wins": {name: 0 for name in self.llms.keys()},
+                "losses": {name: 0 for name in self.llms.keys()},
+                "ties": 0}
 
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Gets the action for the current player.
@@ -88,16 +80,79 @@ class GameSimulator(ABC):
         Returns:
             int: The action selected by the player.
         """
-        if self.random_bot and player == 1:
+        if self.player_type == PlayerType.HUMAN and player == 0:
+            return self._get_human_action(state, legal_actions)
+
+        if self.player_type == PlayerType.RANDOM_BOT and player == 1:
             return random.choice(legal_actions)
-        elif self.play_against_itself:
-            model_name = list(self.llms.keys())[player % len(self.llms)]
-            llm = self.llms[model_name]
-            prompt = generate_prompt(self.game_name, str(state), legal_actions)
-            return llm_decide_move(llm, prompt, tuple(legal_actions))  # Convert to tuple
-        elif player < len(self.llms):
-            model_name = list(self.llms.keys())[player]
-            llm = self.llms[model_name]
-            prompt = generate_prompt(self.game_name, str(state), legal_actions)
-            return llm_decide_move(llm, prompt, tuple(legal_actions))  # Convert to tuple
+
+        if self.player_type in {PlayerType.SELF_PLAY, PlayerType.LLM} and player < len(self.llms):
+            return self._get_llm_action(player, state, legal_actions)
+
         return legal_actions[0]  # Default fallback action
+
+    def _get_human_action(self, state: Any, legal_actions: List[int]) -> int:
+        """Handles input for human players."""
+        print(f"Current state of {self.game_name}:\n{state}")
+        print(f"Your options: {legal_actions}") # Display legal moves to the user
+        while True:
+            try:
+                action = int(input("Enter your action (number): "))
+                if action in legal_actions: # Validate the move
+                    return action
+            except ValueError:
+                pass
+            print("Invalid action. Please choose from:", legal_actions)
+
+    def _get_llm_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
+        """Handles LLM-based decisions."""
+        model_name = list(self.llms.keys())[player % len(self.llms)]
+        llm = self.llms[model_name]
+        prompt = generate_prompt(self.game_name, str(state), legal_actions)
+        return llm_decide_move(llm, prompt, tuple(legal_actions))
+
+    def _record_outcomes(self, final_scores: List[float], outcomes: Dict[str, Any]) -> str:
+        """Records the outcome of a single game round."""
+        if all(score == final_scores[0] for score in final_scores):
+            outcomes["ties"] += 1
+            return "tie"
+
+        max_score = max(final_scores)
+        winners = [name for i, name in enumerate(self.llms.keys()) if final_scores[i] == max_score]
+
+        if len(winners) == 1:
+            outcomes["wins"][winners[0]] += 1
+            return winners[0]
+        else:
+            outcomes["ties"] += 1
+            return "tie"
+
+    def save_results(self, state: Any, final_scores: List[float]) -> None:
+        """Save simulation results to a JSON file."""
+        results = self._prepare_results(state, final_scores)
+        filename = self._get_results_filename()
+
+        with open(filename, "w") as f:
+            json.dump(results, f, indent=4)
+        print(f"Results saved to {filename}")
+
+    def _prepare_results(self, state: Any, final_scores: List[float]) -> Dict[str, Any]:
+        """Prepares the results dictionary for JSON serialization."""
+        final_scores = final_scores.tolist() if hasattr(final_scores, "tolist") else final_scores
+        return {
+            "game_name": self.game_name,
+            "final_state": str(state),
+            "scores": self.scores,
+            "returns": final_scores,
+            "history": state.history_str(),
+        }
+
+    def _get_results_filename(self) -> str:
+        """Generates the filename for saving results."""
+        results_dir = "results"
+        os.makedirs(results_dir, exist_ok=True)
+        return os.path.join(results_dir, f"{self.game_name.lower().replace(' ', '_')}_results.json")
+
+    def log_progress(self, state: Any) -> None:
+        """Log the current game state."""
+        print(f"Current state of {self.game_name}:\n{state}")

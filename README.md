@@ -138,7 +138,15 @@ To add a new game to the OpenSpiel LLM Arena, follow these steps:
 ### Step 4: Run the New Game
 4. Use the `run_simulation.py` script to test the new game. Example:
    ```bash
-   python3 scripts/run_simulation.py --games matching_pennies
+   # Human vs LLM
+   python3 scripts/run_simulation.py --games tic_tac_toe --player-type human
+
+   # Random Bot vs LLM
+   python3 scripts/run_simulation.py --games rps --player-type random_bot
+
+   # Self-Play
+   python3 scripts/run_simulation.py --games kuhn_poker --player-type self_play --rounds 10
+
    ```
 
 ---
