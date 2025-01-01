@@ -28,11 +28,12 @@ class GameSimulator(ABC):
         self.player_type = player_type
         self.scores = {name: 0 for name in self.llms.keys()}  # Initialize scores
 
-    def simulate(self, rounds: int = 1) -> Dict[str, Any]:
+    def simulate(self, rounds: int = 1, log_fn=None) -> Dict[str, Any]:
         """Simulates the game for multiple rounds.
 
         Args:
             rounds: Number of times the game should be played.
+            log_fn: Optional function to log intermediate states.
 
         Returns:
             Dict[str, Any]: Summary of results for all rounds.
@@ -40,14 +41,14 @@ class GameSimulator(ABC):
         outcomes = self._initialize_outcomes()
 
         for _ in range(rounds):
-            # Reset scores for a single round
-            self.scores = {name: 0 for name in self.llms.keys()}
+            self.scores = {name: 0 for name in self.llms.keys()}  # Reset scores
             state = self.game.new_initial_state()
 
             while not state.is_terminal():
-                self.log_progress(state)
-                current_player = state.current_player()
+                if log_fn:
+                    log_fn(state)  # Log current state if a logging function is provided
 
+                current_player = state.current_player()
                 if current_player < 0:
                     self._apply_default_action(state)
                     continue
@@ -58,10 +59,23 @@ class GameSimulator(ABC):
 
             # Record outcomes
             final_scores = state.returns()
-            winner = self._record_outcomes(final_scores, outcomes)
-            self.log_result(state, winner)
+            self._record_outcomes(final_scores, outcomes)
 
         return outcomes
+
+    def _collect_actions(self, state: Any) -> List[int]:
+        """Collects actions for all players in a simultaneous-move game.
+
+        Args:
+            state: The current game state.
+
+        Returns:
+            List[int]: Actions chosen by all players.
+        """
+        return [
+            self._get_action(player, state, state.legal_actions(player))
+            for player in range(self.game.num_players())
+        ]
 
     def _initialize_outcomes(self) -> Dict[str, Any]:
         """Initializes the outcomes dictionary."""

@@ -6,49 +6,61 @@ Kuhn Poker using the OpenSpiel framework.
 For Kuhn Poker, the game mechanics involve:
 
 - Betting rounds where decisions depend on the game state and potential strategies.
-- Chance nodes, which might require specific handling (e.g., dealing cards).
+- Chance nodes, which require specific handling (e.g., dealing cards).
 """
 
 from simulators.base_simulator import GameSimulator
 from utils.llm_utils import generate_prompt, llm_decide_move
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any
 import random
 
 class KuhnPokerSimulator(GameSimulator):
     """Simulator for Kuhn Poker."""
 
-    def simulate(self) -> Dict[str, int]:
-        """Simulates a game of Kuhn Poker.
+    def simulate(self, rounds: int = 1) -> Dict[str, Any]:
+        """Simulates the game for multiple rounds.
+
+        Args:
+            rounds: Number of times the game should be played.
 
         Returns:
-            Dict[str, int]: The scores for each LLM.
+            Dict[str, Any]: Summary of results for all rounds.
         """
-        self.scores = {name: 0 for name in self.llms.keys()}  # Reset scores
-        state = self.game.new_initial_state()
+        # Inherit base functionality but extend for chance nodes
+        outcomes = self._initialize_outcomes()
 
-        while not state.is_terminal():
-            self.log_progress(state)  # Log the state progress
-            current_player = state.current_player()
+        for _ in range(rounds):
+            # Reset scores for a single round
+            self.scores = {name: 0 for name in self.llms.keys()}
+            state = self.game.new_initial_state()
 
-            # Handle chance nodes
-            if state.is_chance_node():
-                print("Chance node encountered. Applying random action.")
-                action = random.choice(state.legal_actions())
+            while not state.is_terminal():
+                self.log_progress(state)
+                current_player = state.current_player()
+
+                if state.is_chance_node():  # Game-specific logic for chance nodes
+                    self._handle_chance_node(state)
+                    continue
+
+                legal_actions = state.legal_actions(current_player)
+                action = self._get_action(current_player, state, legal_actions)
                 state.apply_action(action)
-                continue
 
-            legal_actions = state.legal_actions(current_player)
-            action = self._get_action(current_player, state, legal_actions)
-            state.apply_action(action)
+            # Record outcomes
+            final_scores = state.returns()
+            self._record_outcomes(final_scores, outcomes)
 
-        # Gather final scores
-        final_scores = state.returns()
-        for i, score in enumerate(final_scores):
-            if i < len(self.llms):
-                self.scores[list(self.llms.keys())[i]] += score
+        return outcomes
 
-        self.save_results(state, final_scores)  # Save results to JSON
-        return self.scores
+    def _handle_chance_node(self, state: Any) -> None:
+        """Handles chance nodes in Kuhn Poker.
+
+        Args:
+            state: The current game state.
+        """
+        print("Chance node encountered. Applying random action.")
+        action = random.choice(state.legal_actions())
+        state.apply_action(action)
 
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Gets the action for the current player.
