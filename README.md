@@ -42,11 +42,18 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 1. Use the main binary to run simulations:
    - To simulate a single game:
      ```bash
-     python3 scripts/run_simulation.py --games tic_tac_toe
-     ```
-   - To simulate multiple games:
-     ```bash
-     python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma connect_four kuhn_poker matching_pennies_3p
+      # Human vs LLM
+      python3 scripts/run_simulation.py --games tic_tac_toe --player-type human
+
+      # Random Bot vs LLM
+      python3 scripts/run_simulation.py --games rps --player-type random_bot
+
+      # Self-Play
+      python3 scripts/run_simulation.py --games kuhn_poker --player-type self_play --rounds 10
+      ```
+      - To simulate multiple games:
+      ```bash
+      python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma connect_four kuhn_poker matching_pennies_3p
      ```
 
 2. Command-line options:
@@ -138,15 +145,7 @@ To add a new game to the OpenSpiel LLM Arena, follow these steps:
 ### Step 4: Run the New Game
 4. Use the `run_simulation.py` script to test the new game. Example:
    ```bash
-   # Human vs LLM
-   python3 scripts/run_simulation.py --games tic_tac_toe --player-type human
-
-   # Random Bot vs LLM
-   python3 scripts/run_simulation.py --games rps --player-type random_bot
-
-   # Self-Play
-   python3 scripts/run_simulation.py --games kuhn_poker --player-type self_play --rounds 10
-
+   python3 scripts/run_simulation.py --games matching_pennies
    ```
 
 ---
