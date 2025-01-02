@@ -4,5 +4,3 @@
 __pycache__/
 *.cpython-*
 
-games/__pycache__/tic_tac_toe.cpython-39.pyc
-simulators/__pycache__/base_simulator.cpython-39.pyc
