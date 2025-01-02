@@ -1,1 +1,6 @@
 .vscode/launch.json
+# Ignore Python bytecode files
+*.pyc
+__pycache__/
+*.cpython-*
+
