@@ -43,13 +43,13 @@ This project explores how LLMs interpret game states, make strategic decisions, 
    - To simulate a single game:
      ```bash
       # Human vs LLM
-      python3 scripts/run_simulation.py --games tic_tac_toe --player-type human
+      python scripts/run_simulation.py --games tic_tac_toe --player1-type human --player2-type llm --player2-model gpt2
 
-      # Random Bot vs LLM
-      python3 scripts/run_simulation.py --games rps --player-type random_bot
+      # Random Bot vs Human
+      python scripts/run_simulation.py --games tic_tac_toe --player1-type human --player2-type random_bot
 
       # Self-Play
-      python3 scripts/run_simulation.py --games kuhn_poker --player-type self_play --rounds 10
+      python scripts/run_simulation.py --games tic_tac_toe --player1-type llm --player2-type llm --rounds 10
       ```
       - To simulate multiple games:
       ```bash
