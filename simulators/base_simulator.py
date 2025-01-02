@@ -38,7 +38,7 @@ class GameSimulator(ABC):
         Returns:
             Dict[str, Any]: Summary of results for all rounds.
         """
-        outcomes = self._initialize_outcomes()
+        outcomes = self._initialize_outcomes() # Reset the outcomes dictionary
 
         for _ in range(rounds):
             self.scores = {name: 0 for name in self.llms.keys()}  # Reset scores
@@ -124,6 +124,13 @@ class GameSimulator(ABC):
         llm = self.llms[model_name]
         prompt = generate_prompt(self.game_name, str(state), legal_actions)
         return llm_decide_move(llm, prompt, tuple(legal_actions))
+
+
+    def _apply_default_action(self, state):
+        """
+        Applies a default action when the current player is invalid.
+        """
+        state.apply_action(state.legal_actions()[0])
 
     def _record_outcomes(self, final_scores: List[float], outcomes: Dict[str, Any]) -> str:
         """Records the outcome of a single game round."""
