@@ -1,3 +1,5 @@
+''' Base class for simulating games.'''
+
 import os
 import json
 from typing import Dict, Any, List
@@ -22,6 +24,15 @@ class GameSimulator(ABC):
 
     def __init__(self, game: Any, game_name: str, llms: Dict[str, Any],
                  player_type: PlayerType = PlayerType.LLM):
+        """
+        Args:
+            game (Any): The OpenSpiel game object being simulated.
+            game_name (str): A human-readable name for the game (for logging and reporting).
+            llms (Dict[str, Any]): A dictionary mapping player names (e.g., "Player 1")
+                to their corresponding LLM instances. Can be empty if no LLMs are used.
+            player_type (PlayerType): The type of player controlling the game,
+                such as human, random bot, or LLM. Defaults to LLM.
+        """
         self.game = game
         self.game_name = game_name
         self.llms = llms
@@ -46,9 +57,9 @@ class GameSimulator(ABC):
 
             while not state.is_terminal():
                 if log_fn:
-                    log_fn(state)  # Log current state if a logging function is provided
+                    log_fn(state)
 
-                current_player = state.current_player()
+                current_player = state.current_player() # Current player idx from Open Spiel
                 if current_player < 0:
                     self._apply_default_action(state)
                     continue
@@ -83,6 +94,7 @@ class GameSimulator(ABC):
                 "losses": {name: 0 for name in self.llms.keys()},
                 "ties": 0}
 
+
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Gets the action for the current player.
 
@@ -94,16 +106,21 @@ class GameSimulator(ABC):
         Returns:
             int: The action selected by the player.
         """
-        if self.player_type == PlayerType.HUMAN and player == 0:
+        player_name = f"Player {player + 1}"  # Map index to player name
+
+        player_type = self.player_type.get(player_name)
+
+        if player_type == PlayerType.HUMAN.value:
             return self._get_human_action(state, legal_actions)
 
-        if self.player_type == PlayerType.RANDOM_BOT and player == 1:
+        if player_type == PlayerType.RANDOM_BOT.value:
             return random.choice(legal_actions)
 
-        if self.player_type in {PlayerType.SELF_PLAY, PlayerType.LLM} and player < len(self.llms):
+        if player_type == PlayerType.LLM.value:
             return self._get_llm_action(player, state, legal_actions)
 
-        return legal_actions[0]  # Default fallback action
+        raise ValueError(f"Unknown player type for {player_name}: {player_type}")
+
 
     def _get_human_action(self, state: Any, legal_actions: List[int]) -> int:
         """Handles input for human players."""
@@ -120,11 +137,10 @@ class GameSimulator(ABC):
 
     def _get_llm_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
         """Handles LLM-based decisions."""
-        model_name = list(self.llms.keys())[player % len(self.llms)]
-        llm = self.llms[model_name]
+        player_name = f"Player {player + 1}"
+        llm = self.llms[player_name]
         prompt = generate_prompt(self.game_name, str(state), legal_actions)
         return llm_decide_move(llm, prompt, tuple(legal_actions))
-
 
     def _apply_default_action(self, state):
         """
