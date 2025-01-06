@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import random
 from utils.llm_utils import generate_prompt, llm_decide_move
 from enum import Enum
+import pyspiel
 
 
 class PlayerType(Enum):
@@ -59,10 +60,20 @@ class GameSimulator(ABC):
                 if log_fn:
                     log_fn(state)
 
-                current_player = state.current_player() # Current player idx from Open Spiel
-                legal_actions = state.legal_actions(current_player)
-                action = self._get_action(current_player, state, legal_actions)
-                state.apply_action(action)  # Apply the action to the board
+                # Collect actions
+                current_player = state.current_player()
+                if current_player == pyspiel.PlayerId.SIMULTANEOUS:
+                    # Handle simultaneous moves
+                    actions = self._collect_actions(state)
+                    state.apply_actions(actions)
+                elif current_player >= 0:
+                    # Handle sequential moves
+                    legal_actions = state.legal_actions(current_player)
+                    action = self._get_action(current_player, state, legal_actions)
+                    state.apply_action(action)
+                else:
+                    # Handle unexpected or unsupported player states
+                    raise ValueError(f"Unexpected player ID: {current_player}")
 
             # Record outcomes
             final_scores = state.returns()
@@ -88,7 +99,8 @@ class GameSimulator(ABC):
         """Initializes the outcomes dictionary."""
         return {"wins": {name: 0 for name in self.llms.keys()},
                 "losses": {name: 0 for name in self.llms.keys()},
-                "ties": 0}
+                "ties": 0
+                }
 
 
     def _get_action(self, player: int, state: Any, legal_actions: List[int]) -> int:
@@ -103,15 +115,12 @@ class GameSimulator(ABC):
             int: The action selected by the player.
         """
         player_name = f"Player {player + 1}"  # Map index to player name
-
         player_type = self.player_type.get(player_name)
 
         if player_type == PlayerType.HUMAN.value:
             return self._get_human_action(state, legal_actions)
-
         if player_type == PlayerType.RANDOM_BOT.value:
             return random.choice(legal_actions)
-
         if player_type == PlayerType.LLM.value:
             return self._get_llm_action(player, state, legal_actions)
 
@@ -142,7 +151,7 @@ class GameSimulator(ABC):
         """
         Applies a default action when the current player is invalid.
         """
-        state.apply_action(state.legal_actions()[0])
+        state.apply_action(random.choice(state.legal_actions()))
 
     def _record_outcomes(self, final_scores: List[float], outcomes: Dict[str, Any]) -> str:
         """Records the outcome of a single game round."""
