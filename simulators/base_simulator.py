@@ -62,7 +62,7 @@ class GameSimulator(ABC):
                 current_player = state.current_player() # Current player idx from Open Spiel
                 legal_actions = state.legal_actions(current_player)
                 action = self._get_action(current_player, state, legal_actions)
-                state.apply_action(action)
+                state.apply_action(action)  # Apply the action to the board
 
             # Record outcomes
             final_scores = state.returns()
