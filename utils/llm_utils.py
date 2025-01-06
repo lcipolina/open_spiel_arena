@@ -7,7 +7,7 @@ for decision-making in game simulations.
 
 from functools import lru_cache
 from typing import List, Any
-
+import random
 
 def generate_prompt(game_name: str, state: str, legal_actions: List[int]) -> str:
     """Generate a natural language prompt for the LLM to decide the next move.
@@ -20,12 +20,13 @@ def generate_prompt(game_name: str, state: str, legal_actions: List[int]) -> str
     Returns:
         str: A prompt string for the LLM.
     """
-    return (
-        f"Game: {game_name}\n"
-        f"State:\n{state}\n"
-        f"Legal actions: {legal_actions}\n"
-        "Choose the next action (provide the action number)."
-    )
+    prompt =  (
+         f"You are playing the Game: {game_name}\n"
+         f"State:\n{state}\n"
+         f"Legal actions: {legal_actions}\n"
+         "Your task is to choose the next action (provide the action number answer with only the number of your next move from the list of legal actions. Do not provide any additional text or explanation."
+     )
+    return prompt
 
 
 @lru_cache(maxsize=128)
@@ -40,13 +41,16 @@ def llm_decide_move(llm: Any, prompt: str, legal_actions: tuple) -> int:
     Returns:
         int: The action selected by the LLM.
     """
+
+    # TODO(lkun): test this: temperature = 0.1 #less creative
+
     response = llm(prompt, max_new_tokens=30, pad_token_id=50256)[0]["generated_text"]
     for word in response.split():
-        try:
-            move = int(word)
-            if move in legal_actions:  # Validate the move against legal actions
-                return move
-        except ValueError:
-            continue
-    return legal_actions[0]  # Fallback to the first legal action if no valid move is found
+         try:
+             move = int(word)
+             if move in legal_actions:  # Validate the move against legal actions
+                 return move
+         except ValueError:
+             continue
 
+    return random.choice(legal_actions)   # Fallback if no valid move is found
