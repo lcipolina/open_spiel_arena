@@ -60,10 +60,6 @@ class GameSimulator(ABC):
                     log_fn(state)
 
                 current_player = state.current_player() # Current player idx from Open Spiel
-                if current_player < 0:
-                    self._apply_default_action(state)
-                    continue
-
                 legal_actions = state.legal_actions(current_player)
                 action = self._get_action(current_player, state, legal_actions)
                 state.apply_action(action)
