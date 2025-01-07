@@ -24,24 +24,25 @@ class GameSimulator(ABC):
     """
 
     def __init__(self, game: Any, game_name: str, llms: Dict[str, Any],
-                 player_type: PlayerType = PlayerType.LLM):
+                 player_type: Dict[str, str], max_game_rounds: int = None):
         """
         Args:
             game (Any): The OpenSpiel game object being simulated.
             game_name (str): A human-readable name for the game (for logging and reporting).
             llms (Dict[str, Any]): A dictionary mapping player names (e.g., "Player 1")
                 to their corresponding LLM instances. Can be empty if no LLMs are used.
-            player_type (PlayerType): The type of player controlling the game,
-                such as human, random bot, or LLM. Defaults to LLM.
+            player_type (Dict[str, str]): A dictionary mapping player names to their types.
+            max_game_rounds (int): Maximum number of rounds for iterated games. Ignored by single-shot games.
         """
         self.game = game
         self.game_name = game_name
         self.llms = llms
         self.player_type = player_type
+        self.max_game_rounds = max_game_rounds  # For iterated games
         self.scores = {name: 0 for name in self.llms.keys()}  # Initialize scores
 
     def simulate(self, rounds: int = 1, log_fn=None) -> Dict[str, Any]:
-        """Simulates the game for multiple rounds.
+        """Simulates a game for multiple rounds and computes metrics .
 
         Args:
             rounds: Number of times the game should be played.
@@ -57,17 +58,27 @@ class GameSimulator(ABC):
             state = self.game.new_initial_state()
 
             while not state.is_terminal():
+                if self.max_game_rounds is not None and state.move_number() >= self.max_game_rounds:
+                    # If max_game_rounds is specified, terminate the game after the maximum number of rounds.
+                    # The state.move_number() method tracks the number of moves (or rounds) within the game.
+                    # This ensures that iterated games, such as the Iterated Prisoner's Dilemma,
+                    # stop after the specified number of rounds, even if the game would naturally continue.
+                    break
                 if log_fn:
                     log_fn(state)
 
                 # Collect actions
                 current_player = state.current_player()
-                if current_player == pyspiel.PlayerId.SIMULTANEOUS:
-                    # Handle simultaneous moves
+
+                if current_player == pyspiel.PlayerId.CHANCE:
+                    # Handle chance nodes where the environment acts randomly.
+                    self._handle_chance_node(state)
+                elif current_player == pyspiel.PlayerId.SIMULTANEOUS:
+                     # Handle simultaneous moves for all players.
                     actions = self._collect_actions(state)
                     state.apply_actions(actions)
                 elif current_player >= 0:
-                    # Handle sequential moves
+                    # Handle sequential moves for individual players.
                     legal_actions = state.legal_actions(current_player)
                     action = self._get_action(current_player, state, legal_actions)
                     state.apply_action(action)
@@ -80,6 +91,11 @@ class GameSimulator(ABC):
             self._record_outcomes(final_scores, outcomes)
 
         return outcomes
+
+    def _handle_chance_node(self, state: Any):
+        """Handle chance nodes. Default behavior raises an error."""
+        raise NotImplementedError("Chance node handling not implemented for this game.")
+
 
     def _collect_actions(self, state: Any) -> List[int]:
         """Collects actions for all players in a simultaneous-move game.
@@ -154,20 +170,37 @@ class GameSimulator(ABC):
         state.apply_action(random.choice(state.legal_actions()))
 
     def _record_outcomes(self, final_scores: List[float], outcomes: Dict[str, Any]) -> str:
-        """Records the outcome of a single game round."""
+        """Records the outcome of a single game round.
+
+        Args:
+            final_scores (List[float]): Final cumulative scores of all players.
+            outcomes (Dict[str, Any]): Dictionary to record wins, losses, and ties.
+
+        Returns:
+            str: Name of the winner or "tie" if there is no single winner.
+        """
+        # Check if all scores are equal (a tie)
         if all(score == final_scores[0] for score in final_scores):
             outcomes["ties"] += 1
             return "tie"
 
+        # Find the maximum score and determine winners
         max_score = max(final_scores)
         winners = [name for i, name in enumerate(self.llms.keys()) if final_scores[i] == max_score]
 
+        # Track losers as players who do not have the maximum score
+        losers = [name for i, name in enumerate(self.llms.keys()) if final_scores[i] != max_score]
+
+        # If there is one winner, record it; otherwise, record as a tie
         if len(winners) == 1:
             outcomes["wins"][winners[0]] += 1
+            for loser in losers:
+                outcomes["losses"][loser] += 1
             return winners[0]
         else:
             outcomes["ties"] += 1
             return "tie"
+
 
     def save_results(self, state: Any, final_scores: List[float]) -> None:
         """Save simulation results to a JSON file."""
