@@ -24,7 +24,7 @@ GAMES_REGISTRY = {
         "display_name": "Tic-Tac-Toe",
     },
     "prisoners_dilemma": {
-        "loader": get_prisoners_dilemma_game,
+        "loader": get_prisoners_dilemma_game, # Iterated PD: Multi-round, emphasizing strategy development over repeated interactions.
         "simulator": PrisonersDilemmaSimulator,
         "display_name": "Iterated Prisoner's Dilemma",
     },
@@ -39,7 +39,7 @@ GAMES_REGISTRY = {
         "display_name": "Rock-Paper-Scissors (Matrix)",
     },
     "matrix_pd": {
-        "loader": get_matrix_pd_game,
+        "loader": get_matrix_pd_game,  # Matrix PD: Single-round, with the payoff matrix as the primary structure.
         "simulator": MatrixGameSimulator,
         "display_name": "Prisoner's Dilemma (Matrix)",
     },
