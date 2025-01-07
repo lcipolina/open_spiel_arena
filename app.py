@@ -14,8 +14,10 @@ if os.path.exists(RESULTS_TRACKER_FILE):
     with open(RESULTS_TRACKER_FILE, "r") as f:
         results_tracker = json.load(f)
 else:
-    results_tracker = {name: {opponent: {"wins": 0, "games": 0} for opponent in ["Human"] + list(LLM_REGISTRY.keys())}
-                       for name in ["Human"] + list(LLM_REGISTRY.keys())}
+    results_tracker = {
+    name: {opponent: {"wins": 0, "games": 0} for opponent in ["Human"] + list(LLM_REGISTRY.keys())}
+                       for name in ["Human"] + list(LLM_REGISTRY.keys())
+                       }
 
 
 def save_results_tracker():
@@ -30,18 +32,46 @@ def initialize_game(game_name, player1_type, player2_type, player1_model, player
     game = game_config["loader"]()
     simulator_class = game_config["simulator"]
 
-    # Initialize LLMs using the registry
-    llms = {}
-    if player1_type == "llm" and player1_model in LLM_REGISTRY:
-        llms["Player 1"] = LLM_REGISTRY[player1_model]["model_loader"]()
-    if player2_type == "llm" and player2_model in LLM_REGISTRY:
-        llms["Player 2"] = LLM_REGISTRY[player2_model]["model_loader"]()
+    # Ensure models are selected if players are LLMs
+    if player1_type == "llm" and not player1_model:
+        raise ValueError("Player 1 is set to LLM, but no model is selected.")
+    if player2_type == "llm" and not player2_model:
+        raise ValueError("Player 2 is set to LLM, but no model is selected.")
 
-    simulator = simulator_class(game, game_name, llms=llms)
+    # Initialize LLMs for the players
+    llms = {
+        "Player 1": LLM_REGISTRY[player1_model]["model_loader"]() if player1_type == "llm" else None,
+        "Player 2": LLM_REGISTRY[player2_model]["model_loader"]() if player2_type == "llm" else None,
+    }
+
+    # Map player types to names
+    player_type_map = {
+        "Player 1": player1_type,
+        "Player 2": player2_type,
+    }
+
+    # Create the simulator
+    simulator = simulator_class(
+        game,
+        game_name,
+        llms=llms,
+        player_type=player_type_map,
+    )
     state = game.new_initial_state()
 
-    # Return simulator, state, and a message
     return simulator, state, "Game Initialized! Click 'Next Turn' to start."
+
+
+def toggle_model_dropdown(player1, player2):
+    """Control visibility and set default models for LLM players."""
+    player1_model_visible = gr.update(visible=(player1 == "llm"))
+    player2_model_visible = gr.update(visible=(player2 == "llm"))
+
+    # Set default models if the player type is "llm"
+    default_model1 = list(LLM_REGISTRY.keys())[0] if player1 == "llm" else None
+    default_model2 = list(LLM_REGISTRY.keys())[0] if player2 == "llm" else None
+
+    return player1_model_visible, player2_model_visible, default_model1, default_model2
 
 
 def update_results_tracker(scores, player1, player2):
@@ -109,13 +139,6 @@ def play_turn(simulator, state, player1_type, player2_type, human_move=None, pla
     return f"Next Turn! Current Board:\n{board}\nValid Moves: {legal_moves}", state
 
 
-def toggle_model_dropdown(player1, player2):
-    """Control visibility of model dropdowns based on player types."""
-    player1_model_visible = gr.update(visible=(player1 == "llm"))
-    player2_model_visible = gr.update(visible=(player2 == "llm"))
-    return player1_model_visible, player2_model_visible
-
-
 # Gradio Interface
 with gr.Blocks() as interface:
     with gr.Tab("Game Arena"):
@@ -125,7 +148,7 @@ with gr.Blocks() as interface:
             game_dropdown = gr.Dropdown(
                 choices=list(GAMES_REGISTRY.keys()),
                 label="Select a Game",
-                value=list(GAMES_REGISTRY.keys())[0],  # Default to the first game
+                 value="tic_tac_toe",  # Default to Tic-Tac-Toe
             )
         with gr.Row():
             player1_dropdown = gr.Dropdown(
@@ -142,13 +165,16 @@ with gr.Blocks() as interface:
             player1_model_dropdown = gr.Dropdown(
                 choices=list(LLM_REGISTRY.keys()),
                 label="Player 1 Model",
-                visible=False,
+                value=None,  # No default value if Player 1 is human
+                visible=False,  # Hidden by default for a human player
             )
             player2_model_dropdown = gr.Dropdown(
                 choices=list(LLM_REGISTRY.keys()),
                 label="Player 2 Model",
-                visible=False,
+                value=list(LLM_REGISTRY.keys())[0],  # Default to the first LLM for Player 2
+                visible=True,  # Visible by default for an LLM player
             )
+
         with gr.Row():
             human_input = gr.Textbox(label="Enter your move (number)", visible=True)
         with gr.Row():
