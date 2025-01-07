@@ -1,5 +1,0 @@
-transformers>=4.31.0  # For Hugging Face LLM integration
-open_spiel  # For OpenSpiel framework (assumes it's installed via setup or pip)
-numpy>=1.21.0  # For game simulations and potential data processing
-pytest>=7.0.0  # For unit testing
-
