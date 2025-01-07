@@ -6,8 +6,34 @@ from typing import Dict, Any, List
 from abc import ABC, abstractmethod
 import random
 from utils.llm_utils import generate_prompt, llm_decide_move
-from enum import Enum
+from enum import Enum, unique
 import pyspiel
+
+
+@unique
+class PlayerId(Enum):
+    CHANCE = -1
+    SIMULTANEOUS = -2
+    INVALID = -3
+    TERMINAL = -4
+    MEAN_FIELD = -5
+
+    @classmethod
+    def from_value(cls, value: int):
+        """Returns the PlayerId corresponding to a given integer value.
+
+        Args:
+            value (int): The numerical value to map to a PlayerId.
+
+        Returns:
+            PlayerId: The matching enum member, or raises a ValueError if invalid.
+        """
+        for member in cls:
+            if member.value == value:
+                return member
+        if value >= 0:  # Positive integers represent default players
+            return None  # No enum corresponds to these values directly
+        raise ValueError(f"Unknown player ID value: {value}")
 
 
 class PlayerType(Enum):
@@ -69,21 +95,22 @@ class GameSimulator(ABC):
 
                 # Collect actions
                 current_player = state.current_player()
+                player_id = self.normalize_player_id(current_player)
 
-                if current_player == pyspiel.PlayerId.CHANCE:
+                if player_id == PlayerId.CHANCE.value:
                     # Handle chance nodes where the environment acts randomly.
                     self._handle_chance_node(state)
-                elif current_player == pyspiel.PlayerId.SIMULTANEOUS:
+                elif player_id == PlayerId.SIMULTANEOUS.value:
                      # Handle simultaneous moves for all players.
                     actions = self._collect_actions(state)
                     state.apply_actions(actions)
-                elif current_player >= 0:
-                    # Handle sequential moves for individual players.
+                elif player_id == PlayerId.TERMINAL.value:
+                    break
+                elif current_player >= 0:  # Default players (turn-based)
                     legal_actions = state.legal_actions(current_player)
                     action = self._get_action(current_player, state, legal_actions)
                     state.apply_action(action)
                 else:
-                    # Handle unexpected or unsupported player states
                     raise ValueError(f"Unexpected player ID: {current_player}")
 
             # Record outcomes
@@ -231,3 +258,19 @@ class GameSimulator(ABC):
     def log_progress(self, state: Any) -> None:
         """Log the current game state."""
         print(f"Current state of {self.game_name}:\n{state}")
+
+    def normalize_player_id(self,player_id):
+        """Normalize player_id to its integer value for consistent comparisons.
+
+           This is needed as OpenSpiel has ambiguous representation of the playerID
+
+        Args:
+            player_id (Union[int, PlayerId]): The player ID, which can be an
+                integer or a PlayerId enum instance.
+
+        Returns:
+            int: The integer value of the player ID.
+        """
+        if isinstance(player_id, PlayerId):
+            return player_id.value  # Extract the integer value from the enum
+        return player_id  # If already an integer, return it as is

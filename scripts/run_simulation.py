@@ -11,40 +11,32 @@ from llm_registry import LLM_REGISTRY
 from simulators.base_simulator import PlayerType
 
 
-def _resolve_llms(player1_type, player2_type, player1_model, player2_model):
-    """Resolve the LLM configuration for both players.
+def _resolve_llms(player_types, player_models):
+    """Resolve the LLM configuration for all players.
 
     Args:
-        player1_type (str): Type of Player 1 ("human", "random_bot", "llm").
-        player2_type (str): Type of Player 2 ("human", "random_bot", "llm").
-        player1_model (str): Selected LLM for Player 1 (if applicable).
-        player2_model (str): Selected LLM for Player 2 (if applicable).
+        player_types (List[str]): Types of players ("human", "random_bot", "llm").
+        player_models (List[str]): Selected LLMs for players (if applicable).
 
     Returns:
-        dict: A dictionary mapping player indices to LLMs.
+        dict: A dictionary mapping player names to LLMs.
     """
     llms = {}
     available_llms = list(LLM_REGISTRY.keys())
 
-    if player1_type == "llm":
-        if player1_model:
-            llms["Player 1"] = LLM_REGISTRY[player1_model]["model_loader"]()
-        else:
-            print("Player 1 LLM not specified. Randomly assigning an LLM.")
-            llms["Player 1"] = LLM_REGISTRY[random.choice(available_llms)]["model_loader"]()
-
-    if player2_type == "llm":
-        if player2_model:
-            llms["Player 2"] = LLM_REGISTRY[player2_model]["model_loader"]()
-        else:
-            print("Player 2 LLM not specified. Randomly assigning an LLM.")
-            llms["Player 2"] = LLM_REGISTRY[random.choice(available_llms)]["model_loader"]()
+    for i, player_type in enumerate(player_types):
+        player_name = f"Player {i + 1}"
+        if player_type == "llm":
+            if player_models[i]:
+                llms[player_name] = LLM_REGISTRY[player_models[i]]["model_loader"]()
+            else:
+                print(f"{player_name} LLM not specified. Randomly assigning an LLM.")
+                llms[player_name] = LLM_REGISTRY[random.choice(available_llms)]["model_loader"]()
 
     return llms
 
 
 def main():
-    # Argument parser
     parser = argparse.ArgumentParser(description="Run OpenSpiel simulations.")
     parser.add_argument(
         "--games",
@@ -61,63 +53,59 @@ def main():
         help="Number of rounds to play for each game."
     )
     parser.add_argument(
-        "--player1-type",
+        "--player-types",
         type=str,
+        nargs="+",
         choices=["human", "random_bot", "llm"],
-        default="llm",
-        help="Type of Player 1 (human, random_bot, or llm)."
+        default=["llm", "llm"],
+        help="Types of players (e.g., human, random_bot, llm)."
     )
     parser.add_argument(
-        "--player2-type",
+        "--player-models",
         type=str,
-        choices=["human", "random_bot", "llm"],
-        default="llm",
-        help="Type of Player 2 (human, random_bot, or llm)."
-    )
-    parser.add_argument(
-        "--player1-model",
-        type=str,
-        default=list(LLM_REGISTRY.keys())[0],
-        choices=list(LLM_REGISTRY.keys()),
-        help="Specific LLM model for Player 1 (optional)."
-    )
-    parser.add_argument(
-        "--player2-model",
-        type=str,
-        default=list(LLM_REGISTRY.keys())[0],
-        choices=list(LLM_REGISTRY.keys()),
-        help="Specific LLM model for Player 2 (optional)."
+        nargs="+",
+        default=[],
+        help="Specific LLM models for players (optional)."
     )
     args = parser.parse_args()
 
-    # Convert player types to enums
-    player1_type = args.player1_type
-    player2_type = args.player2_type
-
-    # Initialize overall leaderboard
     overall_leaderboard = {}
 
-    # Loop through selected games
     for game_name in args.games:
         game_config = GAMES_REGISTRY[game_name]
         game = game_config["loader"]()
         simulator_class = game_config["simulator"]
 
+        # Get the required number of players for this game
+        num_players = game.num_players()
+
+        # Adjust player types dynamically
+        player_types = args.player_types[:num_players]  # Trim excess if too many
+        while len(player_types) < num_players:
+            player_types.append("random_bot")  # Default to random_bot for missing players
+
+        # Adjust player models dynamically
+        player_models = args.player_models[:num_players]  # Trim excess if too many
+        while len(player_models) < num_players:
+            player_models.append(None)  # Default to None for missing models
+
         # Resolve LLMs
-        llms = _resolve_llms(player1_type, player2_type, args.player1_model, args.player2_model)
+        llms = _resolve_llms(player_types, player_models)
+
+        # Map player types to player names
+        player_type_map = {f"Player {i + 1}": player_types[i] for i in range(num_players)}
 
         # Initialize simulator
         simulator = simulator_class(
             game,
             game_config["display_name"],
             llms=llms,
-            player_type={"Player 1": player1_type, "Player 2": player2_type}
+            player_type=player_type_map,
         )
 
         print(f"\nStarting simulation for {game_name}...")
         game_results = simulator.simulate(rounds=args.rounds)
 
-        # Update leaderboard
         for player, score in game_results["wins"].items():
             overall_leaderboard[player] = overall_leaderboard.get(player, 0) + score
 
@@ -125,6 +113,8 @@ def main():
     print("\nOverall Leaderboard:")
     for player, score in overall_leaderboard.items():
         print(f"{player}: {score}")
+
+
 
 
 if __name__ == "__main__":

@@ -39,25 +39,29 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 ---
 
 ### Running the Simulator
+
 1. Use the main binary to run simulations:
    - To simulate a single game:
      ```bash
       # Human vs LLM
-      python scripts/run_simulation.py --games tic_tac_toe --player1-type human --player2-type llm --player2-model gpt2
+      python scripts/run_simulation.py --games tic_tac_toe --player-types human llm --player-models None gpt2
 
       # Random Bot vs Human
-      python scripts/run_simulation.py --games tic_tac_toe --player1-type human --player2-type random_bot
+      python scripts/run_simulation.py --games tic_tac_toe --player-types human random_bot
 
       # Self-Play
-      python scripts/run_simulation.py --games tic_tac_toe --player1-type llm --player2-type llm --rounds 10
-      ```
-      - To simulate multiple games:
-      ```bash
-      python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma connect_four kuhn_poker matching_pennies_3p
+      python scripts/run_simulation.py --games tic_tac_toe --player-types llm llm --player-models gpt2 distilgpt2 --rounds 10
+     ```
+   - To simulate multiple games:
+     ```bash
+     python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma connect_four kuhn_poker matching_pennies
      ```
 
 2. Command-line options:
    - `--games`: Specify one or more games to simulate.
+   - `--player-types`: Specify the types of players participating in the game. Acceptable values are `human`, `random_bot`, or `llm`. Provide one type per player, separated by spaces.
+   - `--player-models`: Specify the LLM models to use for players marked as `llm`. Provide one model per player, separated by spaces. Use `None` for non-LLM players.
+   - `--rounds`: Number of rounds to simulate for each game (default: 1).
 
 ---
 
