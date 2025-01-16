@@ -4,7 +4,10 @@ from transformers import pipeline
 # These are just examples of models that run fast enough to work in this proof of concept.
 # But they don't give us good results.
 # Ideally we would use 'intruct-finetuned' models.
-# I have tried some models and these actually worked well (i.e. followed the prompt): microsoft/Phi-3-mini-4k-instruct, Qwen/Qwen2.5-Coder-32B-Instruct, Qwen/Qwen2.5-72B-Instruct, mistralai/Mistral-7B-Instruct-v0.3,dolly-v2-3b, dolly-v2-12b
+# I have tried some models and these actually worked well (i.e. followed the prompt):
+#       microsoft/Phi-3-mini-4k-instruct, Qwen/Qwen2.5-Coder-32B-Instruct,
+#       Qwen/Qwen2.5-72B-Instruct, mistralai/Mistral-7B-Instruct-v0.3,dolly-v2-3b, dolly-v2-12b
+
 # Note. Need to read the models documentation on how to prompt them. See example for Microsoft's Phi.
 
 

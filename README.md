@@ -68,7 +68,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 ## 2. Directory Structure
 
 ### Packages
-- **`games/`**: Game-specific logic (e.g., rules for Tic-Tac-Toe, Connect Four, Matrix Games, etc.).
+- **`games/`**: Game loaders.
 - **`simulators/`**: Simulator logic for each game.
 - **`utils/`**: Shared utility functions (e.g., prompt generation, LLM integration).
 
@@ -95,22 +95,19 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 2. **Python Iterated Prisoner’s Dilemma**:
    - A repeated strategy game where players choose between cooperation and defection to maximize rewards over multiple rounds.
 
-3. **Rock-Paper-Scissors**:
-   - A simultaneous-move game where rock beats scissors, scissors beats paper, and paper beats rock.
-
-4. **Connect Four**:
+3. **Connect Four**:
    - A two-player game where players drop colored discs into a 7x6 grid, aiming to connect four of their own discs in a line.
 
-5. **Matrix Rock-Paper-Scissors**:
+4. **Matrix Rock-Paper-Scissors**:
    - A variant of RPS represented as a payoff matrix.
 
-6. **Matrix Prisoner’s Dilemma**:
+5. **Matrix Prisoner’s Dilemma**:
    - A matrix version of Prisoner’s Dilemma, emphasizing strategic interactions between players.
 
-7. **Kuhn Poker**:
+6. **Kuhn Poker**:
    - A simplified poker game with limited betting rounds and a small deck.
 
-8. **Matching Pennies (3-player)**:
+7. **Matching Pennies (3-player)**:
    - A three-player game where each player aims to match or mismatch the choices of others to achieve a payoff.
 
 ---
@@ -119,9 +116,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 To add a new game to the OpenSpiel LLM Arena, follow these steps:
 
 ### Step 1: Implement the Game Loader
-1. Create a new Python file for the game in the **`games/`** folder.
+1. Create a new entry for the game in the **`games/loaders_module`** script.
    - For example, to add **Matching Pennies**:
-     - Create `games/matching_pennies.py`:
+     - Create:
        ```python
        def get_matching_pennies_game():
            from open_spiel.python.games import matching_pennies
