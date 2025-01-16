@@ -3,8 +3,6 @@ import json
 import gradio as gr
 from games_registry import GAMES_REGISTRY
 from llm_registry import LLM_REGISTRY
-from simulators.base_simulator import PlayerType
-from typing import Dict
 
 # File to persist results
 RESULTS_TRACKER_FILE = "results_tracker.json"
