@@ -5,9 +5,7 @@ A single module containing loader functions for all games.
 """
 
 import pyspiel
-from open_spiel.python.games.tic_tac_toe import TicTacToeGame
-# from open_spiel.python.games.connect_four import ConnectFourGame
-# ... any other necessary imports ...
+
 
 def get_prisoners_dilemma_game():
     """
@@ -24,7 +22,7 @@ def get_tic_tac_toe_game():
     Returns:
         TicTacToeGame: The Tic-Tac-Toe game instance from OpenSpiel.
     """
-    return TicTacToeGame()
+    return pyspiel.load_game("tic_tac_toe")
 
 
 def get_connect_four_game():
