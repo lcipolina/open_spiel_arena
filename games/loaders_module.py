@@ -2,6 +2,7 @@
 loaders_module.py
 
 A single module containing loader functions for all games.
+Used by the 'games_registry.py' module.
 """
 
 import pyspiel

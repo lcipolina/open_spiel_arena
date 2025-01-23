@@ -29,7 +29,7 @@ def main():
     #           collect transitions
     #       update agent
 
-    print("Stub for training script. Implement your RL loop here.")
+
 
 if __name__ == "__main__":
     main()

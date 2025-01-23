@@ -43,18 +43,20 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 1. Use the main binary to run simulations:
    - To simulate a single game:
      ```bash
+      # Run with default config (Tic-Tac-Toe, 5 rounds)
+      python3 scripts/simulate.py
+
       # Human vs LLM
-      python scripts/run_simulation.py --games tic_tac_toe --player-types human llm --player-models None gpt2
+      python3 scripts/simulate.py --game tic_tac_toe --player-types human llm --player-models None gpt2
 
-      # Random Bot vs Human
-      python scripts/run_simulation.py --games tic_tac_toe --player-types human random_bot
+      # Random Bot vs LLM (Connect Four)
+      python3 scripts/simulate.py --game connect_four --player-types random_bot llm --player-models flan-t5
 
-      # Self-Play
-      python scripts/run_simulation.py --games tic_tac_toe --player-types llm llm --player-models gpt2 distilgpt2 --rounds 10
-     ```
-   - To simulate multiple games:
-     ```bash
-     python3 scripts/run_simulation.py --games tic_tac_toe rps prisoners_dilemma connect_four kuhn_poker matching_pennies
+      # Self-Play Tournament (10 rounds)
+      python3 scripts/simulate.py --game kuhn_poker --player-types llm llm --player-models gpt2 distilgpt2 --rounds 10
+
+      # Multi-Game Challenge
+      python3 scripts/simulate.py --games tic_tac_toe prisoners_dilemma connect_four --rounds 5
      ```
 
 2. Command-line options:

@@ -19,9 +19,9 @@ from envs.open_spiel_env import OpenSpielEnv
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
-# from agents.trained_agent import TrainedAgent
+# from agents.trained_agent import TrainedAgent #TODO (lck) implement this
 
-# Example config
+# Game-play config
 from configs import default_simulation_config
 
 import pyspiel
