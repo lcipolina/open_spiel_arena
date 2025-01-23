@@ -7,7 +7,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from games_registry import GAMES_REGISTRY
-from llm_registry import LLM_REGISTRY
+from agents.llm_registry import LLM_REGISTRY
 from simulators.main_simulator_old import PlayerType
 
 

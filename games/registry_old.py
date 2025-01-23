@@ -1,7 +1,7 @@
 # games_registry.py
 """Centralized registry for available games and their simulators."""
 
-from games.loaders_module import (
+from games.loaders import (
     get_tic_tac_toe_game,
     get_prisoners_dilemma_game,
     get_connect_four_game,

@@ -2,7 +2,7 @@ import os
 import json
 import gradio as gr
 from games_registry import GAMES_REGISTRY
-from llm_registry import LLM_REGISTRY
+from agents.llm_registry import LLM_REGISTRY
 
 # File to persist results
 RESULTS_TRACKER_FILE = "results_tracker.json"

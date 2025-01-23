@@ -2,31 +2,34 @@
 """
 simulate.py
 
-Runs a game simulation using a config dict, similar to how RLlib passes
-arguments around. This script can:
-- Load an OpenSpiel game from `config["game_name"]`
-- Construct environment
-- Construct agents
-- Play multiple rounds, optionally seeding RNG, alternating first player, etc.
+Runs game simulations with configurable agents and tracks outcomes.
+Supports both CLI arguments and config dictionaries.
 """
 
+import argparse
 import random
+import json
+import sys
+import os
+from typing import Dict, Any, List
 
-# Suppose your env is in envs.open_spiel_env
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from envs.open_spiel_env import OpenSpielEnv
-
-# Agents:
+from games.registry import GAMES_REGISTRY
+from configs.configs import default_simulation_config
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
-# from agents.trained_agent import TrainedAgent #TODO (lck) implement this
 
-# Game-play config
-from configs import default_simulation_config
+from games.registry import registry
+from envs.open_spiel_env import OpenSpielEnv
 
-import pyspiel
+from utils.common_utils import parse_agents, print_simulation_summary
 
-def run_simulation(config):
+
+
+def run_simulation(config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Runs the OpenSpiel simulation given a config dictionary.
     Returns a dictionary with aggregated outcomes or stats.
@@ -45,129 +48,163 @@ def run_simulation(config):
     if config.get("seed") is not None:
         random.seed(config["seed"])
 
-    # 2. Load the game via pyspiel
-    game_name = config["game_name"]
-    game = pyspiel.load_game(game_name)
+    # 2. Load the game from the registry
+    try:
+        loader = registry.get_game_loader(config["game_name"])
+        game = loader()
+    except ValueError as e:
+        raise RuntimeError(f"Game loading failed: {str(e)}") from e
 
-    # 3. Build player_type map, e.g. {"Player 1": "human", "Player 2": "random_bot"}
-    #    from the config's "agents" list
-    # If an agent doesn't specify "name", we'll assign "Player i+1"
-    agents_info = config["agents"]
-    player_type_map = {}
-    llms = {}  # if needed
+    # Initialize environment
+    env = initialize_environment(game, config)
 
-    for i, agent_cfg in enumerate(agents_info):
-        # agent_cfg might look like: {"type": "human", "name": "Player 1"}
-        name = agent_cfg.get("name", f"Player {i+1}")
-        player_type_map[name] = agent_cfg["type"]
+    # Agent setup
+    agents = create_agents(config, env)
 
-        # If LLM needed:
-        # if agent_cfg["type"] == "llm":
-        #    llms[name] = some_llm_loader(...)
+    # Run simulation loop
+    return run_simulation_loop(env, agents, config)
 
-    # 4. Create the environment
-    max_game_rounds = config.get("max_game_rounds", 1)
-    env = OpenSpielEnv(
+def initialize_environment(game, config):
+    """Initialize game environment"""
+    return OpenSpielEnv(
         game=game,
-        game_name=game_name,
-        player_type=player_type_map,
-        llms=llms,
-        max_game_rounds=max_game_rounds
+        game_name=registry.get_display_name(config["game_name"]),
+        player_type=config["player_types"],   #TODO: see what is this, and whether it should be 'player_typeS'
+        max_game_rounds=config.get("max_game_rounds")
     )
 
-    # 5. Build actual agent instances for each player (human, random, LLM, etc.)
-    agents_dict = {}
-    # We might store them in the same order as "Player 1", "Player 2", etc.
-    player_names = list(player_type_map.keys())
+def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
+    """Create agent instances based on configuration
 
-    for p_name in player_names:
-        agent_type = player_type_map[p_name]
+    Args:
+        config: Simulation configuration dictionary
+        env: Initialized game environment
+
+    Returns:
+        Dictionary of agent instances keyed by player name
+
+    Raises:
+        ValueError: For invalid agent types or missing LLM models
+    """
+    agents = {}
+
+    for idx, agent_cfg in enumerate(config["agents"]):
+        agent_type = agent_cfg["type"].lower()
+        agent_name = f"Player {idx+1}"
+
+        # Human Agent
         if agent_type == "human":
-            agents_dict[p_name] = HumanAgent(env.game_name)
-        elif agent_type == "random_bot":
-            agents_dict[p_name] = RandomAgent()
-        # elif agent_type == "llm":
-        #     llm_instance = llms[p_name]
-        #     agents_dict[p_name] = LLMAgent(llm_instance, env.game_name)
-        # elif agent_type == "trained":
-        #     agents_dict[p_name] = TrainedAgent("checkpoint.path")
+            from agents.human_agent import HumanAgent
+            agents[agent_name] = HumanAgent(
+                player_name=agent_name
+            )
+
+        # Random Bot
+        elif agent_type == "random":
+            from agents.random_agent import RandomAgent
+            agents[agent_name] = RandomAgent(
+                seed=config.get("seed")
+            )
+
+        # LLM Agent
+        elif agent_type == "llm":
+            from agents.llm_agent import LLMAgent
+
+            if not agent_cfg.get("model"):
+                raise ValueError(
+                    f"LLM agent requires model specification. "
+                    f"Missing model for {agent_name}"
+                )
+
+            agents[agent_name] = LLMAgent(
+                model_name=agent_cfg["model"],
+                game=env.game,
+                player_id=idx,
+                temperature=agent_cfg.get("temperature", 0.7),
+                max_tokens=agent_cfg.get("max_tokens", 128)
+            )
+
+        # Unknown Agent Type
         else:
-            print(f"Unrecognized agent type '{agent_type}'. Defaulting to random bot.")
-            agents_dict[p_name] = RandomAgent()
+            raise ValueError(
+                f"Unsupported agent type: '{agent_type}'. "
+                f"Valid types: human, random, llm"
+            )
 
-    # 6. Main simulation loop
-    # We'll accumulate outcomes in env._initialize_outcomes()
-    outcomes = env._initialize_outcomes()
-    rounds = config["rounds"]
-    alternate_first = config.get("alternate_first_player", False)
+    # Validate agent count matches game requirements
+    num_players = env.game.num_players()
+    if len(agents) != num_players:
+        raise ValueError(
+            f"Game requires {num_players} players. "
+            f"Configured {len(agents)} agents."
+        )
 
-    for episode_idx in range(rounds):
-        # If you want to vary seeds each round:
-        seed_base = config.get("seed")
-        if seed_base is not None:
-            round_seed = seed_base + episode_idx
-            random.seed(round_seed)
+    return agents
 
-        # Possibly reorder the agent dictionary if we want to alternate who goes first
-        if alternate_first and episode_idx % 2 == 1 and len(player_names) == 2:
-            # swap the mapping for Player 1 and Player 2
-            # This logic depends on how your environment identifies "current_player".
-            # Another approach is to set the environment's starting player manually.
-            pass  # For simplicity, not fully implemented here
-
-        obs = env.reset()
+def run_simulation_loop(env, agents, config):
+    """Core simulation execution"""
+    results = []
+    for episode in range(config["rounds"]):
+        observation = env.reset()
         done = False
 
-        print(f"\n=== Starting Round {episode_idx + 1} ===")
         while not done:
-            current_player = env.state.current_player()
-            normalized_id = env.normalize_player_id(current_player)
+            current_player = env.current_player()
+            agent = agents[f"Player {current_player+1}"]
 
-            if normalized_id < 0:
-                # handle chance/simultaneous/terminal
-                if normalized_id == -1:  # CHANCE
-                    env._handle_chance_node(env.state)
-                    continue
-                elif normalized_id == -2:  # SIMULTANEOUS
-                    # gather actions from each player
-                    actions = env._collect_actions(env.state)
-                    env.state.apply_actions(actions)
-                    continue
-                elif normalized_id == -4:  # TERMINAL
-                    break
-                else:
-                    raise ValueError(f"Unexpected special player ID: {normalized_id}")
+            action = agent.act(observation)
+            observation, reward, done, info = env.step(action)
 
-            # Normal turn-based
-            player_name = player_names[current_player]  # e.g. "Player 1"
-            agent = agents_dict[player_name]
-            legal_actions = env.state.legal_actions(current_player)
+            if done:
+                results.append({
+                    "episode": episode,
+                    "winner": info.get("winner"),
+                    "scores": info.get("scores")
+                })
 
-            action = agent.choose_action(legal_actions, env.state)
-            obs, reward, done, info = env.step(action)
-            env.render()
-
-        # Record final outcomes if done
-        if "final_scores" in info:
-            final_scores = info["final_scores"]
-            winner = env.record_outcomes(final_scores, outcomes)
-            print(f"Round {episode_idx+1} finished. Winner: {winner}")
-
-    env.close()
-    return outcomes
-
+    return {
+        "game": config["game_name"],
+        "config": config,
+        "results": results
+    }
 
 def main():
-    """
-    Calls run_simulation with a config, then prints results.
-    """
+    """Command line interface"""
+    parser = argparse.ArgumentParser(description="Run OpenSpiel simulations")
+    parser.add_argument(
+        "-g", "--game",
+        required=True,
+        help="Name of the game to simulate"
+    )
+    parser.add_argument(
+        "-r", "--rounds",
+        type=int,
+        default=10,
+        help="Number of rounds to simulate"
+    )
+    parser.add_argument(
+        "-a", "--agents",
+        nargs="+",
+        required=True,
+        help="Agent configurations (type:model)"
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="Random seed for reproducibility"
+    )
 
-    config = default_simulation_config()
-    #  TODO (lck) parse JSON or a CLI argument to pick another config.
+    args = parser.parse_args()
+
+    config = {
+        "game_name": args.game,
+        "rounds": args.rounds,
+        "seed": args.seed,
+        "agents": parse_agents(args.agents)
+    }
 
     results = run_simulation(config)
-    print("\nFinal aggregated outcomes:", results)
-
+    print_simulation_summary(results)
 
 if __name__ == "__main__":
     main()
