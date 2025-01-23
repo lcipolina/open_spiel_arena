@@ -7,7 +7,6 @@ Supports both CLI arguments and config dictionaries.
 """
 
 import os, sys
-import argparse
 import logging
 import random
 from typing import Dict, Any
@@ -17,10 +16,10 @@ from envs.open_spiel_env import OpenSpielEnv
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
-from games.registry import registry
+from games.registry import registry # Import registry to register games
 from utils.common_utils import print_simulation_summary
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from games import loaders  # Import loaders to register games
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def validate_config(config: Dict[str, Any]) -> None:
     """Validates the configuration."""
@@ -173,7 +172,7 @@ def main():
     parser = build_cli_parser()
     args = parser.parse_args()
 
-    # Parse configuration
+    # Parse default configuration
     config = parse_config(args)
 
     # Validate configuration

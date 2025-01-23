@@ -63,11 +63,10 @@ This project explores how LLMs interpret game states, make strategic decisions, 
      ```
 
 2. Command-line options:
-   - `--games`: Specify one or more games to simulate.
-   - `--player-types`: Specify the types of players participating in the game. Acceptable values are `human`, `random_bot`, or `llm`. Provide one type per player, separated by spaces.
-   - `--player-models`: Specify the LLM models to use for players marked as `llm`. Provide one model per player, separated by spaces. Use `None` for non-LLM players.
-   - `--rounds`: Number of rounds to simulate for each game (default: 1).
-
+   - `--config`: Specify a JSON configuration file or raw JSON string.
+                 Example: python scripts/simulation.py --config config.json
+   - `--override`: Specify the types of players participating in the game. Acceptable values are `human`, `random_bot`, or `llm`. Provide one type per player, separated by spaces.
+                 Example: python scripts/simulation.py --override num_episodes=10 env_config.game_name=tic_tac_toe
 ---
 
 ## 2. Directory Structure
@@ -147,13 +146,6 @@ To add a new game to the OpenSpiel LLM Arena, follow these steps:
          "display_name": "Matching Pennies",
      }
      ```
-
-### Step 4: Run the New Game
-4. Use the `run_simulation.py` script to test the new game. Example:
-   ```bash
-   python3 scripts/run_simulation.py --games matching_pennies
-   ```
-
 ---
 
 ## 5. Features

@@ -5,14 +5,12 @@ Centralized game loader module with decorator-based registration.
 """
 
 import pyspiel
+from games.registry import registry
 
-
-import pyspiel
-from .registry import registry
 
 class GameLoader:
     """Base class for game loaders (keeps registry clean)"""
-
+# WHERE IS THIS @registry coming from??
 @registry.register(
     name="prisoners_dilemma",
     loader_path="openspiel_llm.games.loaders.PrisonersDilemmaLoader.load",
