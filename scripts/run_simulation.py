@@ -8,11 +8,11 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from games_registry import GAMES_REGISTRY
 from llm_registry import LLM_REGISTRY
-from simulators.base_simulator import PlayerType
+from simulators.main_simulator import PlayerType
 
 
 def _resolve_llms(player_types, player_models):
-    """Resolve the LLM configuration for all players.
+    """Assign the LLM configuration for all players.
 
     Args:
         player_types (List[str]): Types of players ("human", "random_bot", "llm").

@@ -11,7 +11,7 @@ import random
 import os
 import json
 
-from .envs.base_env import BaseEnv, PlayerId, PlayerType
+from envs.base_env import BaseEnv, PlayerId
 
 
 class OpenSpielEnv(BaseEnv):
@@ -68,6 +68,8 @@ class OpenSpielEnv(BaseEnv):
             # If it's a chance node, handle it automatically.
             # In many OpenSpiel games, chance nodes are built into the state transitions, but
             # if you need to manage them manually, do it here. For now, let's raise an error
+             # Potentially you do not apply_action(...) here because chance is random
+            # We'll raise an error to remind you to implement it if needed
             raise NotImplementedError("Chance node handling not implemented in step().")
 
         # Apply the action
@@ -167,6 +169,8 @@ class OpenSpielEnv(BaseEnv):
         max_score = max(final_scores)
         # Assume players in order "Player 1", "Player 2", etc.
         # This depends on the self.player_type keys (which must be in a stable order)
+        # Identify winners/losers by mapping i -> player name
+        # Suppose we match indexes to the order of self.llms.keys(), or define your own order #TODO: (lck: look into this)
         sorted_players = sorted(self.player_type.keys())  # or track your own ordering
         winners = [name for i, name in enumerate(sorted_players) if final_scores[i] == max_score]
         losers = [name for i, name in enumerate(sorted_players) if final_scores[i] != max_score]

@@ -40,7 +40,7 @@ class PlayerType(Enum):
     LLM = "llm"
     SELF_PLAY = "self_play"
 
-class Env(ABC):
+class BaseEnv(ABC):
     """
     A Gym-like abstract base class.
 

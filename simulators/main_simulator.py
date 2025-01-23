@@ -9,6 +9,13 @@ from envs.open_spiel_env import OpenSpielEnv
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
+from enum import Enum, unique
+
+class PlayerType(Enum):
+    HUMAN = "human"
+    RANDOM_BOT = "random_bot"
+    LLM = "llm"
+    SELF_PLAY = "self_play"
 
 def main():
     # Load an OpenSpiel game object:
