@@ -43,6 +43,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 1. Use the main binary to run simulations:
    - To simulate a single game:
      ```bash
+      # From a JSON FILE
+      python scripts/simulation.py --config config.json
+
       # Run with default config (Tic-Tac-Toe, 5 rounds)
       python3 scripts/simulate.py
 

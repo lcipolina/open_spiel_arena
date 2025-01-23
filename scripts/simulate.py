@@ -6,27 +6,32 @@ Runs game simulations with configurable agents and tracks outcomes.
 Supports both CLI arguments and config dictionaries.
 """
 
+import os, sys
 import argparse
+import logging
 import random
-import json
-import sys
-import os
-from typing import Dict, Any, List
+from typing import Dict, Any
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+from configs.configs import build_cli_parser, parse_config
 from envs.open_spiel_env import OpenSpielEnv
-from games.registry import GAMES_REGISTRY
-from configs.configs import default_simulation_config
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
-
 from games.registry import registry
-from envs.open_spiel_env import OpenSpielEnv
+from utils.common_utils import print_simulation_summary
 
-from utils.common_utils import parse_agents, print_simulation_summary
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+def validate_config(config: Dict[str, Any]) -> None:
+    """Validates the configuration."""
+    game_name = config["env_config"]["game_name"]
+    num_players = registry.get_game_loader(game_name)().num_players()
+
+    if len(config["agents"]) != num_players:
+        raise ValueError(
+            f"Game '{game_name}' requires {num_players} players, "
+            f"but {len(config['agents'])} agents were provided."
+        )
 
 
 def run_simulation(config: Dict[str, Any]) -> Dict[str, Any]:
@@ -64,13 +69,14 @@ def run_simulation(config: Dict[str, Any]) -> Dict[str, Any]:
     # Run simulation loop
     return run_simulation_loop(env, agents, config)
 
-def initialize_environment(game, config):
-    """Initialize game environment"""
+def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
+    """Initializes the game environment."""
+    player_types = [agent["type"] for agent in config["agents"]]
     return OpenSpielEnv(
         game=game,
-        game_name=registry.get_display_name(config["game_name"]),
-        player_type=config["player_types"],   #TODO: see what is this, and whether it should be 'player_typeS'
-        max_game_rounds=config.get("max_game_rounds")
+        game_name=config["env_config"]["game_name"],
+        player_type=player_types,  # TODO: check whether we need to pass one or many
+        max_game_rounds=config["env_config"].get("max_game_rounds"),
     )
 
 def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
@@ -94,28 +100,23 @@ def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
 
         # Human Agent
         if agent_type == "human":
-            from agents.human_agent import HumanAgent
             agents[agent_name] = HumanAgent(
                 player_name=agent_name
             )
 
         # Random Bot
         elif agent_type == "random":
-            from agents.random_agent import RandomAgent
             agents[agent_name] = RandomAgent(
                 seed=config.get("seed")
             )
 
         # LLM Agent
         elif agent_type == "llm":
-            from agents.llm_agent import LLMAgent
-
             if not agent_cfg.get("model"):
                 raise ValueError(
                     f"LLM agent requires model specification. "
                     f"Missing model for {agent_name}"
                 )
-
             agents[agent_name] = LLMAgent(
                 model_name=agent_cfg["model"],
                 game=env.game,
@@ -144,7 +145,7 @@ def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
 def run_simulation_loop(env, agents, config):
     """Core simulation execution"""
     results = []
-    for episode in range(config["rounds"]):
+    for episode in range(config["num_episodes"]):
         observation = env.reset()
         done = False
 
@@ -169,42 +170,30 @@ def run_simulation_loop(env, agents, config):
     }
 
 def main():
-    """Command line interface"""
-    parser = argparse.ArgumentParser(description="Run OpenSpiel simulations")
-    parser.add_argument(
-        "-g", "--game",
-        required=True,
-        help="Name of the game to simulate"
-    )
-    parser.add_argument(
-        "-r", "--rounds",
-        type=int,
-        default=10,
-        help="Number of rounds to simulate"
-    )
-    parser.add_argument(
-        "-a", "--agents",
-        nargs="+",
-        required=True,
-        help="Agent configurations (type:model)"
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        help="Random seed for reproducibility"
-    )
-
+    parser = build_cli_parser()
     args = parser.parse_args()
 
-    config = {
-        "game_name": args.game,
-        "rounds": args.rounds,
-        "seed": args.seed,
-        "agents": parse_agents(args.agents)
-    }
+    # Parse configuration
+    config = parse_config(args)
 
-    results = run_simulation(config)
+    # Validate configuration
+    validate_config(config)
+
+    # Set up logging
+    logging.basicConfig(level=getattr(logging, config["log_level"].upper()))
+    logger = logging.getLogger(__name__)
+    logger.info("Starting simulation...")
+
+    # Run simulation
+    loader = registry.get_game_loader(config["env_config"]["game_name"])
+    game = loader()
+    env = initialize_environment(game, config)
+    agents = create_agents(config, env)
+    results = run_simulation_loop(env, agents, config)
+
+    # Print results
     print_simulation_summary(results)
+
 
 if __name__ == "__main__":
     main()

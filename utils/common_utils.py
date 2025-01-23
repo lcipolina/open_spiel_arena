@@ -6,44 +6,13 @@ and other cross-cutting concerns.
 """
 
 import logging
+from tabulate import tabulate
 
-def setup_logger(name: str) -> logging.Logger:
-    """Sets up a logger for the simulation.
 
-    Args:
-        name: The name of the logger.
-
-    Returns:
-        logging.Logger: Configured logger instance.
-    """
-    logger = logging.getLogger(name)
-    if not logger.handlers:
-        handler = logging.StreamHandler()
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-    return logger
 
 
 def parse_agents(agent_strings: list) -> list:
-    """Parse agent configurations from CLI arguments
-
-    Args:
-        agent_strings: List of strings in format "type:model" or "type"
-
-    Returns:
-        List of agent config dictionaries
-
-    Example:
-        ["llm:gpt-4", "random"] →
-        [
-            {"type": "llm", "model": "gpt-4"},
-            {"type": "random", "model": None}
-        ]
-    """
+    """Convert 'type:model' strings to agent configs"""
     agents = []
     for agent_str in agent_strings:
         if ":" in agent_str:
@@ -60,7 +29,6 @@ def parse_agents(agent_strings: list) -> list:
 
 def print_simulation_summary(results: dict):
     """Print formatted simulation results"""
-    from tabulate import tabulate
 
     # Basic stats
     print(f"\n{' Simulation Summary ':=^50}")
