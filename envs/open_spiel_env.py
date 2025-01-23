@@ -1,9 +1,7 @@
 """
 open_spiel_env.py
 
-Implements a Gym-like environment on top of an OpenSpiel game, using the
-abstract EnvLike interface. It demonstrates how to step through an OpenSpiel
-game, handle chance nodes, record outcomes, etc.
+Implements a Gym-like environment on top of an OpenSpiel game.
 """
 
 from typing import Dict, Any, List
@@ -15,7 +13,7 @@ from envs.base_env import BaseEnv, PlayerId
 
 
 class OpenSpielEnv(BaseEnv):
-    """A 'Gym-like' environment for OpenSpiel, without depending on Gym.
+    """Environment for OpenSpiel.
 
     Handles common functionality like state transitions, outcomes recording,
     and logging.

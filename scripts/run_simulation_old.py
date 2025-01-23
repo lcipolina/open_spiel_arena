@@ -8,7 +8,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from games_registry import GAMES_REGISTRY
 from llm_registry import LLM_REGISTRY
-from simulators.main_simulator import PlayerType
+from simulators.main_simulator_old import PlayerType
 
 
 def _resolve_llms(player_types, player_models):
