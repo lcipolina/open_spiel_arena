@@ -169,14 +169,11 @@ def run_simulation_loop(env, agents, config):
     }
 
 def main():
+
+    # Parse the default configuration
     parser = build_cli_parser()
     args = parser.parse_args()
-
-    # Parse default configuration
     config = parse_config(args)
-
-    # Validate configuration
-    validate_config(config)
 
     # Set up logging
     logging.basicConfig(level=getattr(logging, config["log_level"].upper()))
@@ -186,6 +183,8 @@ def main():
     # Register and load the game
     loader = registry.get_game_loader(config["env_config"]["game_name"])
     game = loader()
+    validate_config(config)
+
     # Run simulation
     env = initialize_environment(game, config)
     agents = create_agents(config, env)
