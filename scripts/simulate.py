@@ -18,7 +18,7 @@ from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
 from games.registry import registry # Import registry to register games
 from utils.common_utils import print_simulation_summary
-from games import loaders  # Import loaders to register games
+#from games import loaders  # Import loaders to register games
 #sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def validate_config(config: Dict[str, Any]) -> None:
@@ -183,9 +183,10 @@ def main():
     logger = logging.getLogger(__name__)
     logger.info("Starting simulation...")
 
-    # Run simulation
+    # Register and load the game
     loader = registry.get_game_loader(config["env_config"]["game_name"])
     game = loader()
+    # Run simulation
     env = initialize_environment(game, config)
     agents = create_agents(config, env)
     results = run_simulation_loop(env, agents, config)
