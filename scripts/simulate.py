@@ -28,7 +28,7 @@ def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
     return OpenSpielEnv(
         game=game,
         game_name=config["env_config"]["game_name"],
-        player_type=player_types,  # TODO: check in OpenSpielEnv whether we need to pass one or many
+        player_types=player_types,  # TODO: check in OpenSpielEnv whether we need to pass one or many
         max_game_rounds=config["env_config"].get("max_game_rounds"),
     )
 

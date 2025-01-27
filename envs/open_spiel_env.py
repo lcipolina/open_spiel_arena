@@ -33,7 +33,7 @@ class OpenSpielEnv(BaseEnv):
         """
         self.game = game
         self.game_name = game_name
-        self.player_type = player_type
+        self.player_types = player_type
         self.max_game_rounds = max_game_rounds  # For iterated games
         self.state = None
         self.scores = {}  # Scoreboard, e.g., { "Player 1": 0, "Player 2": 0, ... }
@@ -46,7 +46,7 @@ class OpenSpielEnv(BaseEnv):
             str: A string representation of the initial state (or any other observation format).
         """
         self.state = self.game.new_initial_state()
-        self.scores = {name: 0 for name in self.player_type.keys()}
+        self.scores = {name: 0 for name in self.player_types.keys()}
         return self._state_to_observation(self.state)
 
     def step(self, action: int):
@@ -143,8 +143,8 @@ class OpenSpielEnv(BaseEnv):
     def _initialize_outcomes(self) -> Dict[str, Any]:
         """Initializes an outcomes dictionary to track wins, losses, ties, etc."""
         return {
-            "wins": {name: 0 for name in self.player_type.keys()},
-            "losses": {name: 0 for name in self.player_type.keys()},
+            "wins": {name: 0 for name in self.player_types.keys()},
+            "losses": {name: 0 for name in self.player_types.keys()},
             "ties": 0
         }
 
@@ -169,7 +169,7 @@ class OpenSpielEnv(BaseEnv):
         # This depends on the self.player_type keys (which must be in a stable order)
         # Identify winners/losers by mapping i -> player name
         # Suppose we match indexes to the order of self.llms.keys(), or define your own order #TODO: (lck: look into this)
-        sorted_players = sorted(self.player_type.keys())  # or track your own ordering
+        sorted_players = sorted(self.player_types.keys())  # or track your own ordering
         winners = [name for i, name in enumerate(sorted_players) if final_scores[i] == max_score]
         losers = [name for i, name in enumerate(sorted_players) if final_scores[i] != max_score]
 
