@@ -22,7 +22,7 @@ class LLMAgent(BaseAgent):
         self.llm = llm
         self.game_name = game_name
 
-    def choose_action(self, legal_actions: List[int], state: Any) -> int:
+    def compute_action(self, legal_actions: List[int], state: Any) -> int:
         """
         Uses the LLM to select an action from the legal actions.
 

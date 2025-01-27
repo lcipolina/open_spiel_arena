@@ -81,7 +81,7 @@ def print_simulation_summary(results: dict):
             print(f"Tie (Scores: {result['scores']})")
 
 
-
+#TODO: (lck) see if this needs to be removed or check for other config entries
 def validate_config(config: Dict[str, Any]) -> None:
     """Validates the configuration."""
     game_name = config["env_config"]["game_name"]

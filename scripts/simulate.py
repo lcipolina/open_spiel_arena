@@ -32,6 +32,35 @@ def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
         max_game_rounds=config["env_config"].get("max_game_rounds"),
     )
 
+'''
+def create_agents_proposed(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
+    # Instead of using a Dic, we use a list. This simplifies the naming and retrieval (?)
+    agents = []
+
+    for idx, agent_cfg in enumerate(config["agents"]):
+        agent_type = agent_cfg["type"].lower()
+
+        if agent_type == "human":
+            agents.append(HumanAgent(game_name="tic_tac_toe"))
+        elif agent_type == "random":
+            agents.append(RandomAgent(seed=config.get("seed")))
+        elif agent_type == "llm":
+            agents.append(LLMAgent(
+                model_name=agent_cfg["model"],
+                game=env.game,
+                player_id=idx,
+                temperature=agent_cfg.get("temperature", 0.7),
+                max_tokens=agent_cfg.get("max_tokens", 128),
+            ))
+        else:
+            raise ValueError(f"Unsupported agent type: '{agent_type}'")
+
+    # Example access in the simulation loop
+    agent = agents[current_player]  # Direct index access
+'''
+
+
+
 def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
     """Create agent instances based on configuration
 
@@ -54,7 +83,7 @@ def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
         # Human Agent
         if agent_type == "human":
             agents[agent_name] = HumanAgent(
-                player_name=agent_name
+                game_name='tic_tac_toe'
             )
 
         # Random Bot
@@ -109,7 +138,7 @@ def run_simulation(args) -> Dict[str, Any]:
 
     # Parse and validate game's configuration
     config = parse_config(args)
-    validate_config(config)
+    # validate_config(config) #TODO: (lck) see if this needs to be removed or check for other config entries
 
     # Set up logging
     logging.basicConfig(level=getattr(logging, config["log_level"].upper()))
@@ -136,35 +165,55 @@ def run_simulation(args) -> Dict[str, Any]:
     agents = create_agents(config, env)
 
     # Run simulation loop
-    return run_simulation_loop(env, agents, config)
-
-
-def run_simulation_loop(env, agents, config):
-    """Core simulation execution"""
-    results = []
-    for episode in range(config["num_episodes"]):
-        observation = env.reset()
-        done = False
-
-        while not done:
-            current_player = env.current_player()
-            agent = agents[f"Player {current_player+1}"]
-
-            action = agent.act(observation)
-            observation, reward, done, info = env.step(action)
-
-            if done:
-                results.append({
-                    "episode": episode,
-                    "winner": info.get("winner"),
-                    "scores": info.get("scores")
-                })
+    results = simulate_episodes(env, agents, config)
 
     return {
-        "game": config["game_name"],
-        "config": config,
+        "game": config.game_name,
         "results": results
     }
+
+def simulate_episodes(env, agents, config):
+    results = []
+    for episode in range(config.num_episodes):
+        results.append(simulate_single_episode(env, agents, episode))
+    return results
+
+def simulate_single_episode(env, agents, episode: int) -> Dict[str, Any]:
+    """
+    Simulate a single episode.
+
+    Args:
+        env: The game environment.
+        agents: A list of agents corresponding to players.
+        episode: The current episode number.
+
+    Returns:
+        A dictionary containing the results of the episode.
+    """
+    # Start a new episode
+    observation = env.reset()
+    done = False
+    episode_result = {"episode": episode}  # Initialize with episode number
+
+    # Play the game until it ends
+    while not done:
+        current_player = env.current_player()
+        agent = agents[current_player]
+
+        # Agent decides the action
+        action = agent.compute_action(observation)
+
+        # Step through the environment
+        observation, reward, done, info = env.step(action)
+
+        # Update results when the episode is finished
+        if done:
+            episode_result.update({
+                "winner": info.get("winner"),
+                "scores": info.get("scores")
+            })
+    return episode_result
+
 
 def main():
 

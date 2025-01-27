@@ -13,7 +13,7 @@ class RandomAgent(BaseAgent):
     Agent that selects an action uniformly at random from the legal actions.
     """
 
-    def choose_action(self, legal_actions: List[int], state: Any) -> int:
+    def compute_action(self, legal_actions: List[int], state: Any) -> int:
         """
         Randomly picks a legal action.
 

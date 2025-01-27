@@ -19,7 +19,7 @@ class HumanAgent(BaseAgent):
         """
         self.game_name = game_name
 
-    def choose_action(self, legal_actions: List[int], state: Any) -> int:
+    def compute_action(self, legal_actions: List[int], state: Any) -> int:
         """
         Prompts the user for a legal move.
 
