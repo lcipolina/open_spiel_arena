@@ -9,3 +9,5 @@ from simulators.base_simulator import GameSimulator
 class MatchingPenniesSimulator(GameSimulator):
     """Simulator for Matching Pennies (3-player)."""
     pass  # All functionality is inherited from GameSimulator
+
+

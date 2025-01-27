@@ -12,7 +12,8 @@ class GameRegistration:
     def register(
         self,
         name: str,
-        loader_path: str,
+        module_path: str,
+        class_name: str,
         simulator_path: str,
         display_name: str
     ) -> Callable[[Type], Type]:
@@ -21,7 +22,8 @@ class GameRegistration:
 
         Args:
             name: The internal game name used for lookup.
-            loader_path: Path to the loader function (e.g., "games.tic_tac_toe.get_game_loader").
+            module_path: Path to the module containing the loader class (e.g., "games.loaders").
+            class_name: The name of the loader class (e.g., "TicTacToeLoader").
             simulator_path: Path to the simulator class (e.g., "simulators.tic_tac_toe.TicTacToeSimulator").
             display_name: Human-readable name for the game.
 
@@ -32,12 +34,13 @@ class GameRegistration:
             if name in self._registry:
                 raise ValueError(f"Game '{name}' is already registered.")
             self._registry[name] = {
-                "loader_path": loader_path,
+                "module_path": module_path,
+                "class_name": class_name,
                 "simulator_path": simulator_path,
                 "display_name": display_name,
-                "config_class": cls
+                "config_class": cls # The class being decorated
             }
-            return cls
+            return cls # Return the class unmodified
         return decorator
 
     def get_display_name(self, name: str) -> str:
@@ -74,8 +77,18 @@ class GameRegistration:
             available = ", ".join(self._registry.keys())
             raise ValueError(f"Game '{name}' not found. Available games: {available}")
 
-        module_path, func_name = self._registry[name]["loader_path"].rsplit(".", 1)
-        return getattr(import_module(module_path), func_name)
+        # Retrieve paths from the registry
+        module_path = self._registry[name]["module_path"]
+        class_name = self._registry[name]["class_name"]
+        method_name = "load" # all loaders have a static load method
+
+        # Import the module and get the class
+        cls = getattr(import_module(module_path), class_name)
+
+        # Retrieve and return the method
+        return getattr(cls, method_name)
+
+
 
     def get_simulator_class(self, name: str) -> Type:
         """

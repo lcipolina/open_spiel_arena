@@ -16,57 +16,11 @@ from envs.open_spiel_env import OpenSpielEnv
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
-from games.registry import registry # Import registry to register games
-from utils.common_utils import print_simulation_summary
-#from games import loaders  # Import loaders to register games
-#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-def validate_config(config: Dict[str, Any]) -> None:
-    """Validates the configuration."""
-    game_name = config["env_config"]["game_name"]
-    num_players = registry.get_game_loader(game_name)().num_players()
-
-    if len(config["agents"]) != num_players:
-        raise ValueError(
-            f"Game '{game_name}' requires {num_players} players, "
-            f"but {len(config['agents'])} agents were provided."
-        )
+from games.registry import registry # Initilizes an empty registry dictionary
+from games import loaders  # Adds the games to the registry dictionary
+from utils.common_utils import print_simulation_summary, validate_config
 
 
-def run_simulation(config: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Runs the OpenSpiel simulation given a config dictionary.
-    Returns a dictionary with aggregated outcomes or stats.
-
-    Config keys may include:
-      - game_name (str): e.g. "tic_tac_toe"
-      - rounds (int): how many episodes to play
-      - agents (list of dict): each dict has "type": "human"/"llm"/"random_bot", etc.
-      - seed (int or None)
-      - alternate_first_player (bool)
-      - max_game_rounds (int or None): for iterated games.
-      ...
-    """
-
-    # 1. Set up random seed if specified
-    if config.get("seed") is not None:
-        random.seed(config["seed"])
-
-    # 2. Load the game from the registry
-    try:
-        loader = registry.get_game_loader(config["game_name"])
-        game = loader()
-    except ValueError as e:
-        raise RuntimeError(f"Game loading failed: {str(e)}") from e
-
-    # Initialize environment
-    env = initialize_environment(game, config)
-
-    # Agent setup
-    agents = create_agents(config, env)
-
-    # Run simulation loop
-    return run_simulation_loop(env, agents, config)
 
 def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
     """Initializes the game environment."""
@@ -74,7 +28,7 @@ def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
     return OpenSpielEnv(
         game=game,
         game_name=config["env_config"]["game_name"],
-        player_type=player_types,  # TODO: check whether we need to pass one or many
+        player_type=player_types,  # TODO: check in OpenSpielEnv whether we need to pass one or many
         max_game_rounds=config["env_config"].get("max_game_rounds"),
     )
 
@@ -141,6 +95,50 @@ def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
 
     return agents
 
+
+def run_simulation(args) -> Dict[str, Any]:
+    """
+    Orchestrates the simulation workflow.
+
+    Args:
+        args: Parsed CLI arguments.
+
+    Returns:
+        Dict: Simulation results.
+    """
+
+    # Parse and validate game's configuration
+    config = parse_config(args)
+    validate_config(config)
+
+    # Set up logging
+    logging.basicConfig(level=getattr(logging, config["log_level"].upper()))
+    logger = logging.getLogger(__name__)
+    logger.info("Starting simulation...")
+
+
+    # 1. Set up random seed if specified
+    if config.get("seed") is not None:
+        random.seed(config["seed"])
+
+    # TODO: FOR NOW THE GAME SIMULATOR IS NOT USED
+    # 2. Load the pyspiel game object
+    try:
+        loader = registry.get_game_loader(config["env_config"]["game_name"])
+        game = loader()
+    except ValueError as e:
+        raise RuntimeError(f"Game loading failed: {str(e)}") from e
+
+    # Initialize environment
+    env = initialize_environment(game, config)
+
+    # Agent setup
+    agents = create_agents(config, env)
+
+    # Run simulation loop
+    return run_simulation_loop(env, agents, config)
+
+
 def run_simulation_loop(env, agents, config):
     """Core simulation execution"""
     results = []
@@ -170,27 +168,12 @@ def run_simulation_loop(env, agents, config):
 
 def main():
 
-    # Parse the default configuration
+    # Build the CLI parser
     parser = build_cli_parser()
     args = parser.parse_args()
-    config = parse_config(args)
 
-    # Set up logging
-    logging.basicConfig(level=getattr(logging, config["log_level"].upper()))
-    logger = logging.getLogger(__name__)
-    logger.info("Starting simulation...")
-
-    # Register and load the game
-    loader = registry.get_game_loader(config["env_config"]["game_name"])
-    game = loader()
-    validate_config(config)
-
-    # Run simulation
-    env = initialize_environment(game, config)
-    agents = create_agents(config, env)
-    results = run_simulation_loop(env, agents, config)
-
-    # Print results
+    # Run the simulation
+    results = run_simulation(args)
     print_simulation_summary(results)
 
 

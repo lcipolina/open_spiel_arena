@@ -7,6 +7,8 @@ and other cross-cutting concerns.
 
 import logging
 from tabulate import tabulate
+from games.registry import registry
+from typing import Dict, Any
 
 
 
@@ -77,3 +79,16 @@ def print_simulation_summary(results: dict):
             print(f"Winner: {result['winner']} (Scores: {result['scores']})")
         else:
             print(f"Tie (Scores: {result['scores']})")
+
+
+
+def validate_config(config: Dict[str, Any]) -> None:
+    """Validates the configuration."""
+    game_name = config["env_config"]["game_name"]
+    num_players = registry.get_game_loader(game_name)().num_players()
+
+    if len(config["agents"]) != num_players:
+        raise ValueError(
+            f"Game '{game_name}' requires {num_players} players, "
+            f"but {len(config['agents'])} agents were provided."
+        )
