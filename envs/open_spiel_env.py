@@ -82,9 +82,11 @@ class OpenSpielEnv(BaseEnv):
         reward_dict = self._compute_reward()
 
         # Check termination
+        # this is wrong: 'self.state.move_number() >= self.max_game_rounds'
+        # because for non-iteratted games self.max_game_rounds is always 1
         done = self.state.is_terminal()
         if (self.max_game_rounds is not None
-                and self.state.move_number() >= self.max_game_rounds):  #TODO (lck: this is wrong!!)
+                and self.state.move_number() >= self.max_game_rounds):  #TODO (lck: this is wrong it should only be for iterated games!!)
             done = True
 
         info = {"final_scores": self.state.returns()} if done else {} # Accumulated rewards for all players

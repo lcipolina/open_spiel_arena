@@ -12,7 +12,7 @@ def default_simulation_config() -> Dict[str, Any]:
     return {
         "env_config": {
             "game_name": "tic_tac_toe",
-            "max_game_rounds": 1,
+            "max_game_rounds": None,  # For iterated games
         },
         "num_episodes": 5,
         "seed": 42,

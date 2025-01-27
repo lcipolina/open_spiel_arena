@@ -28,7 +28,7 @@ def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
         game=game,
         game_name=config["env_config"]["game_name"],
         player_types=player_types,
-        max_game_rounds=config["env_config"].get("max_game_rounds"),
+        max_game_rounds=config["env_config"].get("max_game_rounds"), # For iterrated games
     )
 
 
@@ -64,8 +64,6 @@ def create_agents(config: Dict[str, Any]) -> List:
             raise ValueError(f"Unsupported agent type: '{agent_type}'")
 
     return agents
-
-
 
 
 def create_agents_old(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
