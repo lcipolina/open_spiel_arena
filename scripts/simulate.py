@@ -6,10 +6,9 @@ Runs game simulations with configurable agents and tracks outcomes.
 Supports both CLI arguments and config dictionaries.
 """
 
-import os, sys
 import logging
 import random
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from configs.configs import build_cli_parser, parse_config
 from envs.open_spiel_env import OpenSpielEnv
@@ -32,8 +31,20 @@ def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
         max_game_rounds=config["env_config"].get("max_game_rounds"),
     )
 
-'''
-def create_agents_proposed(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
+
+def create_agents(config: Dict[str, Any]) -> List:
+    """Create agent instances based on configuration
+
+    Args:
+        config: Simulation configuration dictionary
+        env: Initialized game environment
+
+    Returns:
+        List of agent instances
+
+    Raises:
+        ValueError: For invalid agent types or missing LLM models
+    """
     # Instead of using a Dic, we use a list. This simplifies the naming and retrieval (?)
     agents = []
 
@@ -41,27 +52,23 @@ def create_agents_proposed(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[st
         agent_type = agent_cfg["type"].lower()
 
         if agent_type == "human":
-            agents.append(HumanAgent(game_name="tic_tac_toe"))
+            agents.append(HumanAgent(game_name=config['env_config']['game_name']))
         elif agent_type == "random":
             agents.append(RandomAgent(seed=config.get("seed")))
         elif agent_type == "llm":
             agents.append(LLMAgent(
-                model_name=agent_cfg["model"],
-                game=env.game,
-                player_id=idx,
-                temperature=agent_cfg.get("temperature", 0.7),
-                max_tokens=agent_cfg.get("max_tokens", 128),
+           llm = 'chatgpt',  #TODO: (lck) this should be a parameter in the config file
+                game_name=config['env_config']['game_name']
             ))
         else:
             raise ValueError(f"Unsupported agent type: '{agent_type}'")
 
-    # Example access in the simulation loop
-    agent = agents[current_player]  # Direct index access
-'''
+    return agents
 
 
 
-def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
+
+def create_agents_old(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
     """Create agent instances based on configuration
 
     Args:
@@ -160,7 +167,7 @@ def run_simulation(args) -> Dict[str, Any]:
     env = initialize_environment(game, config)
 
     # Agent setup
-    agents = create_agents(config, env)
+    agents = create_agents(config)
 
     # Run simulation loop
     results = simulate_episodes(env, agents, config)
@@ -189,20 +196,22 @@ def simulate_single_episode(env, agents, episode: int) -> Dict[str, Any]:
         A dictionary containing the results of the episode.
     """
     # Start a new episode
-    observation = env.reset()
+    observation = env.reset() # board state and legal actions
     done = False
     episode_result = {"episode": episode}  # Initialize with episode number
 
     # Play the game until it ends
     while not done:
-        current_player = env.current_player()
+        current_player = env.state.current_player()
         agent = agents[current_player]
 
         # Agent decides the action
-        action = agent.compute_action(observation)
+        action = agent.compute_action(legal_actions=observation['legal_actions'],
+                                      state= observation['state_string']
+                    )
 
         # Step through the environment
-        observation, reward, done, info = env.step(action)
+        observation, rewards, done, info = env.step(action)
 
         # Update results when the episode is finished
         if done:

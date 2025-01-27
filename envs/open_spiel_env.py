@@ -36,7 +36,7 @@ class OpenSpielEnv(BaseEnv):
         self.player_types = player_types
         self.max_game_rounds = max_game_rounds  # For iterated games
         self.state = None
-        self.scores = {}  # Scoreboard, e.g., { "Player 1": 0, "Player 2": 0, ... }
+        self.rewards = {}
 
     def reset(self) -> str:
         """
@@ -45,8 +45,8 @@ class OpenSpielEnv(BaseEnv):
         Returns:
             str: A string representation of the initial state (or any other observation format).
         """
-        self.state = self.game.new_initial_state()
-        self.scores = {name: 0 for name in self.player_types.keys()}
+        self.state = self.game.new_initial_state() # Instantiates a pyspiel game
+        self.rewards = {name: 0 for name in self.player_types}
         return self._state_to_observation(self.state)
 
     def step(self, action: int):
@@ -78,8 +78,8 @@ class OpenSpielEnv(BaseEnv):
         # Build the new observation
         observation = self._state_to_observation(self.state)
 
-        # Compute reward
-        reward = self._compute_reward(self.state)
+        # Stepwise reward for each agent
+        reward_dict = self._compute_reward()
 
         # Check termination
         done = self.state.is_terminal()
@@ -87,13 +87,9 @@ class OpenSpielEnv(BaseEnv):
                 and self.state.move_number() >= self.max_game_rounds):
             done = True
 
-        done = self.state.is_terminal() or (
-            self.max_game_rounds is not None and self.state.move_number() >= self.max_game_rounds
-        )
+        info = {"final_scores": self.state.returns()} if done else {} # Accumulated rewards for all players
 
-        info = {"final_scores": self.state.returns()} if done else {}
-
-        return observation, reward, done, info
+        return observation, reward_dict, done, info
 
     def render(self, mode: str = 'human'):
         """Print out the current state of the game."""
@@ -145,19 +141,24 @@ class OpenSpielEnv(BaseEnv):
 
     def _state_to_observation(self, state: Any) -> Dict[str, Any]:
         return {
-            "state_string": str(state),
+            "state_string":  state.observation_string(),
             "legal_actions": state.legal_actions(),
         }
 
-    def _compute_reward(self, state: Any) -> float:
+    def _compute_reward(self) -> Dict[int, float]:
         """
-        Compute the reward at the current step. Many environments return
-        0 reward until the game ends, then final outcome as reward.
+        Compute the step rewards for all agents at the current step.
+
+        Returns:
+            Dict[int, float]: A dictionary mapping agent IDs to their step rewards.
         """
-        if not state.is_terminal():
-            return 0.0
-        # Example: sum of final scores
-        return sum(state.returns())
+        players_list = range(self.state.num_players())
+        current_player = self.state.current_player()
+        rewards = {
+            player: self.state.player_reward(current_player) if player == current_player else 0.0
+            for player in players_list
+        }
+        return rewards
 
     def _initialize_outcomes(self) -> Dict[str, Any]:
         """Initializes an outcomes dictionary to track wins, losses, ties, etc."""
@@ -200,29 +201,3 @@ class OpenSpielEnv(BaseEnv):
         else:
             outcomes["ties"] += 1
             return "tie"
-
-    # I wonder if fron this point onwards we should place these functions somewhere else??
-    def save_results(self, final_scores: List[float], state: Any) -> None:
-        """Save simulation results to a JSON file."""
-        results = self._prepare_results(state, final_scores)
-        filename = self._get_results_filename()
-        with open(filename, "w") as f:
-            json.dump(results, f, indent=4)
-        print(f"Results saved to {filename}")
-
-    def _prepare_results(self, state: Any, final_scores: List[float]) -> Dict[str, Any]:
-        """Prepares the results dictionary for JSON serialization."""
-        final_scores = list(final_scores)  # ensure it's a plain list
-        return {
-            "game_name": self.game_name,
-            "final_state": str(state),
-            "scores": self.scores,
-            "returns": final_scores,
-            "history": state.history_str(),
-        }
-
-    def _get_results_filename(self) -> str:
-        """Generates the filename for saving results."""
-        results_dir = "results"
-        os.makedirs(results_dir, exist_ok=True)
-        return os.path.join(results_dir, f"{self.game_name.lower().replace(' ', '_')}_results.json")

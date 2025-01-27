@@ -25,7 +25,7 @@ class HumanAgent(BaseAgent):
 
         Args:
             legal_actions (List[int]): The set of legal actions for the current player.
-            state (Any): The current OpenSpiel state, can be printed to show the user.
+            state (Any): The current OpenSpiel state.
 
         Returns:
             int: The chosen action.
