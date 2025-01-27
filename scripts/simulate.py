@@ -178,14 +178,8 @@ def run_simulation(args) -> Dict[str, Any]:
     }
 
 def simulate_episodes(env, agents, config):
-    results = []
-    for episode in range(config['num_episodes']):
-        results.append(simulate_single_episode(env, agents, episode))
-    return results
-
-def simulate_single_episode(env, agents, episode: int) -> Dict[str, Any]:
     """
-    Simulate a single episode.
+    Simulate multiple episodes.
 
     Args:
         env: The game environment.
@@ -195,30 +189,32 @@ def simulate_single_episode(env, agents, episode: int) -> Dict[str, Any]:
     Returns:
         A dictionary containing the results of the episode.
     """
-    # Start a new episode
-    observation = env.reset() # board state and legal actions
-    done = False
-    episode_result = {"episode": episode}  # Initialize with episode number
+    for episode in range(config['num_episodes']):
 
-    # Play the game until it ends
-    while not done:
-        current_player = env.state.current_player()
-        agent = agents[current_player]
+        # Start a new episode
+        observation = env.reset()  # board state and legal actions
+        done = False
+        episode_result = {"episode": episode}  # Initialize with episode number
 
-        # Agent decides the action
-        action = agent.compute_action(legal_actions=observation['legal_actions'],
-                                      state= observation['state_string']
-                    )
+        # Play the game until it ends
+        while not done:
+            current_player = env.state.current_player()
+            agent = agents[current_player]
 
-        # Step through the environment
-        observation, rewards, done, info = env.step(action)
+            # Agent decides the action
+            action = agent.compute_action(legal_actions=observation['legal_actions'],
+                                        state= observation['state_string']
+                        )
 
-        # Update results when the episode is finished
-        if done:
-            episode_result.update({
-                "winner": info.get("winner"),
-                "scores": info.get("scores")
-            })
+            # Step through the environment
+            observation, reward_dict, done, info = env.step(action)
+
+            # Update results when the episode is finished
+            if done:
+                episode_result.update({
+                    "winner": info.get("winner"),
+                    "scores": info.get("scores")
+                })
     return episode_result
 
 

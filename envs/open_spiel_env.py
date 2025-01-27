@@ -84,7 +84,7 @@ class OpenSpielEnv(BaseEnv):
         # Check termination
         done = self.state.is_terminal()
         if (self.max_game_rounds is not None
-                and self.state.move_number() >= self.max_game_rounds):
+                and self.state.move_number() >= self.max_game_rounds):  #TODO (lck: this is wrong!!)
             done = True
 
         info = {"final_scores": self.state.returns()} if done else {} # Accumulated rewards for all players
