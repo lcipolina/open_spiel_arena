@@ -28,7 +28,7 @@ def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
     return OpenSpielEnv(
         game=game,
         game_name=config["env_config"]["game_name"],
-        player_types=player_types,  # TODO: check in OpenSpielEnv whether we need to pass one or many
+        player_types=player_types,
         max_game_rounds=config["env_config"].get("max_game_rounds"),
     )
 
@@ -83,7 +83,7 @@ def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
         # Human Agent
         if agent_type == "human":
             agents[agent_name] = HumanAgent(
-                game_name='tic_tac_toe'
+                game_name=config['env_config']['game_name']
             )
 
         # Random Bot
@@ -100,12 +100,10 @@ def create_agents(config: Dict[str, Any], env: OpenSpielEnv) -> Dict[str, Any]:
                     f"Missing model for {agent_name}"
                 )
             agents[agent_name] = LLMAgent(
-                model_name=agent_cfg["model"],
-                game=env.game,
-                player_id=idx,
-                temperature=agent_cfg.get("temperature", 0.7),
-                max_tokens=agent_cfg.get("max_tokens", 128)
-            )
+                llm = 'chatgpt',
+                game_name=config['env_config']['game_name']
+                )
+
 
         # Unknown Agent Type
         else:
@@ -174,7 +172,7 @@ def run_simulation(args) -> Dict[str, Any]:
 
 def simulate_episodes(env, agents, config):
     results = []
-    for episode in range(config.num_episodes):
+    for episode in range(config['num_episodes']):
         results.append(simulate_single_episode(env, agents, episode))
     return results
 

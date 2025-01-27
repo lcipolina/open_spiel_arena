@@ -5,11 +5,35 @@ This module provides shared utility functions for logging, configuration,
 and other cross-cutting concerns.
 """
 
+import os
+import json
 import logging
 from tabulate import tabulate
 from games.registry import registry
-from typing import Dict, Any
+from typing import Dict, Any, List
 
+
+
+
+def save_results(game_name: str, final_scores: List[float], state: Any):
+    results = prepare_results(game_name, final_scores, state)
+    filename = get_results_filename(game_name)
+    with open(filename, "w") as f:
+        json.dump(results, f, indent=4)
+    print(f"Results saved to {filename}")
+
+def prepare_results(game_name: str, final_scores: List[float], state: Any) -> Dict[str, Any]:
+    return {
+        "game_name": game_name,
+        "final_state": str(state),
+        "returns": list(final_scores),  # Ensure it's JSON-serializable
+        "history": state.history_str(),
+    }
+
+def get_results_filename(game_name: str) -> str:
+    results_dir = "results"
+    os.makedirs(results_dir, exist_ok=True)
+    return os.path.join(results_dir, f"{game_name.lower().replace(' ', '_')}_results.json")
 
 
 

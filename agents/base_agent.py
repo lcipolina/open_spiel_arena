@@ -12,7 +12,7 @@ class BaseAgent(ABC):
     """Abstract base class for agents that pick actions in an OpenSpiel environment."""
 
     @abstractmethod
-    def choose_action(self, legal_actions: List[int], state: Any) -> int:
+    def compute_action(self, legal_actions: List[int], state: Any) -> int:
         """
         Select an action from the list of legal actions.
 

@@ -68,7 +68,9 @@ class OpenSpielEnv(BaseEnv):
             # if you need to manage them manually, do it here. For now, let's raise an error
              # Potentially you do not apply_action(...) here because chance is random
             # We'll raise an error to remind you to implement it if needed
-            raise NotImplementedError("Chance node handling not implemented in step().")
+            print("Chance node detected. REVISE THIS!")
+            self._handle_chance_node()
+            #raise NotImplementedError("Chance node handling not implemented in step().")
 
         # Apply the action
         self.state.apply_action(action)
@@ -85,11 +87,11 @@ class OpenSpielEnv(BaseEnv):
                 and self.state.move_number() >= self.max_game_rounds):
             done = True
 
-        # info dict for debugging or final scores
-        info = {}
-        if done:
-            final_scores = self.state.returns()  # returns an array
-            info['final_scores'] = final_scores
+        done = self.state.is_terminal() or (
+            self.max_game_rounds is not None and self.state.move_number() >= self.max_game_rounds
+        )
+
+        info = {"final_scores": self.state.returns()} if done else {}
 
         return observation, reward, done, info
 
@@ -97,6 +99,16 @@ class OpenSpielEnv(BaseEnv):
         """Print out the current state of the game."""
         if mode == 'human':
             print(f"Current state of {self.game_name}:\n{self.state}")
+
+    def seed(self, seed: int = None):
+        """
+        Sets the random seed for the environment.
+
+        Args:
+            seed (int): The random seed.
+        """
+        self.random_generator = random.Random(seed)
+        self.state.set_seed(seed)
 
     def close(self):
         """Cleanup if needed."""
@@ -113,8 +125,9 @@ class OpenSpielEnv(BaseEnv):
         return (player_id == PlayerId.CHANCE.value)
 
     def _handle_chance_node(self):
-        """Handle chance nodes. Default behavior raises an error."""
-        raise NotImplementedError("Chance node handling not implemented for this game.")
+        outcomes, probabilities = zip(*self.state.chance_outcomes())
+        chosen_outcome = self.random_generator.choices(outcomes, probabilities, k=1)[0]
+        self.state.apply_action(chosen_outcome)
 
     def _collect_actions_simultaneous(self) -> List[int]:
         """Collects actions for all players in a simultaneous-move game."""
@@ -123,12 +136,18 @@ class OpenSpielEnv(BaseEnv):
             for p in range(self.game.num_players())
         ]
 
-    def _state_to_observation(self, state: Any) -> str:
+    def _state_to_observation_old(self, state: Any) -> str:
         """
         Convert the current OpenSpiel state into an observation.
         You can return any format (string, dict, custom object).
         """
         return str(state)
+
+    def _state_to_observation(self, state: Any) -> Dict[str, Any]:
+        return {
+            "state_string": str(state),
+            "legal_actions": state.legal_actions(),
+        }
 
     def _compute_reward(self, state: Any) -> float:
         """
@@ -182,6 +201,7 @@ class OpenSpielEnv(BaseEnv):
             outcomes["ties"] += 1
             return "tie"
 
+    # I wonder if fron this point onwards we should place these functions somewhere else??
     def save_results(self, final_scores: List[float], state: Any) -> None:
         """Save simulation results to a JSON file."""
         results = self._prepare_results(state, final_scores)
