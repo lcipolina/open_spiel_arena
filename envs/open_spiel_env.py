@@ -22,7 +22,7 @@ class OpenSpielEnv(BaseEnv):
     def __init__(self,
                  game: Any,
                  game_name: str,
-                 player_type: Dict[str, str],
+                 player_types: Dict[str, str],
                  max_game_rounds: int = None):
         """
         Args:
@@ -33,7 +33,7 @@ class OpenSpielEnv(BaseEnv):
         """
         self.game = game
         self.game_name = game_name
-        self.player_types = player_type
+        self.player_types = player_types
         self.max_game_rounds = max_game_rounds  # For iterated games
         self.state = None
         self.scores = {}  # Scoreboard, e.g., { "Player 1": 0, "Player 2": 0, ... }
