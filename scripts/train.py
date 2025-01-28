@@ -8,6 +8,7 @@ It might set up a training loop, or rely on an RL library.
 
 
 def main():
+    pass
 
 
     # 1. Load game, build environment
