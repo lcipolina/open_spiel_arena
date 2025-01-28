@@ -62,7 +62,7 @@ class OpenSpielEnv(BaseEnv):
             done (bool): Whether the episode is finished.
             info (dict): Additional diagnostic information (e.g. final scores if done).
         """
-        if self._is_chance_node():  #TODO (lck look into this)
+        if self.state.is_chance_node():  #TODO (lck look into this)
             # If it's a chance node, handle it automatically.
             # In many OpenSpiel games, chance nodes are built into the state transitions, but
             # if you need to manage them manually, do it here. For now, let's raise an error
@@ -82,11 +82,9 @@ class OpenSpielEnv(BaseEnv):
         reward_dict = self._compute_reward()
 
         # Check termination
-        # this is wrong: 'self.state.move_number() >= self.max_game_rounds'
-        # because for non-iteratted games self.max_game_rounds is always 1
         done = self.state.is_terminal()
         if (self.max_game_rounds is not None
-                and self.state.move_number() >= self.max_game_rounds):  #TODO (lck: this is wrong it should only be for iterated games!!)
+                and self.state.move_number() >= self.max_game_rounds):   # Condition for iterated games
             done = True
 
         info = {"final_scores": self.state.returns()} if done else {} # Accumulated rewards for all players
@@ -115,12 +113,13 @@ class OpenSpielEnv(BaseEnv):
     # ----------------------------------------------------------------
     # Additional methods
     # ----------------------------------------------------------------
-
+    '''
     def _is_chance_node(self) -> bool:
         """Check if the current player is CHANCE."""
         current_player = self.state.current_player()
         player_id = self.normalize_player_id(current_player)
         return (player_id == PlayerId.CHANCE.value)
+    '''
 
     def _handle_chance_node(self):
         outcomes, probabilities = zip(*self.state.chance_outcomes())

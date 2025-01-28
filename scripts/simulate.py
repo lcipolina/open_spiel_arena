@@ -191,15 +191,13 @@ def simulate_episodes(env, agents, config):
 
         # Start a new episode
         observation = env.reset()  # board state and legal actions
-        done = False
+        done =  env.state.is_terminal()
         episode_result = {"episode": episode}  # Initialize with episode number
 
         # Play the game until it ends
         while not done:
             current_player = env.state.current_player()
             agent = agents[current_player]
-
-            # Agent decides the action
             action = agent.compute_action(legal_actions=observation['legal_actions'],
                                         state= observation['state_string']
                         )
