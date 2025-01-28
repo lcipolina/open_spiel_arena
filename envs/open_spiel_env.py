@@ -6,9 +6,6 @@ Implements a Gym-like environment on top of an OpenSpiel game.
 
 from typing import Dict, Any, List
 import random
-import os
-import json
-
 from envs.base_env import BaseEnv, PlayerId
 
 
@@ -88,7 +85,12 @@ class OpenSpielEnv(BaseEnv):
         # Build the new observation
         observation = self._state_to_observation() if not done else None
 
-        info = {"final_scores": self.state.returns()} if done else {} # Accumulated rewards for all players
+        # Accumulated rewards for all players
+        info = (
+            {"final_scores": self.state.returns()}
+            if done
+            else {}
+        )
 
         return observation, reward_dict, done, info
 
@@ -145,45 +147,3 @@ class OpenSpielEnv(BaseEnv):
             player: self.state.player_reward(player) for player in players_list
         }
         return rewards
-
-    def _initialize_outcomes(self) -> Dict[str, Any]:
-        """Initializes an outcomes dictionary to track wins, losses, ties, etc."""
-        return {
-            "wins": {name: 0 for name in self.player_types.keys()},
-            "losses": {name: 0 for name in self.player_types.keys()},
-            "ties": 0
-        }
-
-    def record_outcomes(self, final_scores: List[float], outcomes: Dict[str, Any]) -> str:
-        """Records the outcome of a single game round.
-
-        Args:
-            final_scores (List[float]): Final cumulative scores of all players.
-            outcomes (Dict[str, Any]): Dictionary to record wins, losses, and ties.
-
-        Returns:
-            str: Name of the winner or "tie" if there is no single winner.
-        """
-        # Check if all scores are equal (a tie)
-        if all(score == final_scores[0] for score in final_scores):
-            outcomes["ties"] += 1
-            return "tie"
-
-        # Find the maximum score and determine winners #TODO (lck: look into this -this is a bit confusing)
-        max_score = max(final_scores)
-        # Assume players in order "Player 1", "Player 2", etc.
-        # This depends on the self.player_type keys (which must be in a stable order)
-        # Identify winners/losers by mapping i -> player name
-        # Suppose we match indexes to the order of self.llms.keys(), or define your own order #TODO: (lck: look into this)
-        sorted_players = sorted(self.player_types.keys())  # or track your own ordering
-        winners = [name for i, name in enumerate(sorted_players) if final_scores[i] == max_score]
-        losers = [name for i, name in enumerate(sorted_players) if final_scores[i] != max_score]
-
-        if len(winners) == 1:
-            outcomes["wins"][winners[0]] += 1
-            for loser in losers:
-                outcomes["losses"][loser] += 1
-            return winners[0]
-        else:
-            outcomes["ties"] += 1
-            return "tie"

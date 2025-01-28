@@ -14,7 +14,7 @@ def default_simulation_config() -> Dict[str, Any]:
             "game_name": "tic_tac_toe",
             "max_game_rounds": None,  # For iterated games
         },
-        "num_episodes": 5,
+        "num_episodes": 4,
         "seed": 42,
         "agents": [
             {"type": "human", "name": "Player 1"},
