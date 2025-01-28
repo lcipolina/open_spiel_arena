@@ -47,7 +47,7 @@ class OpenSpielEnv(BaseEnv):
         """
         self.state = self.game.new_initial_state() # Instantiates a pyspiel game
         self.rewards = {name: 0 for name in self.player_types}
-        return self._state_to_observation(self.state)
+        return self._state_to_observation()
 
     def step(self, action: int):
         """
@@ -75,17 +75,18 @@ class OpenSpielEnv(BaseEnv):
         # Apply the action
         self.state.apply_action(action)
 
-        # Build the new observation
-        observation = self._state_to_observation(self.state)
-
         # Stepwise reward for each agent
         reward_dict = self._compute_reward()
 
         # Check termination
         done = self.state.is_terminal()
         if (self.max_game_rounds is not None
-                and self.state.move_number() >= self.max_game_rounds):   # Condition for iterated games
+                and self.state.move_number() >= self.max_game_rounds
+                ):   # Condition for iterated games
             done = True
+
+        # Build the new observation
+        observation = self._state_to_observation() if not done else None
 
         info = {"final_scores": self.state.returns()} if done else {} # Accumulated rewards for all players
 
@@ -113,13 +114,6 @@ class OpenSpielEnv(BaseEnv):
     # ----------------------------------------------------------------
     # Additional methods
     # ----------------------------------------------------------------
-    '''
-    def _is_chance_node(self) -> bool:
-        """Check if the current player is CHANCE."""
-        current_player = self.state.current_player()
-        player_id = self.normalize_player_id(current_player)
-        return (player_id == PlayerId.CHANCE.value)
-    '''
 
     def _handle_chance_node(self):
         outcomes, probabilities = zip(*self.state.chance_outcomes())
@@ -133,17 +127,10 @@ class OpenSpielEnv(BaseEnv):
             for p in range(self.game.num_players())
         ]
 
-    def _state_to_observation_old(self, state: Any) -> str:
-        """
-        Convert the current OpenSpiel state into an observation.
-        You can return any format (string, dict, custom object).
-        """
-        return str(state)
-
-    def _state_to_observation(self, state: Any) -> Dict[str, Any]:
+    def _state_to_observation(self) -> Dict[str, Any]:
         return {
-            "state_string":  state.observation_string(),
-            "legal_actions": state.legal_actions(),
+            "state_string":  self.state.observation_string(),
+            "legal_actions": self.state.legal_actions(),
         }
 
     def _compute_reward(self) -> Dict[int, float]:
@@ -154,10 +141,8 @@ class OpenSpielEnv(BaseEnv):
             Dict[int, float]: A dictionary mapping agent IDs to their step rewards.
         """
         players_list = range(self.state.num_players())
-        current_player = self.state.current_player()
         rewards = {
-            player: self.state.player_reward(current_player) if player == current_player else 0.0
-            for player in players_list
+            player: self.state.player_reward(player) for player in players_list
         }
         return rewards
 

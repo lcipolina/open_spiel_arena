@@ -209,7 +209,7 @@ def simulate_episodes(env, agents, config):
             if done:
                 episode_result.update({
                     "winner": info.get("winner"),
-                    "scores": info.get("scores")
+                    "scores": info.get("final_scores")
                 })
     return episode_result
 
