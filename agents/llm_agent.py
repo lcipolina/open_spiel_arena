@@ -6,7 +6,7 @@ Implements an agent that uses an LLM to decide the next move.
 
 from typing import List, Any
 from .base_agent import BaseAgent
-from utils.llm_utils import generate_prompt, llm_decide_move
+from agents.llm_utils import generate_prompt, llm_decide_move
 
 class LLMAgent(BaseAgent):
     """

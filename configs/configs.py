@@ -18,8 +18,8 @@ def default_simulation_config() -> Dict[str, Any]:
     "num_episodes": 4,
     "seed": 42,
     "agents": {
-        0: {"type": "human", "model": None},
-        1: {"type": "random", "model": None},
+        0: {"type": "random", "model": None},
+        1: {"type": "llm", "model": "gpt2"},
     },
     "alternate_first_player": True,
     "log_level": "INFO",

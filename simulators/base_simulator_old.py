@@ -5,7 +5,7 @@ import json
 from typing import Dict, Any, List
 from abc import ABC
 import random
-from utils.llm_utils import generate_prompt, llm_decide_move
+from agents.llm_utils import generate_prompt, llm_decide_move
 from enum import Enum, unique
 
 

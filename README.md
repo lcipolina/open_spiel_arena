@@ -56,7 +56,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
       python3 scripts/simulate.py --override env_config.game_name=tic_tac_toe agents.0.type=human agents.0.model=None agents.1.type=llm agents.1.model=gpt2
 
       # Random Bot vs LLM (Connect Four)
-      python3 scripts/simulate.py --override env_config.game_name=connect_four agents.0.type=random agents.0.model=None agents.1.type=llm agents.1.model=flan-t5
+      python3 scripts/simulate.py --override env_config.game_name=connect_four agents.0.type=random agents.0.model=None agents.1.type=llm agents.1.model=flan_t5_small
 
       # Self-Play Tournament (10 rounds)
       python3 scripts/simulate.py --override env_config.game_name=kuhn_poker agents.0.type=llm agents.0.model=gpt2 agents.1.type=llm agents.1.model=distilgpt2 num_episodes=10

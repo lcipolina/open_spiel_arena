@@ -15,6 +15,7 @@ from envs.open_spiel_env import OpenSpielEnv
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent
+from agents.llm_utils import load_llm_from_registry
 from games.registry import registry # Initilizes an empty registry dictionary
 from games import loaders  # Adds the games to the registry dictionary
 from utils.results_utils import print_total_scores
@@ -56,10 +57,11 @@ def create_agents(config: Dict[str, Any]) -> List:
         elif agent_type == "random":
             agents.append(RandomAgent(seed=config.get("seed")))
         elif agent_type == "llm":
-             agents.append(LLMAgent(
-             llm = 'chatgpt',  #TODO: (lck) this should be a parameter in the config file
-                game_name=config['env_config']['game_name']
-            ))
+                    model_name = agent_cfg.get("model", "gpt2")  # Default to "gpt2" if no model is specified
+                    llm = load_llm_from_registry(model_name)
+                    agents.append(LLMAgent(llm=llm, game_name=config['env_config']['game_name']))
+        # elif agent_type == "trained":
+        #     agents_dict[p_name] = TrainedAgent("checkpoint.path")
         else:
             raise ValueError(f"Unsupported agent type: '{agent_type}'")
 

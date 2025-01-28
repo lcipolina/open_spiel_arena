@@ -10,7 +10,7 @@ For Kuhn Poker, the game mechanics involve:
 """
 
 from simulators.base_simulator import GameSimulator
-from utils.llm_utils import llm_decide_move
+from agents.llm_utils import llm_decide_move
 from typing import Any
 import random
 

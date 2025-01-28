@@ -1,3 +1,7 @@
+"""
+llm_registry.py - Central llm registry 
+"""
+
 from transformers import pipeline
 
 # Registry of available LLMs
