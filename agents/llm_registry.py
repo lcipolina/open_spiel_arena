@@ -1,5 +1,5 @@
 """
-llm_registry.py - Central llm registry 
+llm_registry.py - Central llm registry
 """
 
 from transformers import pipeline
