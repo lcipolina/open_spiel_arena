@@ -111,6 +111,9 @@ def run_simulation(args) -> Dict[str, Any]:
     # Run simulation loop
     all_episode_results, total_scores = simulate_episodes(env, agents, config)
 
+    # Print final board for the finished game
+    print(f"Final game state:\n {env.state}")
+
     return {
         "game_name": game_name,
         "all_episode_results": all_episode_results,
@@ -173,6 +176,8 @@ def main():
     # Run the simulation
     result_dict = run_simulation(args)
     print_total_scores(result_dict["game_name"],result_dict['total_scores'])
+
+    # TODO: Save results in results/JSON file! together with the other things requested.
 
 
 if __name__ == "__main__":
