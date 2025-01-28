@@ -49,24 +49,29 @@ This project explores how LLMs interpret game states, make strategic decisions, 
       # Run with default config (Tic-Tac-Toe, 4 rounds)
       python3 scripts/simulate.py
 
+      # Human vs Random
+      python3 scripts/simulate.py --override agents.0.type=human agents.1.type=random
+
       # Human vs LLM
-      python3 scripts/simulate.py --game tic_tac_toe --player-types human llm --player-models None gpt2
+      python3 scripts/simulate.py --override env_config.game_name=tic_tac_toe agents.0.type=human agents.0.model=None agents.1.type=llm agents.1.model=gpt2
 
       # Random Bot vs LLM (Connect Four)
-      python3 scripts/simulate.py --game connect_four --player-types random_bot llm --player-models flan-t5
+      python3 scripts/simulate.py --override env_config.game_name=connect_four agents.0.type=random agents.0.model=None agents.1.type=llm agents.1.model=flan-t5
 
       # Self-Play Tournament (10 rounds)
-      python3 scripts/simulate.py --game kuhn_poker --player-types llm llm --player-models gpt2 distilgpt2 --rounds 10
+      python3 scripts/simulate.py --override env_config.game_name=kuhn_poker agents.0.type=llm agents.0.model=gpt2 agents.1.type=llm agents.1.model=distilgpt2 num_episodes=10
 
       # Multi-Game Challenge
-      python3 scripts/simulate.py --games tic_tac_toe prisoners_dilemma connect_four --rounds 5
+      python3 scripts/simulate.py --override env_config.game_name=tic_tac_toe num_episodes=5 && \
+      python3 scripts/simulate.py --override env_config.game_name=prisoners_dilemma num_episodes=5 && \
+      python3 scripts/simulate.py --override env_config.game_name=connect_four num_episodes=5
+
      ```
 
 2. Command-line options:
    - `--config`: Specify a JSON configuration file or raw JSON string.
                  Example: python scripts/simulation.py --config config.json
    - `--override`: Allows to modify specific parts of the default configuration.
-                 Example: python3 scripts/simulate.py --override num_episodes=5 env_config.game_name=tic_tac_toe
 ---
 
 ## 2. Directory Structure

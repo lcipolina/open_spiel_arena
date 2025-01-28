@@ -76,11 +76,25 @@ def apply_override(config: Dict[str, Any], key: str, value: str) -> Dict[str, An
     """Applies a key-value override to the configuration."""
     keys = key.split(".")
     current = config
-    for k in keys[:-1]:   # Navigate to the nested dictionary
+
+    for i, k in enumerate(keys[:-1]):
+        # Handle dictionary keys
+        if k.isdigit():
+            k = int(k)  # Convert index to integer
+            if not isinstance(current, dict) or k not in current:
+                raise ValueError(f"Invalid key '{k}' in override '{key}'")
         current = current.setdefault(k, {})
-    # Convert value to correct type
-    current[keys[-1]] = parse_value(value)   # Update the key
+
+    # Handle the final key
+    final_key = keys[-1]
+    if final_key.isdigit():
+        final_key = int(final_key)
+        if not isinstance(current, dict) or final_key not in current:
+            raise ValueError(f"Invalid key '{final_key}' in override '{key}'")
+    current[final_key] = parse_value(value)
+
     return config
+
 
 
 def parse_value(value: str) -> Any:
