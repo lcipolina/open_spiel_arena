@@ -44,9 +44,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
    - To simulate a single game:
      ```bash
       # From a JSON FILE
-      python scripts/simulation.py --config config.json
+      python3 scripts/simulation.py --config config.json
 
-      # Run with default config (Tic-Tac-Toe, 5 rounds)
+      # Run with default config (Tic-Tac-Toe, 4 rounds)
       python3 scripts/simulate.py
 
       # Human vs LLM
@@ -65,8 +65,8 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 2. Command-line options:
    - `--config`: Specify a JSON configuration file or raw JSON string.
                  Example: python scripts/simulation.py --config config.json
-   - `--override`: Specify the types of players participating in the game. Acceptable values are `human`, `random_bot`, or `llm`. Provide one type per player, separated by spaces.
-                 Example: python scripts/simulation.py --override num_episodes=10 env_config.game_name=tic_tac_toe
+   - `--override`: Allows to modify specific parts of the default configuration.
+                 Example: python3 scripts/simulate.py --override num_episodes=5 env_config.game_name=tic_tac_toe
 ---
 
 ## 2. Directory Structure

@@ -10,7 +10,7 @@ import logging
 import random
 from typing import Dict, Any, List
 
-from configs.configs import build_cli_parser, parse_config
+from configs.configs import build_cli_parser, parse_config, validate_config
 from envs.open_spiel_env import OpenSpielEnv
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
@@ -20,10 +20,9 @@ from games import loaders  # Adds the games to the registry dictionary
 from utils.results_utils import print_total_scores
 
 
-
 def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
     """Initializes the game environment."""
-    player_types = [agent["type"] for agent in config["agents"]]
+    player_types = [agent["type"] for _, agent in sorted(config["agents"].items())]
     return OpenSpielEnv(
         game=game,
         game_name=config["env_config"]["game_name"],
@@ -48,7 +47,8 @@ def create_agents(config: Dict[str, Any]) -> List:
     # Instead of using a Dic, we use a list. This simplifies the naming and retrieval (?)
     agents = []
 
-    for idx, agent_cfg in enumerate(config["agents"]):
+    # Iterate over agents in numerical order
+    for _, agent_cfg in sorted(config["agents"].items()):
         agent_type = agent_cfg["type"].lower()
 
         if agent_type == "human":
@@ -65,17 +65,6 @@ def create_agents(config: Dict[str, Any]) -> List:
 
     return agents
 
-
-def validate_config(config: Dict[str, Any]) -> None:
-    """Validates the configuration."""
-    game_name = config["env_config"]["game_name"]
-    num_players = registry.get_game_loader(game_name)().num_players()
-
-    if len(config["agents"]) != num_players:
-        raise ValueError(
-            f"Game '{game_name}' requires {num_players} players, "
-            f"but {len(config['agents'])} agents were provided."
-        )
 
 def run_simulation(args) -> Dict[str, Any]:
     """
@@ -121,7 +110,7 @@ def run_simulation(args) -> Dict[str, Any]:
     all_episode_results, total_scores = simulate_episodes(env, agents, config)
 
     return {
-        "game": game_name,
+        "game_name": game_name,
         "all_episode_results": all_episode_results,
         "total_scores": total_scores
     }
@@ -181,7 +170,7 @@ def main():
 
     # Run the simulation
     result_dict = run_simulation(args)
-    print_total_scores(result_dict['total_scores'])
+    print_total_scores(result_dict["game_name"],result_dict['total_scores'])
 
 
 if __name__ == "__main__":

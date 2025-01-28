@@ -55,7 +55,7 @@ def parse_agents(agent_strings: list) -> list:
     return agents
 '''
 
-def print_total_scores(total_scores):
+def print_total_scores(game_name,total_scores):
     """
     Print total scores for all players in a readable format.
 
@@ -63,7 +63,7 @@ def print_total_scores(total_scores):
         total_scores: A dictionary where keys are player IDs and values are
                       their total scores across episodes.
     """
-    print("Total scores across all episodes:")
+    print(f"Total scores across all episodes for game {game_name}:")
     for player, score in total_scores.items():
         print(f"Player {player}: {score}")
 

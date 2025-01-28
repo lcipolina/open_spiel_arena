@@ -5,30 +5,31 @@ configs.py - Simple configuration system with JSON and key-value CLI overrides.
 import argparse
 import json
 from typing import Any, Dict
+from games.registry import registry # Initilizes an empty registry dictionary
 
 
 def default_simulation_config() -> Dict[str, Any]:
     """Returns the default simulation configuration."""
     return {
-        "env_config": {
-            "game_name": "tic_tac_toe",
-            "max_game_rounds": None,  # For iterated games
-        },
-        "num_episodes": 4,
-        "seed": 42,
-        "agents": [
-            {"type": "human", "name": "Player 1"},
-            {"type": "random", "name": "Player 2"},
-        ],
-        "alternate_first_player": True,
-        "log_level": "INFO",
-    }
+    "env_config": {
+        "game_name": "tic_tac_toe",
+        "max_game_rounds": None,
+    },
+    "num_episodes": 4,
+    "seed": 42,
+    "agents": {
+        0: {"type": "human", "model": None},
+        1: {"type": "random", "model": None},
+    },
+    "alternate_first_player": True,
+    "log_level": "INFO",
+}
 
 
 def build_cli_parser() -> argparse.ArgumentParser:
     """Creates a simple CLI parser for key-value overrides and JSON config."""
     parser = argparse.ArgumentParser(
-        description="Simulation Configuration",
+        description="Game Simulation Configuration",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -47,9 +48,11 @@ def build_cli_parser() -> argparse.ArgumentParser:
 
 def parse_config(args: argparse.Namespace) -> Dict[str, Any]:
     """Parses the configuration, merging JSON config and CLI overrides."""
+
+    # Default config
     config = default_simulation_config()
 
-    # Load JSON config
+    # Update with JSON config (if provided)
     if args.config:
         if args.config.strip().startswith("{"):
             # Raw JSON string
@@ -60,7 +63,7 @@ def parse_config(args: argparse.Namespace) -> Dict[str, Any]:
                 json_config = json.load(f)
         config.update(json_config)
 
-    # Apply key-value overrides
+    # Apply CLI key-value overrides (if provided)
     if args.override:
         for override in args.override:
             key, value = override.split("=", 1)
@@ -73,10 +76,10 @@ def apply_override(config: Dict[str, Any], key: str, value: str) -> Dict[str, An
     """Applies a key-value override to the configuration."""
     keys = key.split(".")
     current = config
-    for k in keys[:-1]:
+    for k in keys[:-1]:   # Navigate to the nested dictionary
         current = current.setdefault(k, {})
     # Convert value to correct type
-    current[keys[-1]] = parse_value(value)
+    current[keys[-1]] = parse_value(value)   # Update the key
     return config
 
 
@@ -86,3 +89,24 @@ def parse_value(value: str) -> Any:
         return json.loads(value)  # Automatically parses JSON types
     except json.JSONDecodeError:
         return value  # Leave as string if parsing fails
+
+
+def validate_config(config: Dict[str, Any]) -> None:
+    """Validates the configuration."""
+    game_name = config["env_config"]["game_name"]
+    num_players = registry.get_game_loader(game_name)().num_players()
+
+    # Check if the number of agents matches the number of players
+    if len(config["agents"]) != num_players:
+        raise ValueError(
+            f"Game '{game_name}' requires {num_players} players, "
+            f"but {len(config['agents'])} agents were provided."
+        )
+
+    # Validate agent types
+    valid_agent_types = {"human", "random", "llm"}
+    for player, agent in config["agents"].items():
+        if agent["type"] not in valid_agent_types:
+            raise ValueError(f"Invalid agent type for {player}: {agent['type']} (must be one of {valid_agent_types})")
+        if agent["type"] == "llm" and not agent.get("model"):
+            raise ValueError(f"LLM agent '{player}' must specify a model (e.g., gpt-4)")
