@@ -12,13 +12,13 @@ def default_simulation_config() -> Dict[str, Any]:
     """Returns the default simulation configuration."""
     return {
     "env_config": {
-        "game_name": "connect_four",
+        "game_name": "matrix_rps",
         "max_game_rounds": None,
     },
     "num_episodes": 1,
     "seed": 42,
     "agents": {
-        0: {"type": "random", "model": None},
+        0: {"type": "llm", "model": "gpt2"},
         1: {"type": "human", "model": "None"},
     },
     "alternate_first_player": True,

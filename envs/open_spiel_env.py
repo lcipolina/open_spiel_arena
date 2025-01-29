@@ -4,12 +4,44 @@ open_spiel_env.py
 Implements a Gym-like environment on top of an OpenSpiel game.
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, Union
 import random
-from envs.base_env import BaseEnv, PlayerId
+from abc import ABC
+from enum import Enum, unique
+
+@unique
+class PlayerId(Enum):
+    CHANCE = -1
+    SIMULTANEOUS = -2
+    INVALID = -3
+    TERMINAL = -4
+    MEAN_FIELD = -5
+
+    @classmethod
+    def from_value(cls, value: int):
+        """Returns the PlayerId corresponding to a given integer value.
+
+        Args:
+            value (int): The numerical value to map to a PlayerId.
+
+        Returns:
+            PlayerId: The matching enum member, or raises a ValueError if invalid.
+        """
+        for member in cls:
+            if member.value == value:
+                return member
+        if value >= 0:  # Positive integers represent default players
+            return None  # No enum corresponds to these values directly
+        raise ValueError(f"Unknown player ID value: {value}")
 
 
-class OpenSpielEnv(BaseEnv):
+class PlayerType(Enum):
+    HUMAN = "human"
+    RANDOM_BOT = "random_bot"
+    LLM = "llm"
+    SELF_PLAY = "self_play"
+
+class OpenSpielEnv(ABC):
     """Environment for OpenSpiel.
 
     Handles common functionality like state transitions, outcomes recording,
@@ -70,7 +102,14 @@ class OpenSpielEnv(BaseEnv):
             #raise NotImplementedError("Chance node handling not implemented in step().")
 
         # Apply the action
-        self.state.apply_action(action)
+       # self.state.apply_action(action)
+
+        # Apply actions  #TODO: chek if this is correct!
+        if self.state.is_simultaneous_node():
+                for player, player_action in enumerate(action):
+                    self.state.apply_action(player_action)
+            else:
+                self.state.apply_action(action[0])
 
         # Stepwise reward for each agent
         reward_dict = self._compute_reward()
@@ -117,17 +156,28 @@ class OpenSpielEnv(BaseEnv):
     # Additional methods
     # ----------------------------------------------------------------
 
+    def normalize_player_id(self, player_id: Union[int, PlayerId]) -> int:
+        """Normalize player_id to its integer value for consistent comparisons.
+
+           This is needed as OpenSpiel has ambiguous representation of the playerID
+
+        Args:
+            player_id (Union[int, PlayerId]): The player ID, which can be an
+                integer or a PlayerId enum instance.
+
+        Returns:
+            int: The integer value of the player ID.
+        """
+        if isinstance(player_id, PlayerId):
+            return player_id.value  # Extract the integer value from the enum
+        return player_id  # If already an integer, return it as is
+
+
     def _handle_chance_node(self):
         outcomes, probabilities = zip(*self.state.chance_outcomes())
         chosen_outcome = self.random_generator.choices(outcomes, probabilities, k=1)[0]
         self.state.apply_action(chosen_outcome)
 
-    def _collect_actions_simultaneous(self) -> List[int]:
-        """Collects actions for all players in a simultaneous-move game."""
-        return [
-            random.choice(self.state.legal_actions(p))
-            for p in range(self.game.num_players())
-        ]
 
     def _state_to_observation(self) -> Dict[str, Any]:
         return {

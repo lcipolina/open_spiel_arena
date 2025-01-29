@@ -43,6 +43,8 @@ class GameRegistration:
             return cls # Return the class unmodified
         return decorator
 
+    # TODO: (lck) think this can be deleted
+    '''
     def get_display_name(self, name: str) -> str:
         """
         Get human-readable display name for a game.
@@ -59,6 +61,7 @@ class GameRegistration:
         if name not in self._registry:
             raise ValueError(f"Game '{name}' not registered.")
         return self._registry[name]["display_name"]
+    '''
 
     def get_game_loader(self, name: str) -> Callable:
         """
@@ -89,26 +92,33 @@ class GameRegistration:
         return getattr(cls, method_name)
 
 
-
-    def get_simulator_class(self, name: str) -> Type:
+    def get_simulator_instance(self,
+                                game_name,
+                                game,
+                                player_types,
+                                max_game_rounds=None):
         """
-        Get the simulator class for a registered game.
+        Get an initialized simulator instance for a registered game.
 
         Args:
             name: The internal name of the game.
+            *args: Positional arguments for the simulator's constructor.
+            **kwargs: Keyword arguments for the simulator's constructor.
 
         Returns:
-            The simulator class.
+            An initialized simulator instance.
 
         Raises:
             ValueError: If the game is not registered.
         """
-        if name not in self._registry:
+        if game_name not in self._registry:
             available = ", ".join(self._registry.keys())
-            raise ValueError(f"Game '{name}' not found. Available games: {available}")
+            raise ValueError(f"Game '{game_name}' not found. Available games: {available}")
 
-        module_path, class_name = self._registry[name]["simulator_path"].rsplit(".", 1)
-        return getattr(import_module(module_path), class_name)
+        module_path, class_name = self._registry[game_name]["simulator_path"].rsplit(".", 1)
+        simulator_class = getattr(import_module(module_path), class_name)
+
+        return simulator_class(game, game_name, player_types, max_game_rounds)
 
 
 # Singleton registry instance

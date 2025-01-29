@@ -21,16 +21,21 @@ from games import loaders  # Adds the games to the registry dictionary
 from utils.results_utils import print_total_scores
 
 
-def initialize_environment(game, config: Dict[str, Any]) -> OpenSpielEnv:
+def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
     """Initializes the game environment."""
-    player_types = [agent["type"] for _, agent in sorted(config["agents"].items())]
-    return OpenSpielEnv(
-        game=game,
-        game_name=config["env_config"]["game_name"],
-        player_types=player_types,
-        max_game_rounds=config["env_config"].get("max_game_rounds"), # For iterrated games
-    )
 
+    # Load the pyspiel game object
+    player_types = [agent["type"] for _, agent in sorted(config["agents"].items())]
+    game_name = config["env_config"]["game_name"]
+    game_loader = registry.get_game_loader(game_name)()
+
+    # Load the environment simulator instance
+    return registry.get_simulator_instance(
+        game_name=game_name,
+        game=game_loader,
+        player_types= player_types,
+        max_game_rounds=config["env_config"].get("max_game_rounds") # For iterated games
+    )
 
 def create_agents(config: Dict[str, Any]) -> List:
     """Create agent instances based on configuration
@@ -67,6 +72,74 @@ def create_agents(config: Dict[str, Any]) -> List:
 
     return agents
 
+def normalize_player_id(self,player_id):
+    """Normalize player_id to its integer value for consistent comparisons.
+
+    This is needed as OpenSpiel has ambiguous representation of the playerID
+
+    Args:
+        player_id (Union[int, PlayerId]): The player ID, which can be an
+                integer or a PlayerId enum instance.
+    Returns:
+            int: The integer value of the player ID.
+        """
+    if isinstance(player_id, PlayerId):
+        return player_id.value  # Extract the integer value from the enum
+    return player_id  # If already an integer, return it as is
+
+def _get_action(
+    env: OpenSpielEnv, agents_list: List[Any], observation: Dict[str, Any]
+) -> List[int]:
+    """
+    Computes actions for all players involved in the current step.
+
+    Args:
+        env (OpenSpielEnv): The game environment.
+        agents_list (List[Any]): List of agents corresponding to the players.
+        observation (Dict[str, Any]): The current observation, including legal actions.
+
+    Returns:
+        List[int]: The action(s) selected by the players.
+    """
+    # Handle simultaneous move games
+    if env.state.is_simultaneous_node():
+        return [
+            agent.compute_action(
+                legal_actions=observation["legal_actions"][player],
+                state=observation.get("state_string")
+            )
+            for player, agent in enumerate(agents_list)
+        ]
+
+    # Handle sequential move games
+    current_player = env.state.current_player()
+    player_id = normalize_player_id(current_player)
+    agent = agents_list[current_player]
+    return [
+        agent.compute_action(
+            legal_actions=observation["legal_actions"],
+            state=observation.get("state_string")
+        )
+    ]
+
+
+# Collect actions
+                current_player = state.current_player()
+                player_id = self.normalize_player_id(current_player)
+
+                if player_id == PlayerId.CHANCE.value:
+                    # Handle chance nodes where the environment acts randomly.
+                    self._handle_chance_node(state)
+                elif player_id == PlayerId.SIMULTANEOUS.value:
+                     # Handle simultaneous moves for all players.
+                    actions = self._collect_actions(state)
+                    state.apply_actions(actions)
+                elif player_id == PlayerId.TERMINAL.value:
+                    break
+                elif current_player >= 0:  # Default players (turn-based)
+                    legal_actions = state.legal_actions(current_player)
+                    action = self._get_action(current_player, state, legal_actions)
+                    state.apply_action(action)
 
 def run_simulation(args) -> Dict[str, Any]:
     """
@@ -90,20 +163,12 @@ def run_simulation(args) -> Dict[str, Any]:
     logger = logging.getLogger(__name__)
     logger.info("Starting simulation for game: %s", game_name)
 
-    # 1. Set up random seed if specified
+    # Set up random seed
     if config.get("seed") is not None:
         random.seed(config["seed"])
 
-    # TODO: FOR NOW THE GAME SIMULATOR IS NOT USED
-    # 2. Load the pyspiel game object
-    try:
-        loader = registry.get_game_loader(game_name)
-        game = loader()
-    except ValueError as e:
-        raise RuntimeError(f"Game loading failed: {str(e)}") from e
-
     # Initialize environment
-    env = initialize_environment(game, config)
+    env = initialize_environment(config)
 
     # Agent setup
     agents = create_agents(config)
@@ -120,7 +185,9 @@ def run_simulation(args) -> Dict[str, Any]:
         "total_scores": total_scores
     }
 
-def simulate_episodes(env, agents, config):
+def simulate_episodes(
+    env: OpenSpielEnv, agents: List[Any], config: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Simulate multiple episodes.
 
@@ -145,13 +212,7 @@ def simulate_episodes(env, agents, config):
 
         # Play the game until it ends
         while not done:
-            current_player = env.state.current_player()
-            agent = agents[current_player]
-            action = agent.compute_action(legal_actions=observation['legal_actions'],
-                                        state= observation['state_string']
-                        )
-
-            # Step through the environment
+            action = _get_action(env, agents, observation)
             observation, rewards_dict, done, info = env.step(action)
 
         # Update results when the episode is finished
