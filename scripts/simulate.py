@@ -9,6 +9,7 @@ Supports both CLI arguments and config dictionaries.
 import logging
 import random
 from typing import Dict, Any, List
+from enum import Enum, unique
 
 from configs.configs import build_cli_parser, parse_config, validate_config
 from envs.open_spiel_env import OpenSpielEnv
@@ -20,9 +21,16 @@ from games.registry import registry # Initilizes an empty registry dictionary
 from games import loaders  # Adds the games to the registry dictionary
 from utils.results_utils import print_total_scores
 
+'''
+@unique
+class PlayerId(Enum):
+    CHANCE = -1
+    SIMULTANEOUS = -2
+    INVALID = -3
+'''
 
 def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
-    """Initializes the game environment."""
+    """Loads the game from pyspiel and initializes the game environment simulator."""
 
     # Load the pyspiel game object
     player_types = [agent["type"] for _, agent in sorted(config["agents"].items())]
@@ -72,6 +80,8 @@ def create_agents(config: Dict[str, Any]) -> List:
 
     return agents
 
+#TODO: this is needed because of OpenSpiels ambiguous representation of the playerID - to check if we can delete
+'''
 def normalize_player_id(self,player_id):
     """Normalize player_id to its integer value for consistent comparisons.
 
@@ -86,6 +96,7 @@ def normalize_player_id(self,player_id):
     if isinstance(player_id, PlayerId):
         return player_id.value  # Extract the integer value from the enum
     return player_id  # If already an integer, return it as is
+'''
 
 def _get_action(
     env: OpenSpielEnv, agents_list: List[Any], observation: Dict[str, Any]
@@ -101,28 +112,40 @@ def _get_action(
     Returns:
         List[int]: The action(s) selected by the players.
     """
+
+    # Handle sequential move games
+    current_player = env.state.current_player()
+   # player_id = normalize_player_id(current_player)
+
     # Handle simultaneous move games
     if env.state.is_simultaneous_node():
         return [
             agent.compute_action(
                 legal_actions=observation["legal_actions"][player],
-                state=observation.get("state_string")
+                state=observation.get("state_string"),
+                info = observation.get("info",None)
             )
             for player, agent in enumerate(agents_list)
         ]
 
-    # Handle sequential move games
-    current_player = env.state.current_player()
-    player_id = normalize_player_id(current_player)
-    agent = agents_list[current_player]
-    return [
-        agent.compute_action(
-            legal_actions=observation["legal_actions"],
-            state=observation.get("state_string")
-        )
-    ]
+    # Handle chance nodes where the environment acts randomly.
+    elif env.state.is_chance_node():
+        outcomes, probabilities = zip(*env.state.chance_outcomes())
+        action = random.choices(outcomes, probabilities, k=1)[0]
+        return [action]
 
 
+    elif current_player >= 0:  # Default players (turn-based)
+        agent = agents_list[current_player]
+        return [
+            agent.compute_action(
+                legal_actions=observation["legal_actions"],
+                state=observation.get("state_string"),
+                info = observation.get("info",None)
+            )
+        ]
+
+'''
 # Collect actions
                 current_player = state.current_player()
                 player_id = self.normalize_player_id(current_player)
@@ -140,6 +163,7 @@ def _get_action(
                     legal_actions = state.legal_actions(current_player)
                     action = self._get_action(current_player, state, legal_actions)
                     state.apply_action(action)
+'''
 
 def run_simulation(args) -> Dict[str, Any]:
     """
@@ -219,7 +243,6 @@ def simulate_episodes(
         all_episode_results.append({
             "episode": episode,
             "rewards": rewards_dict,
-            "final_scores": list(info.values())[0]
         })
 
         for player, score in rewards_dict.items():

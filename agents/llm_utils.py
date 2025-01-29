@@ -6,17 +6,18 @@ for decision-making in game simulations.
 """
 
 from functools import lru_cache
-from typing import List, Any
+from typing import List, Any, Optional
 import random
 from agents.llm_registry import LLM_REGISTRY
 
-def generate_prompt(game_name: str, state: str, legal_actions: List[int]) -> str:
+def generate_prompt(game_name: str, state: str, legal_actions: List[int], info: Optional[str] = None) -> str:
     """Generate a natural language prompt for the LLM to decide the next move.
 
     Args:
         game_name: The name of the game.
         state: The current game state as a string.
         legal_actions: The list of legal actions available to the player.
+        info: Additional information to include in the prompt (optional).
 
     Returns:
         str: A prompt string for the LLM.
@@ -25,6 +26,7 @@ def generate_prompt(game_name: str, state: str, legal_actions: List[int]) -> str
          f"You are playing the Game: {game_name}\n"
          f"State:\n{state}\n"
          f"Legal actions: {legal_actions}\n"
+         f"{info}\n" if info else ""
          "Your task is to choose the next action (provide the action number answer with only the number of your next move from the list of legal actions. Do not provide any additional text or explanation."
      )
     return prompt

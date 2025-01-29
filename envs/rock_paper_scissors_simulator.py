@@ -23,6 +23,7 @@ class RockPaperScissorsSimulator(OpenSpielEnv):
         """
         super().__init__(game, game_name, player_types, max_game_rounds)
 
+    '''
     def get_observation(self, state) -> Dict[str, Any]:
         """
         Generate the observation for RPS.
@@ -38,4 +39,21 @@ class RockPaperScissorsSimulator(OpenSpielEnv):
             "legal_actions": [
                 [0, 1, 2] for _ in range(state.num_players())
             ]  # Actions: Rock (0), Paper (1), Scissors (2)
+        }
+    '''
+
+    def _state_to_observation(self) -> Dict[str, Any]:
+        """
+        Generate the observation for Rock-Paper-Scissors.
+
+        Returns:
+            Dict[str, Any]: Observation dictionary containing:
+                - state_string: A placeholder for state description (None in RPS).
+                - legal_actions: A list of valid actions for each player.
+                - info: A string providing action descriptions.
+        """
+        return {
+            "state_string": None,  # RPS has no meaningful observation string
+            "legal_actions": [[0, 1, 2] for _ in range(self.state.num_players())],
+            "info": "Actions: Rock (0), Paper (1), Scissors (2)"  # Fixed string formatting
         }

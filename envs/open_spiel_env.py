@@ -4,11 +4,12 @@ open_spiel_env.py
 Implements a Gym-like environment on top of an OpenSpiel game.
 """
 
-from typing import Dict, Any, Union
+from typing import Any, Dict, List, Tuple, Union
 import random
 from abc import ABC
 from enum import Enum, unique
 
+'''
 @unique
 class PlayerId(Enum):
     CHANCE = -1
@@ -33,13 +34,15 @@ class PlayerId(Enum):
         if value >= 0:  # Positive integers represent default players
             return None  # No enum corresponds to these values directly
         raise ValueError(f"Unknown player ID value: {value}")
+'''
 
-
+'''
 class PlayerType(Enum):
     HUMAN = "human"
     RANDOM_BOT = "random_bot"
     LLM = "llm"
     SELF_PLAY = "self_play"
+'''
 
 class OpenSpielEnv(ABC):
     """Environment for OpenSpiel.
@@ -78,38 +81,24 @@ class OpenSpielEnv(ABC):
         self.rewards = {name: 0 for name in self.player_types}
         return self._state_to_observation()
 
-    def step(self, action: int):
-        """
-        Applies the given action to the environment, then returns (observation, reward, done, info).
+    def step(self, action: Union[int, List[int]]) -> Tuple[Any, float, bool, Dict[str, Any]]:
+        """Applies the given action(s) to the environment and returns the new state.
 
         Args:
-            action (int): The action to apply. Should be chosen by an external agent.
+            action (Union[int, List[int]]): The action to apply. If the game is
+                turn-based, it is an integer. If the game is simultaneous-move,
+                it is a list of actions (one for each player).
 
         Returns:
-            observation (Any): Observation after the action.
-            reward (float): The reward for this step.
-            done (bool): Whether the episode is finished.
-            info (dict): Additional diagnostic information (e.g. final scores if done).
+            Tuple[Any, float, bool, Dict[str, Any]]: A tuple containing:
+                - observation (Any): The resulting state or observation after the action.
+                - reward (float): The reward obtained from this step.
+                - done (bool): Whether the episode has ended.
+                - info (Dict[str, Any]): Additional diagnostic information (e.g., final scores if done).
         """
-        if self.state.is_chance_node():  #TODO (lck look into this)
-            # If it's a chance node, handle it automatically.
-            # In many OpenSpiel games, chance nodes are built into the state transitions, but
-            # if you need to manage them manually, do it here. For now, let's raise an error
-             # Potentially you do not apply_action(...) here because chance is random
-            # We'll raise an error to remind you to implement it if needed
-            print("Chance node detected. REVISE THIS!")
-            self._handle_chance_node()
-            #raise NotImplementedError("Chance node handling not implemented in step().")
 
         # Apply the action
-       # self.state.apply_action(action)
-
-        # Apply actions  #TODO: chek if this is correct!
-        if self.state.is_simultaneous_node():
-                for player, player_action in enumerate(action):
-                    self.state.apply_action(player_action)
-            else:
-                self.state.apply_action(action[0])
+        self.state.apply_actions(action)
 
         # Stepwise reward for each agent
         reward_dict = self._compute_reward()
@@ -149,13 +138,13 @@ class OpenSpielEnv(ABC):
         self.state.set_seed(seed)
 
     def close(self):
-        """Cleanup if needed."""
+        """Cleanup."""
         pass
 
     # ----------------------------------------------------------------
     # Additional methods
     # ----------------------------------------------------------------
-
+    '''
     def normalize_player_id(self, player_id: Union[int, PlayerId]) -> int:
         """Normalize player_id to its integer value for consistent comparisons.
 
@@ -171,7 +160,7 @@ class OpenSpielEnv(ABC):
         if isinstance(player_id, PlayerId):
             return player_id.value  # Extract the integer value from the enum
         return player_id  # If already an integer, return it as is
-
+    '''
 
     def _handle_chance_node(self):
         outcomes, probabilities = zip(*self.state.chance_outcomes())

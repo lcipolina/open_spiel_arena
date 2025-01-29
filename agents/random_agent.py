@@ -5,7 +5,7 @@ Implements an agent that picks a random legal action.
 """
 
 import random
-from typing import List, Any
+from typing import List
 from .base_agent import BaseAgent
 
 class RandomAgent(BaseAgent):
@@ -21,14 +21,14 @@ class RandomAgent(BaseAgent):
         """
         self.random_generator = random.Random(seed)
 
-
-    def compute_action(self, legal_actions: List[int], state: Any) -> int:
+    def compute_action(self, legal_actions: List[int], *args, **kwargs) -> int:
         """
         Randomly picks a legal action.
 
         Args:
             legal_actions (List[int]): The set of legal actions for the current player.
-            state (Any): The current OpenSpiel state (not used).
+            *args: Unused additional arguments for consistency.
+            **kwargs: Unused keyword arguments (e.g., state, info).
 
         Returns:
             int: A randomly selected action.
