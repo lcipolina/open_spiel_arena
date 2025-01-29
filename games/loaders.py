@@ -60,20 +60,8 @@ class KuhnPokerLoader(GameLoader):
     def load():
         return pyspiel.load_game("kuhn_poker")
 
-@registry.register(
-    name="matching_pennies",
-    module_path="games.loaders",
-    class_name="MatchingPenniesLoader",
-    simulator_path="envs.matching_pennies_simulator.MatchingPenniesSimulator",
-    display_name="Matching Pennies (3P)"
-)
-class MatchingPenniesLoader(GameLoader):
-    @staticmethod
-    def load():
-        return pyspiel.load_game("matching_pennies_3p")
 
-
-# Prisoner's Dilemma and Rock-Paper-Scissors as matrix games
+# Prisoner's Dilemma, Matching Pennies and Rock-Paper-Scissors as matrix games
 
 @registry.register(
     name="matrix_pd",
@@ -88,10 +76,22 @@ class MatrixPDLoader(GameLoader):
         return pyspiel.load_game("matrix_pd")
 
 @registry.register(
+    name="matching_pennies",
+    module_path="games.loaders", #pyspiel loader
+    class_name="MatchingPenniesLoader",
+    simulator_path="envs.matrix_game_simulator.MatrixGameSimulator", # environment
+    display_name="Matching Pennies (3P)"
+)
+class MatchingPenniesLoader(GameLoader):
+    @staticmethod
+    def load():
+        return pyspiel.load_game("matching_pennies_3p")
+
+@registry.register(
     name="matrix_rps",
     module_path="games.loaders",
     class_name="MatrixRPSLoader",
-    simulator_path="envs.rock_paper_scissors_simulator.RockPaperScissorsSimulator",
+    simulator_path="envs.matrix_game_simulator.MatrixGameSimulator",
     display_name="Matrix Rock-Paper-Scissors"
 )
 class MatrixRPSLoader(GameLoader):

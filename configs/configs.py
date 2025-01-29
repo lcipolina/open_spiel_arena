@@ -12,7 +12,7 @@ def default_simulation_config() -> Dict[str, Any]:
     """Returns the default simulation configuration."""
     return {
     "env_config": {
-        "game_name": "matrix_pd",  # matrix_rps, tic_tac_toe, connect_four, matrix_pd ,matching_pennies_3p
+        "game_name": "matching_pennies",  # matrix_rps, tic_tac_toe, connect_four, matrix_pd, matching_pennies (requires 3 agents)
         "max_game_rounds": None,
     },
     "num_episodes": 1,
@@ -20,6 +20,7 @@ def default_simulation_config() -> Dict[str, Any]:
     "agents": {
         0: {"type": "llm", "model": "gpt2"},
         1: {"type": "human", "model": "None"},
+        2: {"type": "random", "model": "None"}, # for matching pennies
     },
     "alternate_first_player": True,
     "log_level": "INFO",

@@ -8,7 +8,7 @@ from typing import Any, Dict
 from envs.open_spiel_env import OpenSpielEnv
 
 class ConnectFourSimulator(OpenSpielEnv):
-    """Environment Simulator for Connect Four."""
+    """Environment Simulator for Connect Four (turn based game)."""
 
     def __init__(self, game: Any,
                  game_name: str,

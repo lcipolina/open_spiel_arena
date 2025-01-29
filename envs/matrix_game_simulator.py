@@ -46,13 +46,15 @@ class MatrixGameSimulator(OpenSpielEnv):
                 - info: A string providing action descriptions.
         """
 
-        # TODO: confirm why legal actions come as [0,1,2,3] instead of [0,1]
-
+        # Get available actions for a single player (assume identical for all players)
         row_action_ids = self.state.legal_actions(0)  # Get action indices (0,1)
         row_action_names = [self.state.action_to_string(0, action) for action in row_action_ids]
+        action_description = ", ".join(
+                    [f"{name} ({idx})" for name, idx in zip(row_action_names, row_action_ids)]
+                )
 
         return {
-            "state_string": None,  # No meaningful observation string
-            "legal_actions": [row_action_ids for _ in range(self.state.num_players())],
-            "info": f"Actions: {row_action_names}"
+            "state_board": None,  # No meaningful observation in simultaneous games
+            "legal_actions": [row_action_ids for _ in range(self.state.num_players())],  # Same for all players,
+            "info": f"Actions available: {action_description}"
         }
