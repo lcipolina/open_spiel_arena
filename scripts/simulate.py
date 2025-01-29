@@ -8,7 +8,7 @@ Supports both CLI arguments and config dictionaries.
 
 import logging
 import random
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 from enum import Enum, unique
 
 from configs.configs import build_cli_parser, parse_config, validate_config
@@ -100,7 +100,7 @@ def normalize_player_id(self,player_id):
 
 def _get_action(
     env: OpenSpielEnv, agents_list: List[Any], observation: Dict[str, Any]
-) -> List[int]:
+) -> Union[List[int], int]:
     """
     Computes actions for all players involved in the current step.
 
@@ -110,12 +110,13 @@ def _get_action(
         observation (Dict[str, Any]): The current observation, including legal actions.
 
     Returns:
-        List[int]: The action(s) selected by the players.
+        int: The action selected by the current player (turn-based gamees).
+        List[int]: The actions selected by the players (simultaneous move games).
     """
 
     # Handle sequential move games
     current_player = env.state.current_player()
-   # player_id = normalize_player_id(current_player)
+   # player_id = normalize_player_id(current_player) #TODO: delete this!
 
     # Handle simultaneous move games
     if env.state.is_simultaneous_node():
@@ -132,18 +133,16 @@ def _get_action(
     elif env.state.is_chance_node():
         outcomes, probabilities = zip(*env.state.chance_outcomes())
         action = random.choices(outcomes, probabilities, k=1)[0]
-        return [action]
-
+        return action
 
     elif current_player >= 0:  # Default players (turn-based)
         agent = agents_list[current_player]
-        return [
-            agent.compute_action(
+        return agent.compute_action(
                 legal_actions=observation["legal_actions"],
                 state=observation.get("state_string"),
                 info = observation.get("info",None)
             )
-        ]
+
 
 '''
 # Collect actions

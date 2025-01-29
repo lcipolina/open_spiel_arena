@@ -10,26 +10,34 @@ from typing import List, Any, Optional
 import random
 from agents.llm_registry import LLM_REGISTRY
 
-def generate_prompt(game_name: str, state: str, legal_actions: List[int], info: Optional[str] = None) -> str:
+
+def generate_prompt(game_name: str,
+                    state: str,
+                    legal_actions: List[int],
+                     info: Optional[str] = None) -> str:
     """Generate a natural language prompt for the LLM to decide the next move.
 
     Args:
-        game_name: The name of the game.
-        state: The current game state as a string.
-        legal_actions: The list of legal actions available to the player.
-        info: Additional information to include in the prompt (optional).
+        game_name (str): The name of the game.
+        state (str): The current game state as a string.
+        legal_actions (List[int]): The list of legal actions available to the player.
+        info (Optional[str]): Additional information to include in the prompt (optional).
 
     Returns:
         str: A prompt string for the LLM.
     """
-    prompt =  (
-         f"You are playing the Game: {game_name}\n"
-         f"State:\n{state}\n"
-         f"Legal actions: {legal_actions}\n"
-         f"{info}\n" if info else ""
-         "Your task is to choose the next action (provide the action number answer with only the number of your next move from the list of legal actions. Do not provide any additional text or explanation."
-     )
-    return prompt
+    info_text = f"{info}\n" if info else ""  # ✅ Separate conditional string assignment
+
+    return (
+        f"You are playing the Game: {game_name}\n"
+        f"State:\n{state}\n"
+        f"Legal actions: {legal_actions}\n"
+        f"{info_text}"
+        "Your task is to choose the next action. Provide only the number of "
+        "your next move from the list of legal actions. Do not provide any additional text or explanation."
+    )
+
+
 
 
 @lru_cache(maxsize=128)

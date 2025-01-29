@@ -4,7 +4,7 @@ This module implements the RockPaperScissorsSimulator class, which simulates gam
 Rock-Paper-Scissors using the OpenSpiel framework.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 from envs.open_spiel_env import OpenSpielEnv
 
 class RockPaperScissorsSimulator(OpenSpielEnv):
@@ -23,24 +23,15 @@ class RockPaperScissorsSimulator(OpenSpielEnv):
         """
         super().__init__(game, game_name, player_types, max_game_rounds)
 
-    '''
-    def get_observation(self, state) -> Dict[str, Any]:
-        """
-        Generate the observation for RPS.
+
+    def apply_action(self, action: List[int]):
+        """Applies the given list of actions to the environment.
 
         Args:
-            state: The current game state.
-
-        Returns:
-            Dict[str, Any]: Observation with legal actions for all players.
+            action: If the game is simultaneous-move,
+                it is a list of actions (one for each player).
         """
-        return {
-            "state_string": None,  # RPS has no meaningful observation string
-            "legal_actions": [
-                [0, 1, 2] for _ in range(state.num_players())
-            ]  # Actions: Rock (0), Paper (1), Scissors (2)
-        }
-    '''
+        self.state.apply_actions(action)
 
     def _state_to_observation(self) -> Dict[str, Any]:
         """

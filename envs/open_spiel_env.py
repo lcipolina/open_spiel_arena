@@ -81,6 +81,14 @@ class OpenSpielEnv(ABC):
         self.rewards = {name: 0 for name in self.player_types}
         return self._state_to_observation()
 
+    def apply_action(self, action: int):
+        """Applies the given action to the environment.
+
+        Args:
+            action int: If the game is turn-based, it is an integer.
+        """
+        self.state.apply_action(action)
+
     def step(self, action: Union[int, List[int]]) -> Tuple[Any, float, bool, Dict[str, Any]]:
         """Applies the given action(s) to the environment and returns the new state.
 
@@ -98,7 +106,7 @@ class OpenSpielEnv(ABC):
         """
 
         # Apply the action
-        self.state.apply_actions(action)
+        self.apply_action(action)
 
         # Stepwise reward for each agent
         reward_dict = self._compute_reward()
