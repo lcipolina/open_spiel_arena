@@ -37,7 +37,7 @@ class MatrixGameSimulator(OpenSpielEnv):
 
     def _state_to_observation(self) -> Dict[str, Any]:
         """
-        Generate the observation for Rock-Paper-Scissors.
+        Generate the observation for the matrix game.
 
         Returns:
             Dict[str, Any]: Observation dictionary containing:
