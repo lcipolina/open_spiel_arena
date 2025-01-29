@@ -72,11 +72,14 @@ class MatchingPenniesLoader(GameLoader):
     def load():
         return pyspiel.load_game("matching_pennies_3p")
 
+
+# Prisoner's Dilemma and Rock-Paper-Scissors as matrix games
+
 @registry.register(
     name="matrix_pd",
     module_path="games.loaders",
     class_name="MatrixPDLoader",
-    simulator_path="envs.matrix_games_simulator.MatrixPDSimulator",
+    simulator_path="envs.matrix_game_simulator.MatrixGameSimulator",
     display_name="Matrix Prisoner's Dilemma"
 )
 class MatrixPDLoader(GameLoader):

@@ -45,6 +45,6 @@ class RockPaperScissorsSimulator(OpenSpielEnv):
         """
         return {
             "state_string": None,  # RPS has no meaningful observation string
-            "legal_actions": [[0, 1, 2] for _ in range(self.state.num_players())],
+            "legal_actions": [self.state.legal_actions() for _ in range(self.state.num_players())],
             "info": "Actions: Rock (0), Paper (1), Scissors (2)"  # Fixed string formatting
         }

@@ -12,7 +12,7 @@ def default_simulation_config() -> Dict[str, Any]:
     """Returns the default simulation configuration."""
     return {
     "env_config": {
-        "game_name": "connect_four",  # matrix_rps, tic_tac_toe
+        "game_name": "matrix_pd",  # matrix_rps, tic_tac_toe, connect_four, matrix_pd
         "max_game_rounds": None,
     },
     "num_episodes": 1,
