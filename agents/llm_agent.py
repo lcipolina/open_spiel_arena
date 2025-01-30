@@ -34,5 +34,8 @@ class LLMAgent(BaseAgent):
         Returns:
             int: The action chosen by the LLM.
         """
+
+        # HERE NEEDS TO CALL THE SPECIFIC prompt of the game!!
+
         prompt = generate_prompt(self.game_name, str(state), legal_actions, info = info)
         return llm_decide_move(self.llm, prompt, tuple(legal_actions))

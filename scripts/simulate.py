@@ -45,6 +45,7 @@ def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
         max_game_rounds=config["env_config"].get("max_game_rounds") # For iterated games
     )
 
+## QUESTION: I am not sure if this should go here or in the 'agents' folder and imported, for modularity, vs readability?
 def create_agents(config: Dict[str, Any]) -> List:
     """Create agent instances based on configuration
 
@@ -98,6 +99,7 @@ def normalize_player_id(self,player_id):
     return player_id  # If already an integer, return it as is
 '''
 
+# HERE I HAVE A PROBLEM BECAUSE IT NEEDS TO REDIRECT TO THE LLM Agent but with the specific prompt for the game!!
 def _get_action(
     env: OpenSpielEnv, agents_list: List[Any], observation: Dict[str, Any]
 ) -> Union[List[int], int]:
@@ -116,7 +118,7 @@ def _get_action(
 
     # Handle sequential move games
     current_player = env.state.current_player()
-   # player_id = normalize_player_id(current_player) #TODO: delete this!
+    # player_id = normalize_player_id(current_player) #TODO: delete this!
 
     # Handle simultaneous move games
     if env.state.is_simultaneous_node():
@@ -128,6 +130,14 @@ def _get_action(
             )
             for player, agent in enumerate(agents_list)
         ]
+
+      # ESTABA POR ACA! ahora todas las observaciones tienen que incluir esto: y los agentes separan lo que les sirve!
+      "state": tensor_observation,  # RL agent used this
+            "legal_actions":legal_actions,
+            "info": None,
+            "prompt": prompt_observation
+
+    # LO OTRO ES QUE ME PARECE QUE LOS AGENTES no tienen que estar aca. Tal vez registrarlos? o en otro archivo?
 
     # Handle chance nodes where the environment acts randomly.
     #elif env.state.is_chance_node():

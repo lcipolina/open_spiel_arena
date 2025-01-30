@@ -12,7 +12,6 @@ from agents.llm_utils import llm_decide_move
 from typing import Any, List, Dict
 import random
 
-
 class KuhnPokerSimulator(OpenSpielEnv):
     """Simulator for Kuhn Poker."""
 
@@ -29,6 +28,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
                              for iterated games (optional, default is None).
         """
         super().__init__(game, game_name, player_types, max_game_rounds)
+        self.current_player = 0  # Placeholder for the current player index
 
 
     def _state_to_observation(self) -> Dict[str, Any]:
@@ -41,13 +41,15 @@ class KuhnPokerSimulator(OpenSpielEnv):
                 - legal_actions: A list of valid actions for each player.
                 - info: A string providing action descriptions.
 
-              # Observation tensor encodes:
+        # Observation tensor encodes:
         # Current player (ex:[1,0] if it's player 1).
         # Current card (ex:[1,0,0] for [J,Q,K]).
-        # Pot contribution (ex: [2,2]).
+        # Initial pot contribution (ex: [1,1]).
         Example Output (observation_tensor() as a List)
 
         """
+
+        # Ensure chance nodes are handled before extracting observations
         while self.state.is_chance_node():
             outcomes, probs = zip(*self.state.chance_outcomes())  # distibution over outcomes as a list of (outcome, probability) pairs
             action = random.choices(outcomes, probs)[0]  # Pick a random outcome and convert from list to scalar.
@@ -56,71 +58,20 @@ class KuhnPokerSimulator(OpenSpielEnv):
         # Set the current player (first to act)
         self.current_player = self.state.current_player()
 
-        # Private observation for the current player
-        observation = self.state.observation_tensor(self.current_player)
-        valid_actions = self.state.legal_actions(self.current_player)
-        action_description = 'a'
+        # Private data for the current player
+        tensor_observation = self.state.observation_tensor(self.current_player) # One-hot encoded tensor
+        legal_actions = self.state.legal_actions(self.current_player)
+        prompt_observation = self._generate_prompt(self.state, legal_actions)
 
         return {
-            "state": None,  # No meaningful observation in simultaneous games
-            "legal_actions": self.state.legal_actions(self.current_player),
-            "info": f"Actions available: {action_description}"
+            "state": tensor_observation,  # RL agent used this
+            "legal_actions":legal_actions,
+            "info": None,
+            "prompt": prompt_observation
         }
 
-    def _get_action(self, player: int, state: Any, legal_actions: list) -> int:
-        """Gets the action for the current player.
 
-        Uses the dedicated Kuhn Poker prompt if the player type is LLM.
-
-        Args:
-            player: The index of the current player.
-            state: The current game state.
-            legal_actions: The legal actions available for the player.
-
-        Returns:
-            int: The action selected by the player.
-        """
-        # If the player type is LLM, use the specialized Kuhn Poker prompt
-        if player < len(self.llms):
-            model_name = list(self.llms.keys())[player]
-            llm = self.llms[model_name]
-            prompt = self._generate_poker_prompt(state, legal_actions, player)
-            return llm_decide_move(llm, prompt, tuple(legal_actions))  # Convert to tuple
-
-        # For all other cases, defer to the parent class's implementation
-        return super()._get_action(player, state, legal_actions)
-
-
-
-    def _generate_poker_prompt_old(self,state: Any, legal_actions: list, player: int) -> str:
-        """Generates a detailed prompt for Kuhn Poker using OpenSpiel's state.
-
-        Args:
-            state (pyspiel.State): The current game state.
-            legal_actions (list): Legal actions available to the player.
-            player (int): The index of the current player.
-
-        Returns:
-            str: A natural language prompt describing the game state and options.
-        """
-        # Extract player-specific observation
-        observation = state.observation_string(player)
-
-        # Map actions to readable terms
-        action_map = {0: "PASS (no additional bet)", 1: "BET (add to the pot)"}
-        actions_str = "\n".join(f"{action}: {action_map[action]}" for action in legal_actions)
-
-        # Build the prompt
-        prompt = (
-            f"You are Player {player + 1} in a game of Kuhn Poker.\n"
-            f"Your private observation: {observation}\n"
-            f"The goal is to maximize your winnings based on your card and the pot.\n\n"
-            f"Available actions:\n{actions_str}\n\n"
-            "What action do you choose? Reply with the number corresponding to your action."
-        )
-        return prompt
-
-    def _generate_prompt_new_but_old(self, state: Any, legal_actions: list, player: int) -> dict:
+    def _generate_prompt(self, state: Any, legal_actions: list) -> dict:
         """Generates a detailed observation for Kuhn Poker.
 
         Args:
@@ -134,29 +85,45 @@ class KuhnPokerSimulator(OpenSpielEnv):
                 - "prompt": A human-readable prompt for LLMs & humans.
         """
         # RL Observation: One-hot encoded tensor
-        tensor_observation = state.observation_tensor(player)
+        tensor_observation = state.observation_tensor(self.current_player)
 
         # Human/LLM Observation: Natural Language Prompt
-        observation_str = state.observation_string(player)  # Private card & history
+        observation_str = state.observation_string(self.current_player)  # Private card & history
 
-        # Extract relevant game information
-        history = state.history()  # List of all actions taken
-        pot_size = state.pot() if hasattr(state, "pot") else "Unknown"  # OpenSpiel may not expose directly
-        last_action = history[-1] if history else "No actions taken yet"
+        # Extract structured betting history
+        betting_history = self._get_betting_history(state) # THIS NEEDS TO BE IMPLEMENTED
 
-        # Map actions to readable terms
-        action_map = {0: "PASS (no additional bet)", 1: "BET (add to the pot)"}
-        actions_str = "\n".join(f"{action}: {action_map[action]}" for action in legal_actions)
+        # Extract total pot size and player's contribution
+        total_pot = sum(tensor_observation[-2:])  # Last two values are pot contributions
+        player_contribution = tensor_observation[-2 + self.current_player]  # Index -2 (P1) or -1 (P2)
+
+        # Detect if an opponent has already bet
+        previous_actions = state.history()
+        opponent_has_bet = 1 in previous_actions  # True if opponent bet
+
+        # Map actions correctly based on game state
+        if opponent_has_bet:
+            action_labels = {
+                0: "Fold (give up and lose the pot)",
+                1: "Call (match the opponent's bet)"
+            }
+        else:
+            action_labels = {
+                0: "Check (stay in the game without betting)",
+                1: "Bet (add a chip to the pot)"
+            }
+
+        actions_str = "\n".join(f"{action}: {action_labels[action]}" for action in legal_actions)
 
         # Build the natural language prompt
         prompt = (
-            f"You are Player {player + 1} in a game of Kuhn Poker.\n"
-            f"Your private card: {observation_str[0]}\n"  # First character is the card (J, Q, K)
-            f"Betting history: {' '.join(map(str, history)) if history else 'No actions yet'}\n"
-            f"Current pot size: {pot_size}\n"
-            f"Last action taken: {last_action}\n\n"
+            f"You are Player {self.current_player + 1} in a game of Kuhn Poker.\n"
+            f"Your private card: {observation_str[0]}\n"
+            f"Betting history: {betting_history}\n"
+            f"Total pot size: {total_pot} chips\n"
+            f"Your contribution: {player_contribution} chips\n\n"
             f"Available actions:\n{actions_str}\n\n"
-            "What action do you choose? Reply with only the number corresponding to your action. Do not add any additional text."
+            "What action do you choose? Reply with the number corresponding to your action."
         )
 
         return {
@@ -164,71 +131,28 @@ class KuhnPokerSimulator(OpenSpielEnv):
             "prompt": prompt  # LLMs & Humans
         }
 
+    def _get_betting_history(self, state: Any) -> str:
+        """Extracts a readable betting history from OpenSpiel's game state.
 
-#TODO: check if the valid actions really come as [0,1,2,3]??
+           This function converts the sequence of past actions into a readable format,
+           indicating which player took each action. It alternates between Player 1 and
+           Player 2 based on turn order.
 
-def _get_betting_history(state: Any) -> str:
-    """Extracts a readable betting history from OpenSpiel's game state.
+        Args:
+            state (pyspiel.State): The current game state.
 
-    Args:
-        state (pyspiel.State): The current game state.
+        Returns:
+            str: A formatted betting history with player actions.
+        """
 
-    Returns:
-        str: A formatted betting history with player actions.
-    """
-    action_map = {0: "Check", 1: "Bet", 2: "Call", 3: "Fold"}
+        action_map = {0: "Check", 1: "Bet"}
+        history = []
 
-    history = []
-    num_players = 2  # Kuhn Poker always has 2 players
+        num_players = 2  # Kuhn Poker always has 2 players
 
-    for i, action in enumerate(state.history()):
-        player = i % num_players  # Alternates between 0 and 1
-        history.append(f"Player {player + 1}: {action_map[action]}")
+        # Iterate over the betting actions.
+        for i, action in enumerate(state.history()):
+            player = i % num_players  # Alternates between 0 and 1
+            history.append(f"Player {player + 1}: {action_map.get(action, 'Unknown')}")
 
-    return " -> ".join(history) if history else "No actions yet"
-
-
-def _generate_poker_prompt(self, state: Any, legal_actions: list, player: int) -> dict:
-    """Generates a detailed observation for Kuhn Poker.
-
-    Args:
-        state (pyspiel.State): The current game state.
-        legal_actions (list): Legal actions available to the player.
-        player (int): The index of the current player.
-
-    Returns:
-        dict: A structured observation containing:
-            - "tensor": One-hot encoded observation for RL policies.
-            - "prompt": A human-readable prompt for LLMs & humans.
-    """
-    # RL Observation: One-hot encoded tensor
-    tensor_observation = state.observation_tensor(player)
-
-    # Human/LLM Observation: Natural Language Prompt
-    observation_str = state.observation_string(player)  # Private card & history
-
-    # Extract structured betting history
-    betting_history = _get_betting_history(state)
-
-    # Map actions to readable terms
-    action_labels = {
-        0: "Check (stay in the game without betting)",
-        1: "Bet (add a chip to the pot)",
-        2: "Call (match the opponent's bet)",
-        3: "Fold (give up and lose the pot)"
-    }
-    actions_str = "\n".join(f"{action}: {action_labels[action]}" for action in legal_actions)
-
-    # Build the natural language prompt
-    prompt = (
-        f"You are Player {player + 1} in a game of Kuhn Poker.\n"
-        f"Your private card: {observation_str[0]}\n"
-        f"Betting history: {betting_history}\n\n"
-        f"Available actions:\n{actions_str}\n\n"
-        "What action do you choose? Reply with the number corresponding to your action."
-    )
-
-    return {
-        "tensor": tensor_observation,  # RL policy input
-        "prompt": prompt  # LLMs & Humans
-    }
+        return " -> ".join(history) if history else "No actions yet"
