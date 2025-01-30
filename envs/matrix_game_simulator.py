@@ -54,7 +54,7 @@ class MatrixGameSimulator(OpenSpielEnv):
                 )
 
         return {
-            "state_board": None,  # No meaningful observation in simultaneous games
+            "state": None,  # No meaningful observation in simultaneous games
             "legal_actions": [row_action_ids for _ in range(self.state.num_players())],  # Same for all players,
             "info": f"Actions available: {action_description}"
         }

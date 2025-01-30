@@ -36,12 +36,3 @@ class LLMAgent(BaseAgent):
         """
         prompt = generate_prompt(self.game_name, str(state), legal_actions, info = info)
         return llm_decide_move(self.llm, prompt, tuple(legal_actions))
-
-'''
- model_name=agent_cfg["model"],
-                game=env.game,
-                player_id=idx,
-                temperature=agent_cfg.get("temperature", 0.7),
-                max_tokens=agent_cfg.get("max_tokens", 128)
-
-'''

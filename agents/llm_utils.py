@@ -14,7 +14,7 @@ from agents.llm_registry import LLM_REGISTRY
 def generate_prompt(game_name: str,
                     state: str,
                     legal_actions: List[int],
-                     info: Optional[str] = None) -> str:
+                    info: Optional[str] = None) -> str:
     """Generate a natural language prompt for the LLM to decide the next move.
 
     Args:

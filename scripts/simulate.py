@@ -130,10 +130,10 @@ def _get_action(
         ]
 
     # Handle chance nodes where the environment acts randomly.
-    elif env.state.is_chance_node():
-        outcomes, probabilities = zip(*env.state.chance_outcomes())
-        action = random.choices(outcomes, probabilities, k=1)[0]
-        return action
+    #elif env.state.is_chance_node():
+    #    outcomes, probabilities = zip(*env.state.chance_outcomes())
+    #    action = random.choices(outcomes, probabilities, k=1)[0]
+    #    return action
 
     elif current_player >= 0:  # Default players (turn-based)
         agent = agents_list[current_player]
@@ -265,4 +265,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

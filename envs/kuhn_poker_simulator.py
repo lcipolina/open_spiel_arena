@@ -1,6 +1,4 @@
-"""Simulator for Kuhn Poker.
-
-This module implements the KuhnPokerSimulator class, which simulates games of
+"""This module implements the KuhnPokerSimulator class, which simulates games of
 Kuhn Poker using the OpenSpiel framework.
 
 For Kuhn Poker, the game mechanics involve:
@@ -9,24 +7,65 @@ For Kuhn Poker, the game mechanics involve:
 - Chance nodes, which require specific handling (e.g., dealing cards).
 """
 
-from simulators.base_simulator import GameSimulator
+from envs.open_spiel_env import OpenSpielEnv
 from agents.llm_utils import llm_decide_move
-from typing import Any
+from typing import Any, List, Dict
 import random
 
 
-class KuhnPokerSimulator(GameSimulator):
+class KuhnPokerSimulator(OpenSpielEnv):
     """Simulator for Kuhn Poker."""
 
-    def _handle_chance_node(self, state: Any):
-        """Handle chance nodes for Kuhn Poker.
-
-        Args:
-            state (pyspiel.State): The current state of the game.
+    def __init__(self, game: Any,
+                 game_name: str,
+                 player_types: Dict[str, str],
+                 max_game_rounds: int = None):
         """
-        outcomes, probabilities = zip(*state.chance_outcomes())
-        sampled_outcome = random.choices(outcomes, probabilities)[0]
-        state.apply_action(sampled_outcome)
+        Args:
+            game: The OpenSpiel game object.
+            game_name: A string representing the name of the game.
+            player_types: A dictionary mapping player IDs to their types (e.g., human, random).
+            max_game_rounds: Maximum number of rounds
+                             for iterated games (optional, default is None).
+        """
+        super().__init__(game, game_name, player_types, max_game_rounds)
+
+
+    def _state_to_observation(self) -> Dict[str, Any]:
+        """
+        Generate the observation for the matrix game.
+
+        Returns:
+            Dict[str, Any]: Observation dictionary containing:
+                - state_string: A placeholder for state description (None in RPS).
+                - legal_actions: A list of valid actions for each player.
+                - info: A string providing action descriptions.
+
+              # Observation tensor encodes:
+        # Current player (ex:[1,0] if it's player 1).
+        # Current card (ex:[1,0,0] for [J,Q,K]).
+        # Pot contribution (ex: [2,2]).
+        Example Output (observation_tensor() as a List)
+
+        """
+        while self.state.is_chance_node():
+            outcomes, probs = zip(*self.state.chance_outcomes())  # distibution over outcomes as a list of (outcome, probability) pairs
+            action = random.choices(outcomes, probs)[0]  # Pick a random outcome and convert from list to scalar.
+            self.state.apply_action(action)
+
+        # Set the current player (first to act)
+        self.current_player = self.state.current_player()
+
+        # Private observation for the current player
+        observation = self.state.observation_tensor(self.current_player)
+        valid_actions = self.state.legal_actions(self.current_player)
+        action_description = 'a'
+
+        return {
+            "state": None,  # No meaningful observation in simultaneous games
+            "legal_actions": self.state.legal_actions(self.current_player),
+            "info": f"Actions available: {action_description}"
+        }
 
     def _get_action(self, player: int, state: Any, legal_actions: list) -> int:
         """Gets the action for the current player.
@@ -53,7 +92,7 @@ class KuhnPokerSimulator(GameSimulator):
 
 
 
-    def _generate_poker_prompt(self,state: Any, legal_actions: list, player: int) -> str:
+    def _generate_poker_prompt_old(self,state: Any, legal_actions: list, player: int) -> str:
         """Generates a detailed prompt for Kuhn Poker using OpenSpiel's state.
 
         Args:
@@ -80,3 +119,47 @@ class KuhnPokerSimulator(GameSimulator):
             "What action do you choose? Reply with the number corresponding to your action."
         )
         return prompt
+
+    def _generate_prompt(self, state: Any, legal_actions: list, player: int) -> dict:
+        """Generates a detailed observation for Kuhn Poker.
+
+        Args:
+            state (pyspiel.State): The current game state.
+            legal_actions (list): Legal actions available to the player.
+            player (int): The index of the current player.
+
+        Returns:
+            dict: A structured observation containing:
+                - "tensor": One-hot encoded observation for RL policies.
+                - "prompt": A human-readable prompt for LLMs & humans.
+        """
+        # RL Observation: One-hot encoded tensor
+        tensor_observation = state.observation_tensor(player)
+
+        # Human/LLM Observation: Natural Language Prompt
+        observation_str = state.observation_string(player)  # Private card & history
+
+        # Extract relevant game information
+        history = state.history()  # List of all actions taken
+        pot_size = state.pot() if hasattr(state, "pot") else "Unknown"  # OpenSpiel may not expose directly
+        last_action = history[-1] if history else "No actions taken yet"
+
+        # Map actions to readable terms
+        action_map = {0: "PASS (no additional bet)", 1: "BET (add to the pot)"}
+        actions_str = "\n".join(f"{action}: {action_map[action]}" for action in legal_actions)
+
+        # Build the natural language prompt
+        prompt = (
+            f"You are Player {player + 1} in a game of Kuhn Poker.\n"
+            f"Your private card: {observation_str[0]}\n"  # First character is the card (J, Q, K)
+            f"Betting history: {' '.join(map(str, history)) if history else 'No actions yet'}\n"
+            f"Current pot size: {pot_size}\n"
+            f"Last action taken: {last_action}\n\n"
+            f"Available actions:\n{actions_str}\n\n"
+            "What action do you choose? Reply with only the number corresponding to your action. Do not add any additional text."
+        )
+
+        return {
+            "tensor": tensor_observation,  # RL policy input
+            "prompt": prompt  # LLMs & Humans
+        }
