@@ -123,19 +123,10 @@ def _get_action(
     # Handle simultaneous move games
     if env.state.is_simultaneous_node():
         return [
-            agent.compute_action(
-                legal_actions=observation["legal_actions"][player],
-                state=observation.get("state_string"),
-                info = observation.get("info",None)
-            )
+            agent.compute_action(observation)
             for player, agent in enumerate(agents_list)
         ]
 
-      # ESTABA POR ACA! ahora todas las observaciones tienen que incluir esto: y los agentes separan lo que les sirve!
-      "state": tensor_observation,  # RL agent used this
-            "legal_actions":legal_actions,
-            "info": None,
-            "prompt": prompt_observation
 
     # LO OTRO ES QUE ME PARECE QUE LOS AGENTES no tienen que estar aca. Tal vez registrarlos? o en otro archivo?
 
@@ -147,11 +138,8 @@ def _get_action(
 
     elif current_player >= 0:  # Default players (turn-based)
         agent = agents_list[current_player]
-        return agent.compute_action(
-                legal_actions=observation["legal_actions"],
-                state=observation.get("state_string"),
-                info = observation.get("info",None)
-            )
+        return agent.compute_action(observation)
+
 
 
 '''

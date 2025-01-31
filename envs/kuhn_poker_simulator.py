@@ -7,10 +7,10 @@ For Kuhn Poker, the game mechanics involve:
 - Chance nodes, which require specific handling (e.g., dealing cards).
 """
 
-from envs.open_spiel_env import OpenSpielEnv
-from agents.llm_utils import llm_decide_move
-from typing import Any, List, Dict
 import random
+from typing import Any, Dict
+from envs.open_spiel_env import OpenSpielEnv
+
 
 class KuhnPokerSimulator(OpenSpielEnv):
     """Simulator for Kuhn Poker."""
@@ -41,9 +41,9 @@ class KuhnPokerSimulator(OpenSpielEnv):
                 - legal_actions: A list of valid actions for each player.
                 - info: A string providing action descriptions.
 
-        # Observation tensor encodes:
-        # Current player (ex:[1,0] if it's player 1).
-        # Current card (ex:[1,0,0] for [J,Q,K]).
+        # Observation tensor encodes: [player0, player1, J,Q,K, pot0,pot1]
+        # Current player (one-hot) (ex:[1,0] if it's player 1).
+        # Current card (one-hot) (ex:[1,0,0] for [J,Q,K]).
         # Initial pot contribution (ex: [1,1]).
         Example Output (observation_tensor() as a List)
 
@@ -77,7 +77,6 @@ class KuhnPokerSimulator(OpenSpielEnv):
         Args:
             state (pyspiel.State): The current game state.
             legal_actions (list): Legal actions available to the player.
-            player (int): The index of the current player.
 
         Returns:
             dict: A structured observation containing:
@@ -87,11 +86,11 @@ class KuhnPokerSimulator(OpenSpielEnv):
         # RL Observation: One-hot encoded tensor
         tensor_observation = state.observation_tensor(self.current_player)
 
-        # Human/LLM Observation: Natural Language Prompt
-        observation_str = state.observation_string(self.current_player)  # Private card & history
+        # Extract private card from tensor
+        private_card = self.extract_private_card_from_tensor(tensor_observation)
 
         # Extract structured betting history
-        betting_history = self._get_betting_history(state) # THIS NEEDS TO BE IMPLEMENTED
+        betting_history = self._get_betting_history(state)
 
         # Extract total pot size and player's contribution
         total_pot = sum(tensor_observation[-2:])  # Last two values are pot contributions
@@ -117,8 +116,8 @@ class KuhnPokerSimulator(OpenSpielEnv):
 
         # Build the natural language prompt
         prompt = (
-            f"You are Player {self.current_player + 1} in a game of Kuhn Poker.\n"
-            f"Your private card: {observation_str[0]}\n"
+            f"You are Player {self.current_player} in the game Kuhn Poker.\n"
+            f"Your private card: {private_card}\n"
             f"Betting history: {betting_history}\n"
             f"Total pot size: {total_pot} chips\n"
             f"Your contribution: {player_contribution} chips\n\n"
@@ -126,17 +125,28 @@ class KuhnPokerSimulator(OpenSpielEnv):
             "What action do you choose? Reply with the number corresponding to your action."
         )
 
-        return {
-            "tensor": tensor_observation,  # RL policy input
-            "prompt": prompt  # LLMs & Humans
-        }
+        return prompt
+
+
+    def extract_private_card_from_tensor(self,observation_tensor: list) -> str:
+        """Extracts the player's private card from the one-hot encoded tensor.
+
+        Args:
+            observation_tensor (list): The player's observation tensor.
+
+        Returns:
+            str: The player's private card ('J', 'Q', or 'K').
+        """
+        card_map = {0: "J", 1: "Q", 2: "K"}
+        card_index = observation_tensor[2:5].index(1.0)  # Find which card is 1.0
+        return card_map.get(card_index, "Unknown")
 
     def _get_betting_history(self, state: Any) -> str:
         """Extracts a readable betting history from OpenSpiel's game state.
 
            This function converts the sequence of past actions into a readable format,
            indicating which player took each action. It alternates between Player 1 and
-           Player 2 based on turn order.
+            Player 2 based on turn order.
 
         Args:
             state (pyspiel.State): The current game state.
@@ -146,13 +156,32 @@ class KuhnPokerSimulator(OpenSpielEnv):
         """
 
         action_map = {0: "Check", 1: "Bet"}
-        history = []
-
+        betting_history = []
         num_players = 2  # Kuhn Poker always has 2 players
 
-        # Iterate over the betting actions.
-        for i, action in enumerate(state.history()):
-            player = i % num_players  # Alternates between 0 and 1
-            history.append(f"Player {player + 1}: {action_map.get(action, 'Unknown')}")
+        history = state.history()
 
-        return " -> ".join(history) if history else "No actions yet"
+        # FIX: Ignore the first `num_players` actions (they are card assignments) # TODO: check with Marc
+        betting_actions = history[num_players:]
+
+        # FIX: If no betting has happened yet, return "No actions yet" #TODO: check with MArc
+        if len(betting_actions) == 0:
+            return "No actions yet"
+
+        # Iterate over the betting actions
+        for i, action in enumerate(betting_actions):
+            player = i % num_players  # Alternates between Player 1 (0) and Player 2 (1)
+
+            # Adjust the action name depending on the betting round
+            if 1 in betting_actions[:i]:  # If a bet was made before this action
+                action_label = "Call" if action == 1 else "Fold"
+            else:
+                action_label = action_map.get(action, "Unknown")
+
+            betting_history.append(f"Player {player + 1}: {action_label}")
+
+        return " -> ".join(betting_history)
+
+
+
+    

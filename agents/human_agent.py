@@ -4,7 +4,7 @@ human_agent.py
 Implements an agent that asks the user for input to choose an action.
 """
 
-from typing import List, Any, Optional
+from typing import Any, Dict
 from .base_agent import BaseAgent
 
 from agents.llm_utils import generate_prompt
@@ -22,10 +22,7 @@ class HumanAgent(BaseAgent):
         """
         self.game_name = game_name
 
-    def compute_action(self,
-                       legal_actions: List[int],
-                       state: Any,
-                       info: Optional[str] = None ) -> int:
+    def compute_action(self, observation: Dict[str,Any]) -> int:
         """
         Prompts the user for a legal move.
 
@@ -36,12 +33,16 @@ class HumanAgent(BaseAgent):
         Returns:
             int: The chosen action.
         """
-        #print(f"Current state of {self.game_name}:\n{state}")
-        #print(f"Your options: {legal_actions}")
-        # Same prompt as the LLM agent
-        prompt = generate_prompt(self.game_name, str(state), legal_actions, info = info)
-        print(prompt)
+        legal_actions=observation["legal_actions"]
+        state=observation.get("state_string")
+        info = observation.get("info",None)
+        prompt= observation.get("prompt",None)
 
+        # Same prompt as the LLM agent
+        if prompt is None:
+           prompt = generate_prompt(self.game_name, str(state), legal_actions, info = info)
+
+        print(prompt)
         while True:
             try:
                 action_str = input("Enter your action (number): ")

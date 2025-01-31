@@ -6,13 +6,13 @@ HumanAgent, RandomAgent, LLMAgent, etc.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import Dict, Any
 
 class BaseAgent(ABC):
     """Abstract base class for agents that pick actions in an OpenSpiel environment."""
 
     @abstractmethod
-    def compute_action(self, legal_actions: List[int], state: Any) -> int:
+    def compute_action(self, observation: Dict[str,Any]) -> int:
         """
         Select an action from the list of legal actions.
 
