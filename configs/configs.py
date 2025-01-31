@@ -18,8 +18,8 @@ def default_simulation_config() -> Dict[str, Any]:
     "num_episodes": 1,
     "seed": 42,
     "agents": {
-        0: {"type": "llm", "model": "gpt2"},
-        1: {"type": "human", "model": "None"},
+        0: {"type": "llm", "model": "gpt2"},   #llm, random, human
+        1: {"type": "random", "model": "None"},
        # 2: {"type": "random", "model": "None"}, # for matching pennies
     },
     "alternate_first_player": True,

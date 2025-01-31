@@ -5,7 +5,7 @@ Implements an agent that picks a random legal action.
 """
 
 import random
-from typing import List
+from typing import Dict, Any
 from .base_agent import BaseAgent
 
 class RandomAgent(BaseAgent):
@@ -21,7 +21,7 @@ class RandomAgent(BaseAgent):
         """
         self.random_generator = random.Random(seed)
 
-    def compute_action(self, legal_actions: List[int], *args, **kwargs) -> int:
+    def compute_action(self, observation: Dict[str,Any]) -> int:
         """
         Randomly picks a legal action.
 
@@ -33,4 +33,6 @@ class RandomAgent(BaseAgent):
         Returns:
             int: A randomly selected action.
         """
+
+        legal_actions=observation["legal_actions"]
         return self.random_generator.choice(legal_actions)
