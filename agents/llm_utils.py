@@ -8,7 +8,6 @@ for decision-making in game simulations.
 from functools import lru_cache
 from typing import List, Any, Optional
 import random
-from agents.llm_registry import LLM_REGISTRY
 
 
 def generate_prompt(game_name: str,
@@ -65,20 +64,3 @@ def llm_decide_move(llm: Any, prompt: str, legal_actions: tuple) -> int:
              continue
 
     return random.choice(legal_actions)   # Fallback if no valid move is found
-
-
-def load_llm_from_registry(model_name: str):
-    """Loads an LLM model from the registry by its name.
-
-    Args:
-        model_name (str): The name of the LLM to load.
-
-    Returns:
-        Callable: A callable LLM object.
-
-    Raises:
-        ValueError: If the model name is not in the registry.
-    """
-    if model_name not in LLM_REGISTRY:
-        raise ValueError(f"LLM '{model_name}' is not registered in the LLM registry.")
-    return LLM_REGISTRY[model_name]["model_loader"]()

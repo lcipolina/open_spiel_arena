@@ -12,13 +12,8 @@ import random
 from typing import Dict, Any, List, Union
 from agents.agent_registry import AGENT_REGISTRY
 from agents.agent_report import AgentPerformanceReporter
-
 from configs.configs import build_cli_parser, parse_config, validate_config
 from envs.open_spiel_env import OpenSpielEnv
-from agents.human_agent import HumanAgent
-from agents.random_agent import RandomAgent
-from agents.llm_agent import LLMAgent
-from agents.llm_utils import load_llm_from_registry
 from games.registry import registry # Initilizes an empty registry dictionary
 from games import loaders  # Adds the games to the registry dictionary
 from utils.results_utils import print_total_scores
@@ -42,13 +37,12 @@ def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
 
 # TODO: add done? terminated? to the base env class
 
-## QUESTION: I am not sure if this should go here or in the 'agents' folder and imported, for modularity, vs readability?
+
 def create_agents(config: Dict[str, Any]) -> List:
     """Create agent instances based on configuration
 
     Args:
         config: Simulation configuration dictionary
-        env: Initialized game environment
 
     Returns:
         List of agent instances
@@ -56,7 +50,6 @@ def create_agents(config: Dict[str, Any]) -> List:
     Raises:
         ValueError: For invalid agent types or missing LLM models
     """
-
     agents = []
     game_name = config["env_config"]["game_name"]
 
@@ -70,14 +63,17 @@ def create_agents(config: Dict[str, Any]) -> List:
         # Dynamically instantiate the agent class
         agent_class = AGENT_REGISTRY[agent_type]
 
-        if agent_type == "llm":
+        if agent_type == "llm" or agent_type == "human":
                 model_name = agent_cfg.get("model", "gpt2")
-                llm = load_llm_from_registry(model_name)
-                agents.append(agent_class(llm=llm, game_name=game_name))
+                agents.append(agent_class(model_name=model_name, game_name=game_name))
+        elif agent_type == "random":
+             seed = config.get("seed")
+             agents.append(agent_class(seed=seed))
         else:
-                agents.append(agent_class(game_name=game_name))  # Other agent types
-
-
+            try:
+                agents.append(agent_class(game_name=game_name))
+            except TypeError:
+                agents.append(agent_class())
     return agents
 
 

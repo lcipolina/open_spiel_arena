@@ -5,9 +5,10 @@ Implements an agent that queries an LLM for its action.
 """
 
 from typing import Any, Dict
-from .base_agent import BaseAgent
 from agents.llm_registry import LLM_REGISTRY
 from agents.llm_utils import generate_prompt, llm_decide_move
+from .base_agent import BaseAgent
+
 
 class LLMAgent(BaseAgent):
     """

@@ -4,7 +4,7 @@ agent_registry.py
 Centralized agent registry for dynamic agent loading.
 '''
 
-from typing import Type, Dict, Any
+from typing import Type, Dict
 from agents.human_agent import HumanAgent
 from agents.random_agent import RandomAgent
 from agents.llm_agent import LLMAgent

@@ -13,12 +13,14 @@ class RandomAgent(BaseAgent):
     Agent that selects an action uniformly at random from the legal actions.
     """
 
-    def __init__(self, seed: int = None):
+    def __init__(self, seed: int = None, *args, **kwargs):
         """
         Args:
             llm (Any): The LLM instance (e.g., an OpenAI API wrapper, or any callable).
             game_name (str): The game's name for context in the prompt.
-        """
+            *args: Unused positional arguments.
+            **kwargs: Unused keyword arguments.
+         """
         super().__init__(agent_type="random")
         self.random_generator = random.Random(seed)
 
