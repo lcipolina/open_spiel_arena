@@ -59,28 +59,20 @@ class BaseAgent(ABC):
         return self._process_action(observation)
 
     def _process_action(self, observation: Dict[str, Any]) -> int:
-        """
-        Logs the observation, times the response, and calls `compute_action()`.
+            """Logs the observation, times the response, and calls `compute_action()`."""
+            start_time = time.perf_counter() 
+            action = self.compute_action(observation)
+            duration = time.perf_counter() - start_time
 
-        Args:
-            observation (Dict[str, Any]): The observation data.
+            self.action_count += 1
+            self.total_time += duration
 
-        Returns:
-            int: The chosen action.
-        """
-        start_time = time.time()
-        action = self.compute_action(observation)
-        duration = time.time() - start_time
+            logging.info(
+                "[%s] Observation: %s, Action: %d, Time: %.6f seconds",
+                self.agent_type, observation.get('state_string', 'N/A'), action, duration
+            )
 
-        self.action_count += 1
-        self.total_time += duration
-
-        logging.info(
-            "[%s] Observation: %s, Action: %d, Time: %.4fs",
-            self.agent_type, observation.get('state_string', 'N/A'), action, duration
-        )
-
-        return action
+            return action
 
     def get_performance_metrics(self):
         """

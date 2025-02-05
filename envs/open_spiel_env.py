@@ -1,48 +1,13 @@
 """
 open_spiel_env.py
 
-Implements a Gym-like environment on top of an OpenSpiel game.
+Implements a Gymnasium-like environment on top of an OpenSpiel game.
 """
 
 from typing import Any, Dict, List, Tuple, Union
 import random
 from abc import ABC
-from enum import Enum, unique
 
-'''
-@unique
-class PlayerId(Enum):
-    CHANCE = -1
-    SIMULTANEOUS = -2
-    INVALID = -3
-    TERMINAL = -4
-    MEAN_FIELD = -5
-
-    @classmethod
-    def from_value(cls, value: int):
-        """Returns the PlayerId corresponding to a given integer value.
-
-        Args:
-            value (int): The numerical value to map to a PlayerId.
-
-        Returns:
-            PlayerId: The matching enum member, or raises a ValueError if invalid.
-        """
-        for member in cls:
-            if member.value == value:
-                return member
-        if value >= 0:  # Positive integers represent default players
-            return None  # No enum corresponds to these values directly
-        raise ValueError(f"Unknown player ID value: {value}")
-'''
-
-'''
-class PlayerType(Enum):
-    HUMAN = "human"
-    RANDOM_BOT = "random_bot"
-    LLM = "llm"
-    SELF_PLAY = "self_play"
-'''
 
 class OpenSpielEnv(ABC):
     """Environment for OpenSpiel.
@@ -152,24 +117,8 @@ class OpenSpielEnv(ABC):
     # ----------------------------------------------------------------
     # Additional methods
     # ----------------------------------------------------------------
-    '''
-    def normalize_player_id(self, player_id: Union[int, PlayerId]) -> int:
-        """Normalize player_id to its integer value for consistent comparisons.
 
-           This is needed as OpenSpiel has ambiguous representation of the playerID
-
-        Args:
-            player_id (Union[int, PlayerId]): The player ID, which can be an
-                integer or a PlayerId enum instance.
-
-        Returns:
-            int: The integer value of the player ID.
-        """
-        if isinstance(player_id, PlayerId):
-            return player_id.value  # Extract the integer value from the enum
-        return player_id  # If already an integer, return it as is
-    '''
-
+    # TODO: these forst two methods might need to be deleted
     def _handle_chance_node(self):
         outcomes, probabilities = zip(*self.state.chance_outcomes())
         chosen_outcome = self.random_generator.choices(outcomes, probabilities, k=1)[0]

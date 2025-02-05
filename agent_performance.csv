@@ -1,3 +1,3 @@
 agent_type,actions_taken,total_processing_time,average_response_time
-llm,0,0,0
-random,0,0,0
+llm,1,1.108821165000001,1.108821165000001
+random,1,8.642000000946837e-06,8.642000000946837e-06

@@ -14,7 +14,7 @@ from agents.agent_registry import AGENT_REGISTRY
 from agents.agent_report import AgentPerformanceReporter
 from configs.configs import build_cli_parser, parse_config, validate_config
 from envs.open_spiel_env import OpenSpielEnv
-from games.registry import registry # Initilizes an empty registry dictionary
+from games.registry import registry # Initilizes an empty registry dictionary for the games
 from games import loaders  # Adds the games to the registry dictionary
 from utils.results_utils import print_total_scores
 
@@ -36,7 +36,7 @@ def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
     )
 
 # TODO: add done? terminated? to the base env class
-
+#TODO: we need to report whether the game was terminated r truncated!
 
 def create_agents(config: Dict[str, Any]) -> List:
     """Create agent instances based on configuration
@@ -58,14 +58,14 @@ def create_agents(config: Dict[str, Any]) -> List:
         agent_type = agent_cfg["type"].lower()
 
         if agent_type not in AGENT_REGISTRY:
-                    raise ValueError(f"Unsupported agent type: '{agent_type}'")
+            raise ValueError(f"Unsupported agent type: '{agent_type}'")
 
         # Dynamically instantiate the agent class
         agent_class = AGENT_REGISTRY[agent_type]
 
-        if agent_type == "llm" or agent_type == "human":
-                model_name = agent_cfg.get("model", "gpt2")
-                agents.append(agent_class(model_name=model_name, game_name=game_name))
+        if agent_type in ["llm", "human"]:
+            model_name = agent_cfg.get("model", "gpt2")
+            agents.append(agent_class(model_name=model_name, game_name=game_name))
         elif agent_type == "random":
              seed = config.get("seed")
              agents.append(agent_class(seed=seed))
@@ -76,8 +76,6 @@ def create_agents(config: Dict[str, Any]) -> List:
                 agents.append(agent_class())
     return agents
 
-
-# HERE I HAVE A PROBLEM BECAUSE IT NEEDS TO REDIRECT TO THE LLM Agent but with the specific prompt for the game!!
 def _get_action(
     env: OpenSpielEnv, agents_list: List[Any], observation: Dict[str, Any]
 ) -> Union[List[int], int]:
@@ -100,12 +98,12 @@ def _get_action(
     # Handle simultaneous move games
     if env.state.is_simultaneous_node():
         return [
-            agent.compute_action(observation)
+            agent(observation)
             for player, agent in enumerate(agents_list)
         ]
     elif current_player >= 0:  # Default players (turn-based)
         agent = agents_list[current_player]
-        return agent.compute_action(observation)
+        return agent(observation)
 
 def simulate_episodes(
     env: OpenSpielEnv, agents: List[Any], config: Dict[str, Any]

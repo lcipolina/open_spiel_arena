@@ -1,3 +1,13 @@
 2025-02-05 14:42:53,472 - __main__ - INFO - Starting simulation for game: kuhn_poker
 2025-02-05 14:48:23,366 - __main__ - INFO - Starting simulation for game: kuhn_poker
 2025-02-05 14:57:34,097 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 15:07:15,736 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 15:07:59,169 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 15:15:02,428 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:20:49,897 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:21:20,333 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:22:39,000 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:25:50,206 - root - INFO - [llm] Observation: N/A, Action: 0, Time: 1.322808 seconds
+2025-02-05 17:28:40,558 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:28:42,483 - root - INFO - [llm] Observation: N/A, Action: 0, Time: 1.108821 seconds
+2025-02-05 17:28:42,484 - root - INFO - [random] Observation: N/A, Action: 0, Time: 0.000009 seconds
