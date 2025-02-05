@@ -6,20 +6,18 @@ Implements an agent that asks the user for input to choose an action.
 
 from typing import Any, Dict
 from .base_agent import BaseAgent
-
 from agents.llm_utils import generate_prompt
 
 
 class HumanAgent(BaseAgent):
-    """
-    An agent that queries the user for which action to pick.
-    """
+    """An agent that queries the user for an action."""
 
     def __init__(self, game_name: str):
         """
         Args:
             game_name (str): A human-readable name for the game, used for prompting.
         """
+        super().__init__(agent_type="human")
         self.game_name = game_name
 
     def compute_action(self, observation: Dict[str,Any]) -> int:
@@ -45,8 +43,7 @@ class HumanAgent(BaseAgent):
         print(prompt)
         while True:
             try:
-                action_str = input("Enter your action (number): ")
-                action = int(action_str)
+                action = int(input("Enter your action (number): "))
                 if action in legal_actions:
                     return action
             except ValueError:

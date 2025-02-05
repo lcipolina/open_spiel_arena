@@ -1,7 +1,7 @@
 """
 random_agent.py
 
-Implements an agent that picks a random legal action.
+Implements an agent that selects a random action.
 """
 
 import random
@@ -19,6 +19,7 @@ class RandomAgent(BaseAgent):
             llm (Any): The LLM instance (e.g., an OpenAI API wrapper, or any callable).
             game_name (str): The game's name for context in the prompt.
         """
+        super().__init__(agent_type="random")
         self.random_generator = random.Random(seed)
 
     def compute_action(self, observation: Dict[str,Any]) -> int:
@@ -33,6 +34,4 @@ class RandomAgent(BaseAgent):
         Returns:
             int: A randomly selected action.
         """
-
-        legal_actions=observation["legal_actions"]
-        return self.random_generator.choice(legal_actions)
+        return self.random_generator.choice(observation["legal_actions"])

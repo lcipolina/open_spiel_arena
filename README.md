@@ -50,7 +50,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
       python3 scripts/simulate.py
 
       # Human vs Random
-      python3 scripts/simulate.py --override agents.0.type=human agents.1.type=random
+     python3 scripts/simulate.py --override agents.0.type=human agents.1.type=random
 
       # Human vs LLM
       python3 scripts/simulate.py --override env_config.game_name=tic_tac_toe agents.0.type=human agents.0.model=None agents.1.type=llm agents.1.model=gpt2
@@ -95,33 +95,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 ---
 
-## 3. Games Available
-
-### List of Supported Games
-1. **Tic-Tac-Toe**:
-   - A classic 3x3 grid game where players aim to align three symbols horizontally, vertically, or diagonally.
-
-2. **Python Iterated Prisoner’s Dilemma**:
-   - A repeated strategy game where players choose between cooperation and defection to maximize rewards over multiple rounds.
-
-3. **Connect Four**:
-   - A two-player game where players drop colored discs into a 7x6 grid, aiming to connect four of their own discs in a line.
-
-4. **Matrix Rock-Paper-Scissors**:
-   - A variant of RPS represented as a payoff matrix.
-
-5. **Matrix Prisoner’s Dilemma**:
-   - A matrix version of Prisoner’s Dilemma, emphasizing strategic interactions between players.
-
-6. **Kuhn Poker**:
-   - A simplified poker game with limited betting rounds and a small deck.
-
-7. **Matching Pennies (3-player)**:
-   - A three-player game where each player aims to match or mismatch the choices of others to achieve a payoff.
-
----
-
-## 4. Adding a New Game
+## 3. Adding a New Game
 To add a new game to the OpenSpiel LLM Arena, follow these steps:
 
 ### Step 1: Implement the Game Loader
@@ -153,24 +127,27 @@ To add a new game to the OpenSpiel LLM Arena, follow these steps:
      ```
 ---
 
-## 5. Features
+## 4. Adding a New Agent
+1. Implement the Agent Class
+* Create a new file in `agents/`, e.g., `agents/rl_agent.py`.
+* Ensure it inherits from `BaseAgent`.
+* Implement `compute_action()`.
 
-- **LLM Integration**:
-  - Uses Hugging Face Transformers to incorporate open-source LLMs (e.g., GPT-2, FLAN-T5).
-  - Converts game states into natural language prompts for LLM decision-making.
+2. Register the Agent
+Modify `agent_registry.py`.
+Example:
+```python
+from agents.rl_agent import RLAgent
+register_agent("rl", RLAgent)
+```
 
-- **Flexible Opponent Options**:
-  - LLMs can play against random bots, other LLMs, or themselves.
+3. Use the RL Agent in Simulation.
+Example:
+```python
+python3 scripts/simulate.py --override agents.0.type=rl agents.0.model=my_trained_rl_model
+```
 
-- **Extensible Framework**:
-  - Supports adding new OpenSpiel games by defining custom simulators and integrating them into the pipeline.
-
-- **Results Logging**:
-  - Saves simulation results in JSON format inside the `results/` folder for easy analysis and review.
-
----
-
-## 6. Contribution Guidelines
+## 5. Contribution Guidelines
 
 ### Steps to Contribute:
 1. Fork this repository.
@@ -181,7 +158,7 @@ To add a new game to the OpenSpiel LLM Arena, follow these steps:
 
 ---
 
-## 7. Example Output
+## 6. Example Output
 
 ### Game: Tic-Tac-Toe
 ```
