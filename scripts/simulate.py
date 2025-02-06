@@ -96,6 +96,8 @@ def _get_action(
             }
 
     # Handle turn-based games (only one player acts)
+    # We rely on OpenSpiel's internal state to determine the current player
+    # then we map to our shuffled agents
     current_player = env.state.current_player()
     return {current_player: player_to_agent[current_player](observation[current_player])}
 
@@ -121,6 +123,7 @@ def simulate_episodes(
     for episode in range(config['num_episodes']):
 
         # Shuffle agent and map from OpenSpiel indices to shuffled agents
+        # the _get_action function will use this mapping to get actions from OS internal idx to shuffled agents.
         shuffled_agents = random.sample(agents, len(agents))
         player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
         actions_dict = {idx: None for idx in player_to_agent}
@@ -132,9 +135,11 @@ def simulate_episodes(
         truncated = False  # Whether the episode ended due to `max_game_rounds`
 
         # Play the game until it ends
+        # observation_dict brings the new state and legal actions for all players
+        # then _get_action maps to the corresponding shuffled agents.
         while not (terminated or truncated):
-            actions_dict = _get_action(env, player_to_agent, observation_dict)
-            observation_dict, rewards_dict, terminated, truncated, info = env.step(actions_dict) # Actions passed as {player: action}
+            actions_dict = _get_action(env, player_to_agent, observation_dict) # actions_dict =  {player_id: action}
+            observation_dict, rewards_dict, terminated, truncated, info = env.step(actions_dict)  # observations_dict =  {player_id: observation}
 
         # Update results when the episode is finished
         for player, reward in rewards_dict.items():
