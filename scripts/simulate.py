@@ -35,10 +35,7 @@ def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
         max_game_rounds=config["env_config"].get("max_game_rounds") # For iterated games
     )
 
-# TODO: add done? terminated? to the base env class
-#TODO: we need to report whether the game was terminated r truncated!
-
-def create_agents(config: Dict[str, Any]) -> List:
+def initialize_agents(config: Dict[str, Any]) -> List:
     """Create agent instances based on configuration
 
     Args:
@@ -127,20 +124,22 @@ def simulate_episodes(
     for episode in range(config['num_episodes']):
 
         # Start a new episode
-        observation = env.reset()  # board state and legal actions
-        done =  env.state.is_terminal()
+        observation, info = env.reset()  # board state and legal actions
 
-        # TODO: add 'terminated' as well! (for iterated games)
+        terminated = False  # Whether the episode has ended normally
+        truncated = False  # Whether the episode ended due to `max_game_rounds`
 
         # Play the game until it ends
-        while not done:
+        while not (terminated or truncated):
             action = _get_action(env, agents, observation)
-            observation, rewards_dict, done, info = env.step(action)
+            observation, rewards_dict, terminated, truncated, info = env.step(action)
 
         # Update results when the episode is finished
         all_episode_results.append({
             "episode": episode,
             "rewards": rewards_dict,
+            "terminated": terminated,
+            "truncated": truncated,
         })
 
         for player, score in rewards_dict.items():
@@ -177,8 +176,8 @@ def run_simulation(args) -> Dict[str, Any]:
     # Initialize environment
     env = initialize_environment(config)
 
-    # Agent setup
-    agents = create_agents(config)
+    # Initialize agents
+    agents = initialize_agents(config)
 
     # Run simulation loop
     all_episode_results, total_scores = simulate_episodes(env, agents, config)
