@@ -47,7 +47,7 @@ def initialize_agents(config: Dict[str, Any]) -> List:
     Raises:
         ValueError: For invalid agent types or missing LLM models
     """
-    agents = []
+    agents_list = []
     game_name = config["env_config"]["game_name"]
 
     # Iterate over agents in numerical order
@@ -62,45 +62,42 @@ def initialize_agents(config: Dict[str, Any]) -> List:
 
         if agent_type in ["llm", "human"]:
             model_name = agent_cfg.get("model", "gpt2")
-            agents.append(agent_class(model_name=model_name, game_name=game_name))
+            agents_list.append(agent_class(model_name=model_name, game_name=game_name))
         elif agent_type == "random":
              seed = config.get("seed")
-             agents.append(agent_class(seed=seed))
+             agents_list.append(agent_class(seed=seed))
         else:
             try:
-                agents.append(agent_class(game_name=game_name))
+              agents_list.append(agent_class(game_name=game_name))
             except TypeError:
-                agents.append(agent_class())
-    return agents
+              agents_list.append(agent_class())
+    return agents_list
 
 def _get_action(
-    env: OpenSpielEnv, agents_list: List[Any], observation: Dict[str, Any]
-) -> Union[List[int], int]:
+    env: OpenSpielEnv, player_to_agent: Dict[int, Any], observation: Dict[str, Any]
+) -> Dict[int, int]:
     """
-    Computes actions for all players involved in the current step.
+    Computes actions for all (shuffled) players involved in the current step.
 
     Args:
         env (OpenSpielEnv): The game environment.
-        agents_list (List[Any]): List of agents corresponding to the players.
-        observation (Dict[str, Any]): The current observation, including legal actions.
+        player_to_agent (Dict[int, Any]): Mapping from OpenSpiel player index to shuffled agent.
+        observation (Dict[str, Any]): 'state_string' and 'legal_actions'.
 
     Returns:
-        int: The action selected by the current player (turn-based gamees).
-        List[int]: The actions selected by the players (simultaneous move games).
+        Dict[int, int]: A dictionary mapping player indices to selected actions.
     """
 
-    # Handle sequential move games
-    current_player = env.state.current_player()
-
-    # Handle simultaneous move games
+    # Handle simultaneous-move games (all players act at once)
     if env.state.is_simultaneous_node():
-        return [
-            agent(observation)
-            for player, agent in enumerate(agents_list)
-        ]
-    elif current_player >= 0:  # Default players (turn-based)
-        agent = agents_list[current_player]
-        return agent(observation)
+        return {
+            player: player_to_agent[player](observation[player]) # CALL agent function to get action
+            for player in player_to_agent
+            }
+
+    # Handle turn-based games (only one player acts)
+    current_player = env.state.current_player()
+    return {current_player: player_to_agent[current_player](observation[current_player])}
 
 def simulate_episodes(
     env: OpenSpielEnv, agents: List[Any], config: Dict[str, Any]
@@ -110,8 +107,8 @@ def simulate_episodes(
 
     Args:
         env: The game environment.
-        agents: A list of agents corresponding to players.
-        episode: The current episode number.
+        agents: A list of agents classes corresponding to players.
+        config: Simulation configuration.
 
     Returns:
         A dictionary containing the results of the episode.
@@ -119,31 +116,36 @@ def simulate_episodes(
 
     # Initialize storage for episode results
     all_episode_results = []
-    total_scores = {}  # To accumulate scores for all players
+    total_scores = {agent: 0 for agent in agents}  # Track scores per agent
 
     for episode in range(config['num_episodes']):
 
+        # Shuffle agent and map from OpenSpiel indices to shuffled agents
+        shuffled_agents = random.sample(agents, len(agents))
+        player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
+        actions_dict = {idx: None for idx in player_to_agent}
+
         # Start a new episode
-        observation, info = env.reset()  # board state and legal actions
+        observation_dict, info = env.reset()  # board state and legal actions
 
         terminated = False  # Whether the episode has ended normally
         truncated = False  # Whether the episode ended due to `max_game_rounds`
 
         # Play the game until it ends
         while not (terminated or truncated):
-            action = _get_action(env, agents, observation)
-            observation, rewards_dict, terminated, truncated, info = env.step(action)
+            actions_dict = _get_action(env, player_to_agent, observation_dict)
+            observation_dict, rewards_dict, terminated, truncated, info = env.step(actions_dict) # Actions passed as {player: action}
 
         # Update results when the episode is finished
+        for player, reward in rewards_dict.items():
+            total_scores[player_to_agent[player]] += reward   # Map rewards back to agents
+
         all_episode_results.append({
             "episode": episode,
-            "rewards": rewards_dict,
+            "rewards": {player_to_agent[player]: reward for player, reward in rewards_dict.items()},
             "terminated": terminated,
             "truncated": truncated,
         })
-
-        for player, score in rewards_dict.items():
-                    total_scores[player] = total_scores.get(player, 0) + score
 
     return all_episode_results, total_scores
 
@@ -176,17 +178,17 @@ def run_simulation(args) -> Dict[str, Any]:
     # Initialize environment
     env = initialize_environment(config)
 
-    # Initialize agents
-    agents = initialize_agents(config)
+    # Initialize agents list
+    agents_list = initialize_agents(config)
 
     # Run simulation loop
-    all_episode_results, total_scores = simulate_episodes(env, agents, config)
+    all_episode_results, total_scores = simulate_episodes(env, agents_list, config)
 
     # Print final board for the finished game
     print(f"Final game state:\n {env.state}")
 
     # Performance reports
-    reporter = AgentPerformanceReporter(agents)
+    reporter = AgentPerformanceReporter(agents_list)
     reporter.collect_metrics()
     reporter.print_summary()
     reporter.plot_metrics()
@@ -208,7 +210,7 @@ def main():
     result_dict = run_simulation(args)
     print_total_scores(result_dict["game_name"],result_dict['total_scores'])
 
-    # TODO: Save results in results/JSON file! together with the other things requested.
+    # TODO: Save results in results/JSON file with payer's names! together with the other things requested.
 
 
 if __name__ == "__main__":

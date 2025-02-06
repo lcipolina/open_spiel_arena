@@ -28,17 +28,37 @@ class KuhnPokerSimulator(OpenSpielEnv):
                              for iterated games (optional, default is None).
         """
         super().__init__(game, game_name, player_types, max_game_rounds)
-        self.current_player = 0  # Placeholder for the current player index
 
 
-    def _state_to_observation(self) -> Dict[str, Any]:
-        """
-        Generate the observation for the matrix game.
+    def _state_to_observation(self) -> Dict[int, Dict[str, Any]]:
+        """Returns the observation for each agent in the game.
 
         Returns:
-            Dict[str, Any]: Observation dictionary containing:
+            Dict[int, Dict[str, Any]]: Mapping from agent ID to their respective observations.
+        """
+        return {
+            agent_id: {
+                "state_string": self.state.observation_string(agent_id),
+                "legal_actions": self.state.legal_actions(agent_id),
+                "prompt": None  # Can be overridden in child classes
+            }
+            for agent_id in range(self.state.num_players())  # Generate for ALL players
+        }
+
+
+    def _state_to_observation_old(self) -> Dict[int, Dict[str, Any]]:
+        """
+        Generate observations for only the relevant agents based on `action_dict.keys()`.
+
+        Args:
+            action_dict (Dict[int, int]): Mapping from shuffled agent IDs to their actions.
+
+        Returns:
+
+            Dict[int, Dict[str, Any]]: Observation dictionary containing:
                 - state_string: A placeholder for state description (None in RPS).
-                - legal_actions: A list of valid actions for each player.
+                - info: Additional metadata.
+                - prompt: A structured prompt for LLMs.
                 - info: A string providing action descriptions.
 
         # Observation tensor encodes: [player0, player1, J,Q,K, pot0,pot1]
@@ -50,41 +70,41 @@ class KuhnPokerSimulator(OpenSpielEnv):
         """
 
         # Ensure chance nodes are handled before extracting observations
-        while self.state.is_chance_node():
-            outcomes, probs = zip(*self.state.chance_outcomes())  # distibution over outcomes as a list of (outcome, probability) pairs
-            action = random.choices(outcomes, probs)[0]  # Pick a random outcome and convert from list to scalar.
-            self.state.apply_action(action)
+        self._solve_chance_nodes()
 
-        # Set the current player (first to act)
-        self.current_player = self.state.current_player()
+        if self.state.is_chance_node():  # If it's a chance node, return empty observation
+            return {player: {"state_string": None, "legal_actions": [], "info": None, "prompt": None}
+                    for player in action_dict.keys()}
 
-        # Private data for the current player
-        tensor_observation = self.state.observation_tensor(self.current_player) # One-hot encoded tensor
-        legal_actions = self.state.legal_actions(self.current_player)
-        prompt_observation = self._generate_prompt(self.state, legal_actions)
-
-        return {
-            "state": tensor_observation,  # RL agent used this
-            "legal_actions":legal_actions,
-            "info": None,
-            "prompt": prompt_observation
+        # Private data for the current player. Using inherited current player (shuffled)
+        observation_dictionary = {
+        agent_id: {
+            "state_string": self.state.observation_string(agent_id),
+            "legal_actions": self.state.legal_actions(agent_id),
+            "prompt": self._generate_prompt(self.state, self.state.legal_actions(agent_id), agent_id)
+        }
+        for agent_id in range(self.state.num_players())  # Generate for ALL players
         }
 
+        return observation_dictionary
 
-    def _generate_prompt(self, state: Any, legal_actions: list) -> dict:
+    def _generate_prompt(self, state: Any, legal_actions: list, agent_id: int) -> str:
         """Generates a detailed observation for Kuhn Poker.
 
         Args:
             state (pyspiel.State): The current game state.
             legal_actions (list): Legal actions available to the player.
+            agent_id (int): The agent/player ID.
 
         Returns:
-            dict: A structured observation containing:
-                - "tensor": One-hot encoded observation for RL policies.
-                - "prompt": A human-readable prompt for LLMs & humans.
+            str: A structured LLM prompt for decision-making.
         """
+
+        if self.state.is_chance_node():  # If in a chance node, return empty observation
+            return {}
+
         # RL Observation: One-hot encoded tensor
-        tensor_observation = state.observation_tensor(self.current_player)
+        tensor_observation = state.observation_tensor(agent_id)
 
         # Extract private card from tensor
         private_card = self.extract_private_card_from_tensor(tensor_observation)
@@ -94,7 +114,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
 
         # Extract total pot size and player's contribution
         total_pot = sum(tensor_observation[-2:])  # Last two values are pot contributions
-        player_contribution = tensor_observation[-2 + self.current_player]  # Index -2 (P1) or -1 (P2)
+        player_contribution = tensor_observation[-2 +  agent_id]  # Index -2 (P1) or -1 (P2)
 
         # Detect if an opponent has already bet
         previous_actions = state.history()
@@ -116,7 +136,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
 
         # Build the natural language prompt
         prompt = (
-            f"You are Player {self.current_player} in the game Kuhn Poker.\n"
+            f"You are {agent_id} in the game Kuhn Poker.\n"
             f"Your private card: {private_card}\n"
             f"Betting history: {betting_history}\n"
             f"Total pot size: {total_pot} chips\n"
@@ -126,7 +146,6 @@ class KuhnPokerSimulator(OpenSpielEnv):
         )
 
         return prompt
-
 
     def extract_private_card_from_tensor(self,observation_tensor: list) -> str:
         """Extracts the player's private card from the one-hot encoded tensor.
@@ -181,7 +200,3 @@ class KuhnPokerSimulator(OpenSpielEnv):
             betting_history.append(f"Player {player + 1}: {action_label}")
 
         return " -> ".join(betting_history)
-
-
-
-    

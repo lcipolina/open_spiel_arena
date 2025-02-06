@@ -4,7 +4,7 @@ open_spiel_env.py
 Implements a Gymnasium-like environment on top of an OpenSpiel game.
 """
 
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union, Optional
 import random
 from abc import ABC
 
@@ -30,13 +30,13 @@ class OpenSpielEnv(ABC):
         """
         self.game = game
         self.game_name = game_name
-        self.player_types = player_types
+        self.player_types = player_types # List of strings
         self.max_game_rounds = max_game_rounds  # For iterated games
         self.state = None
-        self.rewards = {}
         self.info = {}
+        self.terminated, self.truncated = False, False
 
-    def reset(self, seed: int = None, options: Dict[str, Any] = None) -> Tuple[str, Dict[str, Any]]:
+    def reset(self, seed: Optional[int]=None) -> Tuple[str, Dict[str, Any]]:
         """
         Resets the environment to an initial state and returns an initial observation.
 
@@ -46,13 +46,18 @@ class OpenSpielEnv(ABC):
                 - Dict[str, Any]: Additional info
         """
         if seed is not None:
-                    self.seed(seed)
+            self.seed(seed)
 
         self.state = self.game.new_initial_state() # Instantiates a pyspiel game
-        self.rewards = {name: 0 for name in self.player_types}
         self.terminated = False
         self.truncated = False
         self.info = {}
+
+        # Handle chance nodes first (e.g., dealing cards in Kuhn Poker)
+        if self.state.is_chance_node():
+            self._solve_chance_nodes()
+            return self._state_to_observation(), self.info
+
         return self._state_to_observation(), self.info
 
     def apply_action(self, action: int):
@@ -63,13 +68,13 @@ class OpenSpielEnv(ABC):
         """
         self.state.apply_action(action)
 
-    def step(self, action: Union[int, List[int]]) -> Tuple[Any, float, bool, Dict[str, Any]]:
+    def step(self, action_dict: Dict[int, int]) -> Tuple[Any, float, bool, Dict[str, Any]]:
         """Applies the given action(s) to the environment and returns the new state.
 
         Args:
-            action (Union[int, List[int]]): The action to apply. If the game is
-                turn-based, it is an integer. If the game is simultaneous-move,
-                it is a list of actions (one for each player).
+            action_dict (Dict[int, int]): A dictionary mapping agent IDs to actions.
+                - For turn-based games: {current_player: action}
+                - For simultaneous games: {player_0: action_0, player_1: action_1, ...}
 
         Returns:
             Tuple[Any, float, bool, bool, Dict[str, Any]]: A tuple containing:
@@ -80,10 +85,20 @@ class OpenSpielEnv(ABC):
                 - info (Dict[str, Any]): Additional diagnostic information (e.g., final scores if done).
         """
 
-        # Apply the action
-        self.apply_action(action)
+        # Handle chance nodes
+        if self.state.is_chance_node():
+            self._solve_chance_nodes()
+            return self._state_to_observation(), {}, False, False, {}
 
-        # Stepwise reward for each agent
+        # Handle simultaneous move games
+        if self.state.is_simultaneous_node():
+            actions = [action_dict[player] for player in sorted(action_dict.keys())]
+            self.state.apply_actions(actions)  # Multi-agent moves
+        else:
+            current_player = list(action_dict.keys())[0]
+            self.state.apply_action(action_dict[current_player]) # Single action
+
+        # Stepwise reward for each OpenSpiel-indexed agent
         reward_dict = self._compute_reward()
 
         # Check termination due to game end
@@ -95,14 +110,14 @@ class OpenSpielEnv(ABC):
              and self.state.move_number() >= self.max_game_rounds
         )
 
-        # If the game is done (either normally or truncated), return None as observation
-        observation = self._state_to_observation() if not (self.terminated or self.truncated) else None
-
-        # Accumulated rewards for all players
+        # If the game is finished, store final scores; otherwise, update current player
         if self.terminated or self.truncated:
             self.info["final_scores"] = self.state.returns()
+            observation_dict = {agentID: None for agentID in list(action_dict.keys())} # No observation when the game ends
+        else:
+            observation_dict = self._state_to_observation() # Get next observation for all agents
 
-        return observation, reward_dict, self.terminated, self.truncated, self.info
+        return observation_dict, reward_dict, self.terminated, self.truncated, self.info
 
     def render(self, mode: str = 'human'):
         """Print out the current state of the game."""
@@ -127,28 +142,54 @@ class OpenSpielEnv(ABC):
     # Additional methods
     # ----------------------------------------------------------------
 
-    # TODO: these forst two methods might need to be deleted
-    def _handle_chance_node(self):
-        outcomes, probabilities = zip(*self.state.chance_outcomes())
-        chosen_outcome = self.random_generator.choices(outcomes, probabilities, k=1)[0]
-        self.state.apply_action(chosen_outcome)
-
-
-    def _state_to_observation(self) -> Dict[str, Any]:
-        return {
-            "state_string":  self.state.observation_string(),
-            "legal_actions": self.state.legal_actions(),
-        }
-
-    def _compute_reward(self) -> Dict[int, float]:
-        """
-        Compute the step rewards for all agents at the current step.
+    def _state_to_observation(self) -> Dict[int, Dict[str, Any]]:
+        """Returns the observation for each agent in the game.
 
         Returns:
-            Dict[int, float]: A dictionary mapping agent IDs to their step rewards.
+            Dict[int, Dict[str, Any]]: Mapping from agent ID to their respective observations.
         """
-        players_list = range(self.state.num_players())
-        rewards = {
-            player: self.state.player_reward(player) for player in players_list
+        return {
+            agent_id: {
+                "state_string": self.state.observation_string(agent_id),
+                "legal_actions": self.state.legal_actions(agent_id),
+                "prompt": None  # Can be overridden in child classes
+            }
+            for agent_id in range(self.state.num_players())  # Generate for ALL players
         }
-        return rewards
+
+
+    def _state_to_observation_old(self, action_dict: Dict[int, int]) -> Dict[int, Dict[str, Any]]:
+        """Returns the observation for each agent in the game.
+
+        Args:
+        action_dict (Dict[int, int]): Mapping of agent ID to their last action.
+
+        Returns:
+            Dict[int, Dict[str, Any]]: Mapping from agent ID to their respective observations.
+        """
+        observation_dictionary = {
+        agent_id: {
+            "state_string": self.state.observation_string(agent_id),
+            "legal_actions": self.state.legal_actions(agent_id),
+            "prompt": None  # Can be overridden in child classes
+        }
+        for agent_id in action_dict.keys()
+        }
+        return observation_dictionary
+
+
+    def _solve_chance_nodes(self) -> None:
+        """Automatically plays chance nodes by selecting outcomes based on probabilities.
+
+        Many OpenSpiel games involve chance nodes (e.g., dealing cards).
+        This method ensures that chance nodes are resolved before player actions.
+        """
+        while self.state.is_chance_node():
+            outcomes, probs = zip(*self.state.chance_outcomes())  # List of (outcome, probability)
+            action = random.choices(outcomes, probs)[0]  # Pick a random outcome
+            self.state.apply_action(action)  # Apply the chosen chance action
+
+
+    def _compute_reward(self) -> Dict[int, float]:
+        """Returns rewards indexed by OpenSpiel player indices (0, 1, ...)."""
+        return {player: self.state.player_reward(player) for player in range(self.state.num_players())}
