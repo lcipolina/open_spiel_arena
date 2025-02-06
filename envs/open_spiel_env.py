@@ -34,17 +34,26 @@ class OpenSpielEnv(ABC):
         self.max_game_rounds = max_game_rounds  # For iterated games
         self.state = None
         self.rewards = {}
+        self.info = {}
 
-    def reset(self) -> str:
+    def reset(self, seed: int = None, options: Dict[str, Any] = None) -> Tuple[str, Dict[str, Any]]:
         """
         Resets the environment to an initial state and returns an initial observation.
 
         Returns:
-            str: A string representation of the initial state (or any other observation format).
+            Tuple[str, Dict[str, Any]]:
+                - str: A string representation of the initial state.
+                - Dict[str, Any]: Additional info
         """
+        if seed is not None:
+                    self.seed(seed)
+
         self.state = self.game.new_initial_state() # Instantiates a pyspiel game
         self.rewards = {name: 0 for name in self.player_types}
-        return self._state_to_observation()
+        self.terminated = False
+        self.truncated = False
+        self.info = {}
+        return self._state_to_observation(), self.info
 
     def apply_action(self, action: int):
         """Applies the given action to the environment.
@@ -63,10 +72,11 @@ class OpenSpielEnv(ABC):
                 it is a list of actions (one for each player).
 
         Returns:
-            Tuple[Any, float, bool, Dict[str, Any]]: A tuple containing:
-                - observation (Any): The resulting state or observation after the action.
+            Tuple[Any, float, bool, bool, Dict[str, Any]]: A tuple containing:
+                - observation (Any): The resulting state after the action.
                 - reward (float): The reward obtained from this step.
-                - done (bool): Whether the episode has ended.
+                - terminated (bool): Whether the episode has ended normally.
+                - truncated (bool): Whether the episode ended due to `max_game_rounds`.
                 - info (Dict[str, Any]): Additional diagnostic information (e.g., final scores if done).
         """
 
@@ -76,24 +86,23 @@ class OpenSpielEnv(ABC):
         # Stepwise reward for each agent
         reward_dict = self._compute_reward()
 
-        # Check termination
-        done = self.state.is_terminal()
-        if (self.max_game_rounds is not None
-                and self.state.move_number() >= self.max_game_rounds
-                ):   # Condition for iterated games
-            done = True
+        # Check termination due to game end
+        self.terminated = self.state.is_terminal()
 
-        # Build the new observation
-        observation = self._state_to_observation() if not done else None
-
-        # Accumulated rewards for all players
-        info = (
-            {"final_scores": self.state.returns()}
-            if done
-            else {}
+        # Check truncation due to max rounds (condition for iterated games)
+        self.truncated = (
+            self.max_game_rounds is not None
+             and self.state.move_number() >= self.max_game_rounds
         )
 
-        return observation, reward_dict, done, info
+        # If the game is done (either normally or truncated), return None as observation
+        observation = self._state_to_observation() if not (self.terminated or self.truncated) else None
+
+        # Accumulated rewards for all players
+        if self.terminated or self.truncated:
+            self.info["final_scores"] = self.state.returns()
+
+        return observation, reward_dict, self.terminated, self.truncated, self.info
 
     def render(self, mode: str = 'human'):
         """Print out the current state of the game."""
