@@ -40,7 +40,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
             agent_id: {
                 "state_string": self.state.observation_string(agent_id),
                 "legal_actions": self.state.legal_actions(agent_id),
-                "prompt": None  # Can be overridden in child classes
+                "prompt": self._generate_prompt(self.state, self.state.legal_actions(agent_id), agent_id)
             }
             for agent_id in range(self.state.num_players())  # Generate for ALL players
         }
@@ -74,7 +74,8 @@ class KuhnPokerSimulator(OpenSpielEnv):
 
         if self.state.is_chance_node():  # If it's a chance node, return empty observation
             return {player: {"state_string": None, "legal_actions": [], "info": None, "prompt": None}
-                    for player in action_dict.keys()}
+                    for player in range(self.state.num_players())
+                    }
 
         # Private data for the current player. Using inherited current player (shuffled)
         observation_dictionary = {
