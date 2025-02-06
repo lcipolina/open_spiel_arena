@@ -157,27 +157,6 @@ class OpenSpielEnv(ABC):
             for agent_id in range(self.state.num_players())  # Generate for ALL players
         }
 
-
-    def _state_to_observation_old(self, action_dict: Dict[int, int]) -> Dict[int, Dict[str, Any]]:
-        """Returns the observation for each agent in the game.
-
-        Args:
-        action_dict (Dict[int, int]): Mapping of agent ID to their last action.
-
-        Returns:
-            Dict[int, Dict[str, Any]]: Mapping from agent ID to their respective observations.
-        """
-        observation_dictionary = {
-        agent_id: {
-            "state_string": self.state.observation_string(agent_id),
-            "legal_actions": self.state.legal_actions(agent_id),
-            "prompt": None  # Can be overridden in child classes
-        }
-        for agent_id in action_dict.keys()
-        }
-        return observation_dictionary
-
-
     def _solve_chance_nodes(self) -> None:
         """Automatically plays chance nodes by selecting outcomes based on probabilities.
 

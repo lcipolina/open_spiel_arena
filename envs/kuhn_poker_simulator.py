@@ -45,50 +45,6 @@ class KuhnPokerSimulator(OpenSpielEnv):
             for agent_id in range(self.state.num_players())  # Generate for ALL players
         }
 
-
-    def _state_to_observation_old(self) -> Dict[int, Dict[str, Any]]:
-        """
-        Generate observations for only the relevant agents based on `action_dict.keys()`.
-
-        Args:
-            action_dict (Dict[int, int]): Mapping from shuffled agent IDs to their actions.
-
-        Returns:
-
-            Dict[int, Dict[str, Any]]: Observation dictionary containing:
-                - state_string: A placeholder for state description (None in RPS).
-                - info: Additional metadata.
-                - prompt: A structured prompt for LLMs.
-                - info: A string providing action descriptions.
-
-        # Observation tensor encodes: [player0, player1, J,Q,K, pot0,pot1]
-        # Current player (one-hot) (ex:[1,0] if it's player 1).
-        # Current card (one-hot) (ex:[1,0,0] for [J,Q,K]).
-        # Initial pot contribution (ex: [1,1]).
-        Example Output (observation_tensor() as a List)
-
-        """
-
-        # Ensure chance nodes are handled before extracting observations
-        self._solve_chance_nodes()
-
-        if self.state.is_chance_node():  # If it's a chance node, return empty observation
-            return {player: {"state_string": None, "legal_actions": [], "info": None, "prompt": None}
-                    for player in range(self.state.num_players())
-                    }
-
-        # Private data for the current player. Using inherited current player (shuffled)
-        observation_dictionary = {
-        agent_id: {
-            "state_string": self.state.observation_string(agent_id),
-            "legal_actions": self.state.legal_actions(agent_id),
-            "prompt": self._generate_prompt(self.state, self.state.legal_actions(agent_id), agent_id)
-        }
-        for agent_id in range(self.state.num_players())  # Generate for ALL players
-        }
-
-        return observation_dictionary
-
     def _generate_prompt(self, state: Any, legal_actions: list, agent_id: int) -> str:
         """Generates a detailed observation for Kuhn Poker.
 
