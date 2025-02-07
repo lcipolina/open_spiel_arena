@@ -115,22 +115,6 @@ def save_game_log(file_path: str, game_log: Dict[str, Any]):
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(game_log, f, indent=4)
 
-
-#TODO: delete this function!
-def load_game_log_old(file_path: str) -> Dict[str, Any]:
-    """
-    Loads a game log from a JSON file.
-
-    Args:
-        file_path: The file path of the log file.
-
-    Returns:
-        Dict[str, Any]: The loaded game log.
-    """
-    with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 class SimulationFormatter(logging.Formatter):
     """Custom formatter for game simulation records"""
     def format(self, record):
@@ -203,52 +187,6 @@ def configure_logging_log(
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
 
-#TODO: delete this function!
-def log_game_event_old(
-    game_name: str,
-    event_type: str,
-    details: Dict[str, Any],
-    level: str = "INFO"
-):
-    """
-    Structured logging for game events
-
-    Example:
-        log_game_event(
-            game_name="tic_tac_toe",
-            event_type="move",
-            details={
-                "player": "LLM Agent",
-                "action": 4,
-                "state": "x.o\n...\n..."
-            }
-        )
-    """
-    logger = logging.getLogger("game_events")
-    extra = {"game": game_name, **details}
-
-    if level == "DEBUG":
-        logger.debug(json.dumps({"event_type": event_type, **details}), extra=extra)
-    elif level == "WARNING":
-        logger.warning(json.dumps({"event_type": event_type, **details}), extra=extra)
-    else:
-        logger.info(json.dumps({"event_type": event_type, **details}), extra=extra)
-
-#TODO: delete this function!
-def log_experiment_config_old(config: Dict[str, Any]):
-    """Log experiment configuration with metadata"""
-    logger = logging.getLogger("experiments")
-    logger.info(
-        "Experiment Configuration",
-        extra={
-            "config": config,
-            "timestamp": datetime.utcnow().isoformat(),
-            "system": {
-                "python_version": sys.version,
-                "platform": sys.platform
-            }
-        }
-    )
 
 def time_execution(func: Callable) -> Callable:
     """
