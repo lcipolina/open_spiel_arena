@@ -12,6 +12,113 @@ from typing import Dict, Any
 import traceback
 from logging.handlers import RotatingFileHandler
 
+import json
+from typing import List, Dict, Any
+from collections import defaultdict
+
+
+def generate_game_log(
+    model_name: str,
+    games: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """
+    Generates a structured game log containing details of individual games and a summary.
+
+    Args:
+        model_name: The name of the model that played the games.
+        games: A list of game records, where each record contains details such as
+               game name, rounds, result, moves, illegal moves, and opponent.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing structured game logs and summary statistics.
+    """
+
+    # Initialize summary statistics
+    summary = defaultdict(lambda: {
+        "games": 0,
+        "moves/game": 0.0,
+        "illegal-moves": 0,
+        "win-rate": 0.0,
+        "vs Random": 0.0
+    })
+
+    # Track per-game statistics
+    game_stats = defaultdict(lambda: {
+        "total_moves": 0,
+        "illegal_moves": 0,
+        "wins": 0,
+        "vs_random_wins": 0,
+        "vs_random_games": 0
+    })
+
+    for game in games:
+        game_name = game["game"]
+        rounds = game["rounds"]
+        result = game["result"]
+        moves = game["moves"]
+        illegal_moves = game["illegal_moves"]
+        opponent = game["opponent"]
+
+        # Update game-specific statistics
+        game_stats[game_name]["total_moves"] += len(moves)
+        game_stats[game_name]["illegal_moves"] += illegal_moves
+        game_stats[game_name]["wins"] += int(result == "win")
+        game_stats[game_name]["vs_random_wins"] += int(
+            result == "win" and opponent == "random_bot"
+        )
+        game_stats[game_name]["vs_random_games"] += int(opponent == "random_bot")
+        summary[game_name]["games"] += 1
+
+    # Compute final summary statistics
+    for game_name, stats in game_stats.items():
+        total_games = summary[game_name]["games"]
+        summary[game_name]["moves/game"] = round(
+            stats["total_moves"] / total_games, 1
+        )
+        summary[game_name]["illegal-moves"] = stats["illegal_moves"]
+        summary[game_name]["win-rate"] = round(
+            (stats["wins"] / total_games) * 100, 1
+        ) if total_games > 0 else 0.0
+        if stats["vs_random_games"] > 0:
+            summary[game_name]["vs Random"] = round(
+                (stats["vs_random_wins"] / stats["vs_random_games"]) * 100, 1
+            )
+        else:
+            summary[game_name]["vs Random"] = 0.0
+
+    return {
+        "model_name": model_name,
+        "games_played": games,
+        "summary": summary
+    }
+
+
+def save_game_log(file_path: str, game_log: Dict[str, Any]):
+    """
+    Saves the game log to a JSON file.
+
+    Args:
+        file_path: The file path where the log should be saved.
+        game_log: The structured game log dictionary.
+    """
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(game_log, f, indent=4)
+
+
+def load_game_log(file_path: str) -> Dict[str, Any]:
+    """
+    Loads a game log from a JSON file.
+
+    Args:
+        file_path: The file path of the log file.
+
+    Returns:
+        Dict[str, Any]: The loaded game log.
+    """
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 class SimulationFormatter(logging.Formatter):
     """Custom formatter for game simulation records"""
     def format(self, record):

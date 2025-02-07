@@ -60,14 +60,6 @@ class OpenSpielEnv(ABC):
 
         return self._state_to_observation(), self.info
 
-    def apply_action(self, action: int):
-        """Applies the given action to the environment.
-
-        Args:
-            action int: If the game is turn-based, it is an integer.
-        """
-        self.state.apply_action(action)
-
     def step(self, action_dict: Dict[int, int]) -> Tuple[Any, float, bool, Dict[str, Any]]:
         """Applies the given action(s) to the environment and returns the new state.
 

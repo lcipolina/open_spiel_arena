@@ -215,7 +215,7 @@ def main():
     result_dict = run_simulation(args)
     print_total_scores(result_dict["game_name"],result_dict['total_scores'])
 
-    # TODO: Save results in results/JSON file with payer's names! together with the other things requested.
+
 
 
 if __name__ == "__main__":

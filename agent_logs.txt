@@ -47,3 +47,6 @@
 2025-02-06 20:14:27,881 - __main__ - INFO - Starting simulation for game: kuhn_poker
 2025-02-06 20:14:29,435 - root - INFO - [llm] Observation: 211, Action: 1, Time: 0.884153 seconds
 2025-02-06 20:14:29,435 - root - INFO - [random] Observation: 021, Action: 0, Time: 0.000006 seconds
+2025-02-07 09:54:56,210 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 09:54:58,897 - root - INFO - [llm] Observation: 211, Action: 0, Time: 1.238367 seconds
+2025-02-07 09:54:58,897 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
