@@ -4,7 +4,7 @@ open_spiel_env.py
 Implements a Gymnasium-like environment on top of an OpenSpiel game.
 """
 
-from typing import Any, Dict, List, Tuple, Union, Optional
+from typing import Optional, Tuple, Dict, Any
 import random
 from abc import ABC
 
@@ -40,6 +40,9 @@ class OpenSpielEnv(ABC):
         """
         Resets the environment to an initial state and returns an initial observation.
 
+        Args:
+        seed (Optional[int]): Seed for environment randomization.
+
         Returns:
             Tuple[str, Dict[str, Any]]:
                 - str: A string representation of the initial state.
@@ -56,7 +59,6 @@ class OpenSpielEnv(ABC):
         # Handle chance nodes first (e.g., dealing cards in Kuhn Poker)
         if self.state.is_chance_node():
             self._solve_chance_nodes()
-            return self._state_to_observation(), self.info
 
         return self._state_to_observation(), self.info
 

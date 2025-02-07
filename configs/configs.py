@@ -22,7 +22,6 @@ def default_simulation_config() -> Dict[str, Any]:
         1: {"type": "random", "model": "None"},
        # 2: {"type": "random", "model": "None"}, # for matching pennies
     },
-    "alternate_first_player": True,
     "log_level": "INFO",
 }
 

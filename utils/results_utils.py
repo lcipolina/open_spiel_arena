@@ -13,7 +13,7 @@ from games.registry import registry
 from typing import Dict, Any, List
 
 
-
+#TODO: there 3 functions are not used but useful! it contains the state history!
 
 def save_results(game_name: str, final_scores: List[float], state: Any):
     results = prepare_results(game_name, final_scores, state)
@@ -36,40 +36,29 @@ def get_results_filename(game_name: str) -> str:
     return os.path.join(results_dir, f"{game_name.lower().replace(' ', '_')}_results.json")
 
 
-#TODO: delete this function
-'''
-def parse_agents(agent_strings: list) -> list:
-    """Convert 'type:model' strings to agent configs"""
-    agents = []
-    for agent_str in agent_strings:
-        if ":" in agent_str:
-            agent_type, model = agent_str.split(":", 1)
-        else:
-            agent_type = agent_str
-            model = None
 
-        agents.append({
-            "type": agent_type.strip().lower(),
-            "model": model.strip() if model else None
-        })
-    return agents
-'''
-
-def print_total_scores(game_name,total_scores):
+def print_total_scores(game_name: str, summary: Dict[str, Any]):
     """
-    Print total scores for all players in a readable format.
+    Prints the total scores summary for a game.
 
     Args:
-        total_scores: A dictionary where keys are player IDs and values are
-                      their total scores across episodes.
+        game_name: The name of the game being summarized.
+        summary: The dictionary containing the game summary.
     """
-    print(f"Total scores across all episodes for game {game_name}:")
-    for player, score in total_scores.items():
-        print(f"Player {player}: {score}")
+
+    print(f"\nTotal scores across all episodes for game {game_name}:")
+
+    # 🔹 Ensure we loop through actual player summaries
+    if game_name in summary:
+        print(f"Game summary: {summary[game_name]}")  # ✅ Clearly label as "Game summary"
+    else:
+        for player_id, stats in summary.items():
+            print(f"Player {player_id}: {stats}")  # ✅ Now prints actual players correctly
+
 
 
 #TODO: delete this function
-def print_simulation_summary(results: dict):
+def print_simulation_summary_old(results: dict):
     """Print formatted simulation results"""
 
     # Basic stats
@@ -123,7 +112,7 @@ def print_simulation_summary(results: dict):
 
 # TODO: not sure if these ones are needed
 
-def _initialize_outcomes(self) -> Dict[str, Any]:
+def _initialize_outcomes_old(self) -> Dict[str, Any]:
         """Initializes an outcomes dictionary to track wins, losses, ties, etc."""
         return {
             "wins": {name: 0 for name in self.player_types.keys()},
@@ -131,7 +120,7 @@ def _initialize_outcomes(self) -> Dict[str, Any]:
             "ties": 0
         }
 
-def record_outcomes(self, final_scores: List[float], outcomes: Dict[str, Any]) -> str:
+def record_outcomes_old(self, final_scores: List[float], outcomes: Dict[str, Any]) -> str:
         """Records the outcome of a single game round.
 
         Args:

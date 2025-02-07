@@ -8,89 +8,100 @@ import logging
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any
+from typing import Callable, Dict, Any, List
 import traceback
 from logging.handlers import RotatingFileHandler
-
-import json
-from typing import List, Dict, Any
+import os
+import time
+from functools import wraps
 from collections import defaultdict
 
+from utils.results_utils import print_total_scores
 
-def generate_game_log(
-    model_name: str,
-    games: List[Dict[str, Any]]
-) -> Dict[str, Any]:
+def generate_game_log(model_name: str, games: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Generates a structured game log containing details of individual games and a summary.
 
     Args:
         model_name: The name of the model that played the games.
-        games: A list of game records, where each record contains details such as
-               game name, rounds, result, moves, illegal moves, and opponent.
+        games: A list of game records.
 
     Returns:
         Dict[str, Any]: A dictionary containing structured game logs and summary statistics.
     """
 
-    # Initialize summary statistics
-    summary = defaultdict(lambda: {
-        "games": 0,
-        "moves/game": 0.0,
-        "illegal-moves": 0,
-        "win-rate": 0.0,
-        "vs Random": 0.0
-    })
+    summary = {}
 
-    # Track per-game statistics
-    game_stats = defaultdict(lambda: {
-        "total_moves": 0,
-        "illegal_moves": 0,
-        "wins": 0,
-        "vs_random_wins": 0,
-        "vs_random_games": 0
-    })
+    # Track LLM wins per model and per opponent type
+    llm_win_counts = {}  # {model_name: win_count}
+    llm_total_games = {}  # {model_name: total_games_played}
+    llm_vs_opponent = {}  # {model_name: {opponent_type: win_count}}
 
     for game in games:
         game_name = game["game"]
         rounds = game["rounds"]
-        result = game["result"]
         moves = game["moves"]
         illegal_moves = game["illegal_moves"]
-        opponent = game["opponent"]
 
-        # Update game-specific statistics
-        game_stats[game_name]["total_moves"] += len(moves)
-        game_stats[game_name]["illegal_moves"] += illegal_moves
-        game_stats[game_name]["wins"] += int(result == "win")
-        game_stats[game_name]["vs_random_wins"] += int(
-            result == "win" and opponent == "random_bot"
-        )
-        game_stats[game_name]["vs_random_games"] += int(opponent == "random_bot")
+        if game_name not in summary:
+            summary[game_name] = {
+                "games": 0,
+                "moves/game": 0.0,
+                "illegal-moves": 0,
+                "win-rate": {},
+                "win-rate vs": {}  # 🔹 Track win rates per opponent type
+            }
+
         summary[game_name]["games"] += 1
+        summary[game_name]["moves/game"] += len(moves) / summary[game_name]["games"]
+        summary[game_name]["illegal-moves"] += illegal_moves
 
-    # Compute final summary statistics
-    for game_name, stats in game_stats.items():
-        total_games = summary[game_name]["games"]
-        summary[game_name]["moves/game"] = round(
-            stats["total_moves"] / total_games, 1
-        )
-        summary[game_name]["illegal-moves"] = stats["illegal_moves"]
-        summary[game_name]["win-rate"] = round(
-            (stats["wins"] / total_games) * 100, 1
-        ) if total_games > 0 else 0.0
-        if stats["vs_random_games"] > 0:
-            summary[game_name]["vs Random"] = round(
-                (stats["vs_random_wins"] / stats["vs_random_games"]) * 100, 1
-            )
-        else:
-            summary[game_name]["vs Random"] = 0.0
+        # Identify LLMs and opponents
+        llm_players = [p for p in game["players"] if p["player_type"] == "llm"]
+        non_llm_players = [p for p in game["players"] if p["player_type"] != "llm"]
+
+        for llm in llm_players:
+            model = llm["player_model"]
+            result = llm["result"]
+
+            # Initialize model tracking
+            if model not in llm_win_counts:
+                llm_win_counts[model] = 0
+                llm_total_games[model] = 0
+                llm_vs_opponent[model] = {}
+
+            llm_total_games[model] += 1  # Count games played by this LLM
+
+            if result == "win":
+                llm_win_counts[model] += 1  # Count wins
+
+                # Track wins against each opponent type
+                for opponent in non_llm_players:
+                    opponent_type = opponent["player_type"]
+                    if opponent_type not in llm_vs_opponent[model]:
+                        llm_vs_opponent[model][opponent_type] = 0
+                    llm_vs_opponent[model][opponent_type] += 1
+
+    # 🔹 Compute win rates per LLM model and opponent type
+    for model, total_games in llm_total_games.items():
+        win_rate = (llm_win_counts[model] / total_games) * 100 if total_games > 0 else 0
+        summary[game_name]["win-rate"][model] = round(win_rate, 2)
+
+        # Compute per-opponent win rates
+        for opponent_type, wins in llm_vs_opponent[model].items():
+            total_vs_opponent = sum(1 for game in games for p in game["players"]
+                                    if p["player_type"] == opponent_type and p["player_model"] == model)
+
+            win_rate_vs_opponent = (wins / total_vs_opponent) * 100 if total_vs_opponent > 0 else 0
+            summary[game_name]["win-rate vs"][f"{model} vs {opponent_type}"] = round(win_rate_vs_opponent, 2)
 
     return {
         "model_name": model_name,
         "games_played": games,
         "summary": summary
     }
+
+
 
 
 def save_game_log(file_path: str, game_log: Dict[str, Any]):
@@ -105,7 +116,8 @@ def save_game_log(file_path: str, game_log: Dict[str, Any]):
         json.dump(game_log, f, indent=4)
 
 
-def load_game_log(file_path: str) -> Dict[str, Any]:
+#TODO: delete this function!
+def load_game_log_old(file_path: str) -> Dict[str, Any]:
     """
     Loads a game log from a JSON file.
 
@@ -146,7 +158,8 @@ class JSONFormatter(logging.Formatter):
 
         return json.dumps(log_record)
 
-def configure_logging(
+#TODO: delete this function!
+def configure_logging_log(
     log_dir: str = "logs",
     console_level: str = "INFO",
     file_level: str = "DEBUG",
@@ -190,7 +203,8 @@ def configure_logging(
     root_logger.addHandler(console_handler)
     root_logger.addHandler(file_handler)
 
-def log_game_event(
+#TODO: delete this function!
+def log_game_event_old(
     game_name: str,
     event_type: str,
     details: Dict[str, Any],
@@ -220,7 +234,8 @@ def log_game_event(
     else:
         logger.info(json.dumps({"event_type": event_type, **details}), extra=extra)
 
-def log_experiment_config(config: Dict[str, Any]):
+#TODO: delete this function!
+def log_experiment_config_old(config: Dict[str, Any]):
     """Log experiment configuration with metadata"""
     logger = logging.getLogger("experiments")
     logger.info(
@@ -234,3 +249,62 @@ def log_experiment_config(config: Dict[str, Any]):
             }
         }
     )
+
+def time_execution(func: Callable) -> Callable:
+    """
+    Decorator to measure the execution time of a function.
+
+    Args:
+        func: Function to be wrapped.
+
+    Returns:
+        Wrapped function with execution time logging.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        elapsed_time = time.time() - start_time
+        logging.info(f"{func.__name__} executed in {elapsed_time:.2f} seconds")
+        return result
+    return wrapper
+
+
+def log_simulation_results(func: Callable) -> Callable:
+    """
+    Decorator to log and save game simulation results.
+
+    Args:
+        func: The simulation function.
+
+    Returns:
+        Wrapped function that logs results.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+
+        if not isinstance(result, tuple) or len(result) != 2:
+            raise ValueError("Expected (model_name, game_results) from simulation function.")
+
+        model_name, game_results = result
+        game_name = game_results[0]["game"] if game_results else "unknown_game"
+
+        # Generate structured game log
+        log_data = generate_game_log(model_name, game_results)
+
+        # Ensure results directory exists
+        os.makedirs("results", exist_ok=True)
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        file_path = f"results/{game_name}_{timestamp}.json"
+
+        save_game_log(file_path, log_data)
+
+        # Print summary to console
+        print_total_scores(game_name, log_data["summary"])
+
+        logging.info(f"Simulation complete. Results saved to {file_path}")
+
+        return result  # Return the original function output
+
+    return wrapper
