@@ -65,6 +65,7 @@ def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[in
 def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
     """Loads the game from pyspiel and initializes the game environment simulator."""
 
+    seed = config.get("seed")
 
     # Load the pyspiel game object
     player_types = [agent["type"] for _, agent in sorted(config["agents"].items())]
@@ -76,12 +77,9 @@ def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
         game_name=game_name,
         game=game_loader,
         player_types= player_types,
-        max_game_rounds=config["env_config"].get("max_game_rounds") # For iterated games
+        max_game_rounds=config["env_config"].get("max_game_rounds"), # For iterated games
+        seed=seed
     )
-
-    seed = config.get("seed")
-    if seed is not None:
-        env.seed(seed)
 
     return env
 
@@ -153,7 +151,7 @@ def _get_action(
     return {current_player: player_to_agent[current_player](observation[current_player])}
 
 def simulate_episodes(
-    env: OpenSpielEnv, agents: List[Any], config: Dict[str, Any]
+    env: OpenSpielEnv, agents: List[Any], config: Dict[str, Any], seed:int
 ) -> Tuple[str, List[Dict[str, Any]]]:
     """
     Simulates multiple episodes and logs game events.
@@ -171,7 +169,9 @@ def simulate_episodes(
     game_results = []
     game_name = config["env_config"]["game_name"]
 
-    for _ in range(config['num_episodes']):
+    for episode_idx in range(config['num_episodes']):
+
+        episode_seed = seed + episode_idx  # Vary seed per episode to avoid identical runs
 
         # Shuffle agent and map from OpenSpiel indices to shuffled agents
         # the _get_action function will use this mapping to get actions from OS internal idx to shuffled agents.
@@ -189,7 +189,7 @@ def simulate_episodes(
         }
 
         # Start a new episode
-        observation_dict, _ = env.reset()  # board state and legal actions
+        observation_dict, _ = env.reset(seed=episode_seed)  # board state and legal actions
         moves = []
         illegal_moves, rounds = 0, 0
         terminated = False  # Whether the episode has ended normally
@@ -235,7 +235,6 @@ def simulate_episodes(
         return model_name, game_results
 
 
-
 @time_execution
 @log_simulation_results
 def run_simulation(args) -> Dict[str, Any]:
@@ -252,9 +251,10 @@ def run_simulation(args) -> Dict[str, Any]:
     # Parse and validate game's configuration
     config = parse_config(args)
     validate_config(config)
+
     seed = config.get("seed")
     if seed is not None:
-            set_seed(seed)
+        set_seed(seed)
 
     game_name = config["env_config"]["game_name"]
 
@@ -266,7 +266,7 @@ def run_simulation(args) -> Dict[str, Any]:
     agents_list = initialize_agents(config)
 
     # Run simulation loop
-    model_name, game_results = simulate_episodes(env, agents_list, config)
+    model_name, game_results = simulate_episodes(env, agents_list, config, seed=seed)
 
     # Print final game state
     print("\n----------------------------")

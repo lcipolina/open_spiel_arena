@@ -37,11 +37,6 @@ def build_cli_parser() -> argparse.ArgumentParser:
         type=str,
         help="Path to a JSON config file or raw JSON string.",
     )
-    parser.add_argument(
-        "--seed",
-         type=int,
-         default=None,
-         help="Random seed for reproducibility.")
 
     parser.add_argument(
         "--override",
@@ -75,10 +70,6 @@ def parse_config(args: argparse.Namespace) -> Dict[str, Any]:
             key, value = override.split("=", 1)
             config = apply_override(config, key, value)
 
-    # Update with CLI seed (if provided)
-    if args.seed is not None:
-        config["seed"] = args.seed
-
     return config
 
 
@@ -104,7 +95,6 @@ def apply_override(config: Dict[str, Any], key: str, value: str) -> Dict[str, An
     current[final_key] = parse_value(value)
 
     return config
-
 
 
 def parse_value(value: str) -> Any:

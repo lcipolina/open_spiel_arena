@@ -5,7 +5,7 @@ matrix games like Rock-Paper-Scissors and Prisoner's Dilemma using the OpenSpiel
 framework.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from envs.open_spiel_env import OpenSpielEnv
 
 class MatrixGameSimulator(OpenSpielEnv):
@@ -14,7 +14,8 @@ class MatrixGameSimulator(OpenSpielEnv):
     def __init__(self, game: Any,
                  game_name: str,
                  player_types: Dict[str, str],
-                 max_game_rounds: int = None):
+                 max_game_rounds: int = None,
+                 seed: Optional[int] = None):
         """
         Args:
             game: The OpenSpiel game object.
@@ -23,7 +24,7 @@ class MatrixGameSimulator(OpenSpielEnv):
             max_game_rounds: Maximum number of rounds
                              for iterated games (optional, default is None).
         """
-        super().__init__(game, game_name, player_types, max_game_rounds)
+        super().__init__(game, game_name, player_types, max_game_rounds, seed)
 
 
     def apply_action(self, action: List[int]):

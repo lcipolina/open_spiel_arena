@@ -107,3 +107,24 @@
 2025-02-08 13:49:50,639 - __main__ - INFO - Starting simulation for game: kuhn_poker
 2025-02-08 13:51:33,187 - __main__ - INFO - Starting simulation for game: kuhn_poker
 2025-02-08 13:52:02,490 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-08 15:16:37,913 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 15:38:16,647 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:03:17,477 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:04:18,228 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:11:33,070 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:29:36,744 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:29:38,082 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.561140 seconds
+2025-02-08 16:29:38,082 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000008 seconds
+2025-02-08 16:38:06,240 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:38:26,202 - root - INFO - [llm] Observation: 211, Action: 0, Time: 2.132058 seconds
+2025-02-08 16:38:48,332 - root - INFO - [random] Observation: 011, Action: 0, Time: 3.172654 seconds
+2025-02-08 16:41:01,167 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:41:02,496 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.352535 seconds
+2025-02-08 16:41:02,496 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-08 16:41:02,497 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250208_164102.json
+2025-02-08 16:41:02,497 - root - INFO - run_simulation executed in 1.33 seconds
+2025-02-08 16:49:04,604 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:49:05,664 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.372422 seconds
+2025-02-08 16:49:05,665 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-08 16:49:05,665 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250208_164905.json
+2025-02-08 16:49:05,666 - root - INFO - run_simulation executed in 1.06 seconds

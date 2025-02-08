@@ -1,0 +1,46 @@
+{
+    "model_name": "gpt2",
+    "games_played": [
+        {
+            "game": "kuhn_poker",
+            "rounds": 2,
+            "moves": [
+                {
+                    "0": 0
+                },
+                {
+                    "1": 0
+                }
+            ],
+            "illegal_moves": 0,
+            "players": [
+                {
+                    "player_id": 0,
+                    "player_type": "llm",
+                    "player_model": "gpt2",
+                    "result": "win"
+                },
+                {
+                    "player_id": 1,
+                    "player_type": "random",
+                    "player_model": "None",
+                    "result": "loss"
+                }
+            ]
+        }
+    ],
+    "summary": {
+        "kuhn_poker": {
+            "games": 1,
+            "moves/game": 2.0,
+            "illegal-moves": 0,
+            "win-rate": {
+                "gpt2": 100.0
+            },
+            "win-rate vs": {
+                "gpt2 vs random": 0
+            }
+        }
+    },
+    "seed": 42
+}

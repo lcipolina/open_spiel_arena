@@ -46,8 +46,9 @@ This project explores how LLMs interpret game states, make strategic decisions, 
       # From a JSON FILE
       python3 scripts/simulation.py --config config.json
 
-      # Run with default config (Tic-Tac-Toe, 4 rounds)
+      # Run with default config
       python3 scripts/simulate.py
+      python3 scripts/simulate.py --override seed=42
 
       # Human vs Random
      python3 scripts/simulate.py --override agents.0.type=human agents.1.type=random

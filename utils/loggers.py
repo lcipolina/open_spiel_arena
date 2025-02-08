@@ -229,7 +229,10 @@ def log_simulation_results(func: Callable) -> Callable:
 
         # Retrieve the seed from config (passed as args)
         config = kwargs.get("config") if "config" in kwargs else args[0]
-        seed = config.get("seed", "Unknown")  # Default to 'Unknown' if seed is missing
+        if isinstance(config, dict):
+            seed = config.get("seed", 42)
+        else:
+            seed = getattr(config, "seed", 42)
 
         # Generate structured game log
         log_data = generate_game_log(model_name, game_results, seed)

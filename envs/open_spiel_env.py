@@ -20,13 +20,16 @@ class OpenSpielEnv(ABC):
                  game: Any,
                  game_name: str,
                  player_types: Dict[str, str],
-                 max_game_rounds: int = None):
+                 max_game_rounds: int = None,
+                 seed: Optional[int] = None
+                 ):
         """
         Args:
             game (Any): The OpenSpiel game object being simulated.
             game_name (str): A human-readable name for the game.
             player_type (Dict[str, str]): Maps "Player 1", "Player 2", ... to their types (human, random, llm, etc.).
             max_game_rounds (int): Maximum number of rounds for iterated games. Ignored by single-shot games.
+            seed (Optional[int]): Random seed for reproducibility.
         """
         self.game = game
         self.game_name = game_name
@@ -35,6 +38,12 @@ class OpenSpielEnv(ABC):
         self.state = None
         self.info = {}
         self.terminated, self.truncated = False, False
+
+        # Set game seed if supported by OpenSpiel
+        if hasattr(game, "set_seed"):
+            game.set_seed(seed)
+
+        self.state = None
 
     def reset(self, seed: Optional[int]=None) -> Tuple[str, Dict[str, Any]]:
         """
@@ -49,7 +58,9 @@ class OpenSpielEnv(ABC):
                 - Dict[str, Any]: Additional info
         """
         if seed is not None:
-            self.seed(seed)
+            self.set_seed(seed)
+        if hasattr(self.game, "set_seed"):
+            self.game.set_seed(seed)
 
         self.state = self.game.new_initial_state() # Instantiates a pyspiel game
         self.terminated = False
@@ -118,15 +129,21 @@ class OpenSpielEnv(ABC):
         if mode == 'human':
             print(f"Current state of {self.game_name}:\n{self.state}")
 
-    def seed(self, seed: int = None):
+    def set_seed(self, seed: int = None):
         """
         Sets the random seed for the environment.
 
         Args:
             seed (int): The random seed.
         """
-        self.random_generator = random.Random(seed)
-        self.state.set_seed(seed)
+        self.random_generator = random.Random(seed)  # 🔹 Ensure Python's RNG is seeded
+
+        # 🔹 Set game seed if OpenSpiel supports it
+        if hasattr(self.game, "set_seed"):
+            self.game.set_seed(seed)
+
+        self.seed_value = seed  # Store the seed for tracking
+
 
     def close(self):
         """Cleanup."""

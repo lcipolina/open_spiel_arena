@@ -1,7 +1,9 @@
-"""Central game registry with decorator-based registration
+"""
+   registry.py
+   Central game registry with decorator-based registration
    Dynamically register all games at runtime
 """
-from typing import Dict, Any, Callable, Type
+from typing import Dict, Any, Callable, Type, Optional
 from importlib import import_module
 
 
@@ -43,26 +45,6 @@ class GameRegistration:
             return cls # Return the class unmodified
         return decorator
 
-    # TODO: (lck) think this can be deleted
-    '''
-    def get_display_name(self, name: str) -> str:
-        """
-        Get human-readable display name for a game.
-
-        Args:
-            name: The internal name of the game.
-
-        Returns:
-            Display name of the game.
-
-        Raises:
-            ValueError: If the game is not registered.
-        """
-        if name not in self._registry:
-            raise ValueError(f"Game '{name}' not registered.")
-        return self._registry[name]["display_name"]
-    '''
-
     def get_game_loader(self, name: str) -> Callable:
         """
         Get the game loader function for a registered game.
@@ -96,7 +78,8 @@ class GameRegistration:
                                 game_name,
                                 game,
                                 player_types,
-                                max_game_rounds=None):
+                                max_game_rounds=None,
+                                seed: Optional[int] = None) -> Any:
         """
         Get an initialized simulator instance for a registered game.
 
@@ -118,7 +101,7 @@ class GameRegistration:
         module_path, class_name = self._registry[game_name]["simulator_path"].rsplit(".", 1)
         simulator_class = getattr(import_module(module_path), class_name)
 
-        return simulator_class(game, game_name, player_types, max_game_rounds)
+        return simulator_class(game, game_name, player_types, max_game_rounds, seed)
 
 
 # Singleton registry instance
