@@ -12,13 +12,12 @@ import logging
 import random
 from typing import Dict, Any, List, Tuple
 from agents.agent_registry import AGENT_REGISTRY
-# from agents.agent_report import AgentPerformanceReporter  #TODO: delete this!
 from configs.configs import build_cli_parser, parse_config, validate_config
 from envs.open_spiel_env import OpenSpielEnv
 from games.registry import registry # Initilizes an empty registry dictionary for the games
 from games import loaders  # Adds the games to the registry dictionary
-from utils.results_utils import print_total_scores
 from utils.loggers import log_simulation_results, time_execution
+from utils.seeding import set_seed
 
 
 def detect_illegal_moves(env: OpenSpielEnv, actions_dict: Dict[int, int]) -> int:
@@ -66,18 +65,25 @@ def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[in
 def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
     """Loads the game from pyspiel and initializes the game environment simulator."""
 
+
     # Load the pyspiel game object
     player_types = [agent["type"] for _, agent in sorted(config["agents"].items())]
     game_name = config["env_config"]["game_name"]
     game_loader = registry.get_game_loader(game_name)()
 
     # Load the environment simulator instance
-    return registry.get_simulator_instance(
+    env =  registry.get_simulator_instance(
         game_name=game_name,
         game=game_loader,
         player_types= player_types,
         max_game_rounds=config["env_config"].get("max_game_rounds") # For iterated games
     )
+
+    seed = config.get("seed")
+    if seed is not None:
+        env.seed(seed)
+
+    return env
 
 def initialize_agents(config: Dict[str, Any]) -> List:
     """Create agent instances based on configuration
@@ -93,6 +99,7 @@ def initialize_agents(config: Dict[str, Any]) -> List:
     """
     agents_list = []
     game_name = config["env_config"]["game_name"]
+    seed = config.get("seed")
 
     # Iterate over agents in numerical order
     for _, agent_cfg in sorted(config["agents"].items()):
@@ -163,7 +170,6 @@ def simulate_episodes(
     # Initialize storage for episode results
     game_results = []
     game_name = config["env_config"]["game_name"]
-    agent_configs = config["agents"]
 
     for _ in range(config['num_episodes']):
 
@@ -176,8 +182,8 @@ def simulate_episodes(
         # Track each player's type and model for this episode
         episode_players = {
             player_id: {
-                "player_type": agent_configs[player_id]["type"],
-                "player_model": agent_configs[player_id].get("model", "None")
+                "player_type": config["agents"][player_id]["type"],
+                "player_model": config["agents"][player_id].get("model", "None")
             }
             for player_id in player_to_agent.keys()
         }
@@ -221,7 +227,7 @@ def simulate_episodes(
         # Identify all LLM models used
         llm_models = [
             data.get("model", "None")
-            for data in agent_configs.values()
+            for data in config["agents"].values()
             if data["type"] == "llm"
         ]
         model_name = ", ".join(llm_models) if llm_models else "None"
@@ -246,15 +252,15 @@ def run_simulation(args) -> Dict[str, Any]:
     # Parse and validate game's configuration
     config = parse_config(args)
     validate_config(config)
+    seed = config.get("seed")
+    if seed is not None:
+            set_seed(seed)
 
     game_name = config["env_config"]["game_name"]
 
     logging.basicConfig(level=getattr(logging, config["log_level"].upper()))
     logger = logging.getLogger(__name__)
-    logger.info("Starting simulation for game: %s", game_name)
-
-    if config.get("seed") is not None:
-        random.seed(config["seed"])
+    logger.info("Starting simulation for game: %s with seed %s", game_name, seed)
 
     env = initialize_environment(config)
     agents_list = initialize_agents(config)
@@ -263,6 +269,10 @@ def run_simulation(args) -> Dict[str, Any]:
     model_name, game_results = simulate_episodes(env, agents_list, config)
 
     # Print final game state
+    print("\n----------------------------")
+    print(f"Game Outcomes (Seed: {seed})")  
+    print("----------------------------")
+
     print(f"\nFinal game state:\n{env.state}")
 
     # Print game outcomes

@@ -3,7 +3,6 @@ Logging utilities for tracking simulations, agent behavior, and game outcomes.
 Supports structured logging and experiment tracking.
 """
 
-import sys
 import logging
 import json
 from pathlib import Path
@@ -14,11 +13,10 @@ from logging.handlers import RotatingFileHandler
 import os
 import time
 from functools import wraps
-from collections import defaultdict
 
 from utils.results_utils import print_total_scores
 
-def generate_game_log(model_name: str, games: List[Dict[str, Any]]) -> Dict[str, Any]:
+def generate_game_log(model_name: str, games: List[Dict[str, Any]], seed: int) -> Dict[str, Any]:
     """
     Generates a structured game log containing details of individual games and a summary.
 
@@ -98,7 +96,8 @@ def generate_game_log(model_name: str, games: List[Dict[str, Any]]) -> Dict[str,
     return {
         "model_name": model_name,
         "games_played": games,
-        "summary": summary
+        "summary": summary,
+        "seed": seed
     }
 
 
@@ -228,8 +227,12 @@ def log_simulation_results(func: Callable) -> Callable:
         model_name, game_results = result
         game_name = game_results[0]["game"] if game_results else "unknown_game"
 
+        # Retrieve the seed from config (passed as args)
+        config = kwargs.get("config") if "config" in kwargs else args[0]
+        seed = config.get("seed", "Unknown")  # Default to 'Unknown' if seed is missing
+
         # Generate structured game log
-        log_data = generate_game_log(model_name, game_results)
+        log_data = generate_game_log(model_name, game_results, seed)
 
         # Ensure results directory exists
         os.makedirs("results", exist_ok=True)
