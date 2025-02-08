@@ -270,7 +270,7 @@ def run_simulation(args) -> Dict[str, Any]:
 
     # Print final game state
     print("\n----------------------------")
-    print(f"Game Outcomes (Seed: {seed})")  
+    print(f"Game Outcomes (Seed: {seed})")
     print("----------------------------")
 
     print(f"\nFinal game state:\n{env.state}")
