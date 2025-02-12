@@ -73,7 +73,7 @@ class OpenSpielEnv(ABC):
 
         return self._state_to_observation(), self.info
 
-    def step(self, action_dict: Dict[int, int]) -> Tuple[Any, float, bool, Dict[str, Any]]:
+    def step(self, action_dict: Dict[int, int]) -> Tuple[Any, float, bool,bool, Dict[str, Any]]:
         """Applies the given action(s) to the environment and returns the new state.
 
         Args:

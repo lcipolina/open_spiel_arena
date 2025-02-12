@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# utils/game_utils.py
+
 """
 simulate.py
 
@@ -8,17 +8,44 @@ Supports both CLI arguments and config dictionaries.
 Includes performance reporting and logging.
 """
 
-import logging
+import os, sys
+
+# Dynamically add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+import ray
+import argparse
+import logging  # this is not used, QUESTION FOR CHAT GPT: I believe we need to initialize the logging?
 import random
+import json
 from typing import Dict, Any, List, Tuple
 from agents.agent_registry import AGENT_REGISTRY
-from configs.configs import build_cli_parser, parse_config, validate_config
+from configs.configs import parse_config, validate_config  #TODO: delete this module or call this validate later
 from envs.open_spiel_env import OpenSpielEnv
 from games.registry import registry # Initilizes an empty registry dictionary for the games
 from games import loaders  # Adds the games to the registry dictionary
-from utils.loggers import log_simulation_results, time_execution
+# from utils.loggers import log_simulation_results, time_execution #TODO: delete this!
 from utils.seeding import set_seed
+from agents.llm_utils import batch_llm_decide_moves
 
+
+
+# Load SLURM Output Path from Environment
+OUTPUT_PATH = os.getenv(
+    "OUTPUT_PATH",
+    "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/results/simulation_results.json"
+)
+
+# Initialize Ray from SLURM either local or distributed mode.
+#if ray.is_initialized(): # commented for faster debugging
+#   ray.shutdown()
+if os.getenv("DEBUG", "0") == "1":
+    print("⚠️ Debug mode enabled: Running Ray in local mode (single process)")
+    ray.init(local_mode=True)
+else:
+    ray.init(address="auto", ignore_reinit_error=True)
 
 def detect_illegal_moves(env: OpenSpielEnv, actions_dict: Dict[int, int]) -> int:
     """
@@ -31,12 +58,10 @@ def detect_illegal_moves(env: OpenSpielEnv, actions_dict: Dict[int, int]) -> int
     Returns:
         int: The number of illegal moves detected.
     """
-    illegal_moves = 0
-    for player, action in actions_dict.items():
-        legal_actions = env.state.legal_actions(player)
-        if action not in legal_actions:
-            illegal_moves += 1
-    return illegal_moves
+    return sum(
+        1 for player, action in actions_dict.items()
+        if action not in env.state.legal_actions(player)
+    )
 
 
 def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[int, Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -62,10 +87,8 @@ def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[in
     ]
 
 
-def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
+def initialize_environment(config: Dict[str, Any], seed:int) -> OpenSpielEnv:
     """Loads the game from pyspiel and initializes the game environment simulator."""
-
-    seed = config.get("seed")
 
     # Load the pyspiel game object
     player_types = [agent["type"] for _, agent in sorted(config["agents"].items())]
@@ -79,11 +102,12 @@ def initialize_environment(config: Dict[str, Any]) -> OpenSpielEnv:
         player_types= player_types,
         max_game_rounds=config["env_config"].get("max_game_rounds"), # For iterated games
         seed=seed
+
     )
 
     return env
 
-def initialize_agents(config: Dict[str, Any]) -> List:
+def initialize_agents_old(config: Dict[str, Any], seed:int) -> List:
     """Create agent instances based on configuration
 
     Args:
@@ -97,7 +121,6 @@ def initialize_agents(config: Dict[str, Any]) -> List:
     """
     agents_list = []
     game_name = config["env_config"]["game_name"]
-    seed = config.get("seed")
 
     # Iterate over agents in numerical order
     for _, agent_cfg in sorted(config["agents"].items()):
@@ -113,7 +136,6 @@ def initialize_agents(config: Dict[str, Any]) -> List:
             model_name = agent_cfg.get("model", "gpt2")
             agents_list.append(agent_class(model_name=model_name, game_name=game_name))
         elif agent_type == "random":
-             seed = config.get("seed")
              agents_list.append(agent_class(seed=seed))
         else:
             try:
@@ -122,11 +144,104 @@ def initialize_agents(config: Dict[str, Any]) -> List:
               agents_list.append(agent_class())
     return agents_list
 
+def initialize_agents(config: Dict[str, Any], seed:int) -> List:
+    """
+    Create agent instances based on the configuration.
+
+    Args:
+        config (Dict[str, Any]): Simulation configuration.
+        game_name (str): The game being played.
+
+    Returns:
+        List: A list of agent instances.
+
+    Raises:
+        ValueError: If an invalid agent type or missing model is found.
+    """
+    agents_list = []
+    game_name = config["env_config"]["game_name"]
+
+    for agent in config["agents"].values():
+        agent_type = agent["type"].lower()
+
+        if agent_type not in AGENT_REGISTRY:
+            raise ValueError(f"Unsupported agent type: '{agent_type}'")
+
+        agent_class = AGENT_REGISTRY[agent_type]
+
+        if agent_type == "llm":
+            model_name = agent.get("model")
+            if not model_name:
+                raise ValueError(f"LLM agent must have a model specified.")
+            agents_list.append(agent_class(model_name=model_name, game_name=game_name))
+        elif agent_type == "random":
+            agents_list.append(agent_class(seed=seed))
+        else:
+            agents_list.append(agent_class())
+
+    return agents_list
+
+
+def setup_agents(config: Dict[str, Any], game_name: str, llm_models: List[str]) -> Dict[int, Dict[str, str]]:
+    """
+    Ensures agent configuration consistency:
+    - Uses manually assigned agents from config if present.
+    - Dynamically assigns agents if missing.
+    - Supports overrides.
+    - Ensures correct number of agents per game.
+
+    Args:
+        config (Dict[str, Any]): Full simulation configuration.
+        game_name (str): The game being played.
+        llm_models (List[str]): Available LLM models.
+
+    Returns:
+        Dict[int, Dict[str, str]]: Agent configuration per player.
+    """
+    num_players = registry.get_game_loader(game_name)().num_players()
+    mode = config.get("mode", "llm_vs_random")
+
+    # If manually set in config, use it
+    if mode == "manual":
+        if "agents" not in config or len(config["agents"]) != num_players:
+            raise ValueError(
+                f"Manual mode requires explicit agent definitions. "
+                f"Expected {num_players} agents, but got {len(config.get('agents', {}))}."
+            )
+        return config["agents"]
+
+    # Otherwise, dynamically assign agents
+    agents = {}
+    if mode == "llm_vs_random":
+        for i in range(num_players):
+            agents[i] = {
+                "type": "llm" if i == 0 else "random",
+                "model": llm_models[i % len(llm_models)] if i == 0 else "None"
+            }
+    elif mode == "llm_vs_llm":
+        for i in range(num_players):
+            agents[i] = {
+                "type": "llm",
+                "model": llm_models[i % len(llm_models)]
+            }
+
+    # Apply overrides if provided in the config
+    if "agents" in config:
+        for key, value in config["agents"].items():
+            agents[int(key)] = value
+
+    # Persist changes
+    config["agents"] = agents
+
+    return config["agents"]
+
+
 def _get_action(
     env: OpenSpielEnv, player_to_agent: Dict[int, Any], observation: Dict[str, Any]
 ) -> Dict[int, int]:
     """
-    Computes actions for all (shuffled) players involved in the current step.
+    Computes actions for all (shuffled) players using batch processing where applicable.
+    Each agent handles its own prompt logic.
 
     Args:
         env (OpenSpielEnv): The game environment.
@@ -137,167 +252,130 @@ def _get_action(
         Dict[int, int]: A dictionary mapping player indices to selected actions.
     """
 
-    # Handle simultaneous-move games (all players act at once)
+    # Batch LLM calls for simultaneous-move games (all players act at once)
     if env.state.is_simultaneous_node():
-        return {
-            player: player_to_agent[player](observation[player]) # CALL agent function to get action
-            for player in player_to_agent
-            }
+        prompts, legal_actions, model_names = {}, {}, {}
 
-    # Handle turn-based games (only one player acts)
-    # We rely on OpenSpiel's internal state to determine the current player
-    # then we map to our shuffled agents
+        for player, agent in player_to_agent.items():
+            if agent.agent_type == "llm": #TODO : ver como se saca el tipo de agente
+               player_key = str(player)  # Convert player index to string
+               prompts[player] = agent(observation[player_key])
+               legal_actions[player] = tuple(observation[player_key]["legal_actions"])
+               model_names[player] = agent.model_name
+
+        llm_moves = ray.get(batch_llm_decide_moves.remote(model_names, prompts, legal_actions))
+
+        # Merge LLM moves with non-LLM agent moves
+        # Handle turn-based games (only one player acts)
+        # We rely on OpenSpiel's internal state to determine the current player
+        # then we map to our shuffled agents
+        player_key = str(player)
+        actions = {player: agent(observation[player_key])
+                   for player, agent in player_to_agent.items()
+                   if agent.agent_type != "llm"}
+
+        # Merge LLM moves with other agents' moves
+        actions.update(llm_moves)
+        return actions
+
+    # Handle turn-based games (only current player acts)
     current_player = env.state.current_player()
     return {current_player: player_to_agent[current_player](observation[current_player])}
 
-def simulate_episodes(
-    env: OpenSpielEnv, agents: List[Any], config: Dict[str, Any], seed:int
-) -> Tuple[str, List[Dict[str, Any]]]:
+
+@ray.remote # Runs on its own ray worker
+def simulate_game(game_name: str,
+                  config: Dict[str, Any],
+                  seed: int
+                  ) -> Tuple[str, List[Dict[str, Any]]]:
     """
-    Simulates multiple episodes and logs game events.
+    Runs multiple episodes of a single game in parallel.
 
     Args:
-        env: The game environment.
-        agents: A list of agents classes corresponding to players.
-        config: Simulation configuration.
+        game_name (str): The game to simulate.
+        config (Dict[str, Any]): Simulation configuration.
+        seed: Random seed.
 
     Returns:
-         Tuple[str, List[Dict[str, Any]]]: Model name(s) and game results.
+        Tuple[str, List[Dict[str, Any]]]: Model name(s) and game results.
     """
 
-    # Initialize storage for episode results
+    set_seed(seed)
+    num_players = registry.get_game_loader(game_name)().num_players()
+
+    # Dynamically assign agents
+    llm_models = [m["model"] for m in config.get("agents", {}).values() if m["type"] == "llm"]
+    config["agents"] = setup_agents(config, game_name, llm_models)
+
+    env = initialize_environment(config, seed)
+    agents = initialize_agents(config, seed)  # Uses updated config["agents"]
+
     game_results = []
-    game_name = config["env_config"]["game_name"]
+    for episode in range(config["num_episodes"]):
+        observation, _ = env.reset(seed=seed + episode)
+        actions = {}
 
-    for episode_idx in range(config['num_episodes']):
-
-        episode_seed = seed + episode_idx  # Vary seed per episode to avoid identical runs
-
-        # Shuffle agent and map from OpenSpiel indices to shuffled agents
-        # the _get_action function will use this mapping to get actions from OS internal idx to shuffled agents.
+        # Map players to agents
         shuffled_agents = random.sample(agents, len(agents))
         player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
-        actions_dict = {idx: None for idx in player_to_agent}
 
-        # Track each player's type and model for this episode
-        episode_players = {
-            player_id: {
-                "player_type": config["agents"][player_id]["type"],
-                "player_model": config["agents"][player_id].get("model", "None")
-            }
-            for player_id in player_to_agent.keys()
-        }
-
-        # Start a new episode
-        observation_dict, _ = env.reset(seed=episode_seed)  # board state and legal actions
-        moves = []
-        illegal_moves, rounds = 0, 0
-        terminated = False  # Whether the episode has ended normally
-        truncated = False  # Whether the episode ended due to `max_game_rounds`
-
-        # Play the game until it ends
-        # observation_dict brings the new state and legal actions for all players
-        # then _get_action maps to the corresponding shuffled agents.
-        while not (terminated or truncated):
-            actions_dict = _get_action(env, player_to_agent, observation_dict) # actions_dict =  {player_id: action}
-
-            # Detect illegal moves
-            illegal_moves += detect_illegal_moves(env, actions_dict)
-
-            moves.append(actions_dict)
-            rounds += 1
-            observation_dict, \
-            rewards_dict, \
-            terminated, \
-            truncated, \
-            _ = env.step(actions_dict)   # observations_dict =  {player_id: observation}
-
-
-        # Update results when the episode is finished - TODO: check this against all games
-        episode_results = get_episode_results(rewards_dict, episode_players)
+        while not env.is_terminal():
+            actions = _get_action(env, player_to_agent, observation)
+            observation, rewards, terminated, truncated, _ = env.step(actions)
+            if terminated or truncated:
+                break
 
         game_results.append({
             "game": game_name,
-            "rounds": rounds,
-            "moves": moves,
-            "illegal_moves": illegal_moves,
-            "players": episode_results
+            "rounds": len(actions),
+            "players": {idx: agent.get_performance_metrics() for idx, agent in enumerate(agents)}
         })
 
-        # Identify all LLM models used
-        llm_models = [
-            data.get("model", "None")
-            for data in config["agents"].values()
-            if data["type"] == "llm"
-        ]
-        model_name = ", ".join(llm_models) if llm_models else "None"
-
-        return model_name, game_results
-
-
-@time_execution
-@log_simulation_results
-def run_simulation(args) -> Dict[str, Any]:
-    """
-    Orchestrates the simulation workflow and generates reports.
-
-    Args:
-        args: Parsed CLI arguments.
-
-    Returns:
-        Dict: Simulation results.
-    """
-
-    # Parse and validate game's configuration
-    config = parse_config(args)
-    validate_config(config)
-
-    seed = config.get("seed")
-    if seed is not None:
-        set_seed(seed)
-
-    game_name = config["env_config"]["game_name"]
-
-    logging.basicConfig(level=getattr(logging, config["log_level"].upper()))
-    logger = logging.getLogger(__name__)
-    logger.info("Starting simulation for game: %s with seed %s", game_name, seed)
-
-    env = initialize_environment(config)
-    agents_list = initialize_agents(config)
-
-    # Run simulation loop
-    model_name, game_results = simulate_episodes(env, agents_list, config, seed=seed)
-
-    # Print final game state
-    print("\n----------------------------")
-    print(f"Game Outcomes (Seed: {seed})")
-    print("----------------------------")
-
-    print(f"\nFinal game state:\n{env.state}")
-
-    # Print game outcomes
-    for result in game_results:
-        print(f"\nGame: {result['game']}")
-        print(f"Rounds played: {result['rounds']}")
-        print(f"Illegal moves: {result['illegal_moves']}")
-
-        # Instead of accessing a non-existent 'result' key, loop through players
-        for player in result["players"]:
-            print(f"Player {player['player_id']} ({player['player_type']} - {player['player_model']}): {player['result'].upper()}")
+    # Identify all LLM models used
+    llm_models_used = [
+        data.get("model", "None") for data in config["agents"].values() if data["type"] == "llm"
+    ]
+    model_name = ", ".join(llm_models_used) if llm_models_used else "None"
 
     return model_name, game_results
 
+def run_simulation(args):
+    """Main function to run the simulation across multiple games."""
 
-def main():
-    """Main entry point for the simulation script."""
+    config = parse_config(args)
 
-    # Build the CLI parser
-    parser = build_cli_parser()
-    args = parser.parse_args()
+    log_level_str = config.get("log_level", "INFO").upper()
+    log_level = getattr(logging, log_level_str, logging.INFO)  # Defaults to INFO if invalid
+    logging.basicConfig(
+        level=log_level,
+        format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+    logger = logging.getLogger(__name__)
 
-    # Run the simulation
-    run_simulation(args)
+
+    seed = config.get("seed", 42)
+    set_seed(seed)
+
+    # Read game names from SLURM environment variable (if set)
+    game_names = os.getenv("GAME_NAMES", "kuhn_poker,matrix_rps,tic_tac_toe,connect_four").split(",")
+
+    # Run simulations in parallel
+    results = ray.get([simulate_game.remote(game, config, seed) for game in game_names])
+
+
+    # Save results
+    with open(OUTPUT_PATH, "w") as f:
+        json.dump(results, f, indent=4)
+
+    return results
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Run LLM game simulations.")
+    parser.add_argument("--config", type=str, help="Path to JSON config file.")
+    parser.add_argument(
+        "--override", nargs="*", metavar="KEY=VALUE",
+        help="Key-value overrides for configuration (e.g., game_name=tic_tac_toe)."
+    )
+    args = parser.parse_args()
+    run_simulation(args)

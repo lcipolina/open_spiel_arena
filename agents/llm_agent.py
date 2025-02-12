@@ -4,9 +4,10 @@ llm_agent.py
 Implements an agent that queries an LLM for its action.
 """
 
+
 from typing import Any, Dict
 from agents.llm_registry import LLM_REGISTRY
-from agents.llm_utils import generate_prompt, llm_decide_move
+from agents.llm_utils import generate_prompt
 from .base_agent import BaseAgent
 
 
@@ -30,7 +31,7 @@ class LLMAgent(BaseAgent):
 
         self.llm = LLM_REGISTRY[model_name]["model_loader"]()
 
-    def compute_action(self, observation: Dict[str,Any]) -> int:
+    def compute_action(self, observation: Dict[str,Any]) -> str:
         """
         Uses the LLM to select an action from the legal actions.
 
@@ -39,9 +40,8 @@ class LLMAgent(BaseAgent):
                 - legal_actions: The set of legal actions for the current player.
                 - state_string: The current OpenSpiel state.
                 - info: Additional information to include in the prompt.
-                - prompt: The prompt for the LLM (optionally coming from some games).
         Returns:
-            int: The action chosen by the LLM.
+            Tuple[str, Tuple[int, ...]]: The prompt and legal actions.
         """
         legal_actions = observation["legal_actions"]
         state = observation.get("state_string")
@@ -50,4 +50,4 @@ class LLMAgent(BaseAgent):
 
         if prompt is None:
            prompt = generate_prompt(self.game_name, str(state), legal_actions, info = info)
-        return llm_decide_move(self.llm, prompt, tuple(legal_actions))
+        return prompt

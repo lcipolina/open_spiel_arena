@@ -44,7 +44,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
    - To simulate a single game:
      ```bash
       # From a JSON FILE
-      python3 scripts/simulation.py --config config.json
+      python3 scripts/simulate.py --config config.json
 
       # Run with default config
       python3 scripts/simulate.py

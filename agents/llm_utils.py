@@ -5,10 +5,16 @@ This module provides helper functions to generate prompts and interact with LLMs
 for decision-making in game simulations.
 """
 
-from functools import lru_cache
-from typing import List, Any, Optional
+import os
+from typing import List, Any, Optional, Dict
 import random
+from vllm import SamplingParams
+from agents.llm_registry import LLM_REGISTRY
+import ray
 
+# Get values from SLURM (default if not found)
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", 10))
+TEMPERATURE = float(os.getenv("TEMPERATURE", 0.1))
 
 def generate_prompt(game_name: str,
                     state: str,
@@ -37,30 +43,49 @@ def generate_prompt(game_name: str,
     )
 
 
-
-
-@lru_cache(maxsize=128)
-def llm_decide_move(llm: Any, prompt: str, legal_actions: tuple) -> int:
-    """Use an LLM to decide the next move, with caching for repeated prompts.
+@ray.remote  # The function will be a separate Ray task or actor
+def batch_llm_decide_moves(
+    model_names: Dict[int, str],  # Supports multiple LLMs per player
+    prompts: Dict[int, str],
+    legal_actions: Dict[int, tuple]
+) -> Dict[int, int]:
+    """
+    Queries vLLM in batch mode to decide moves for multiple players, supporting multiple LLM models.
 
     Args:
-        llm: The LLM pipeline instance (e.g., from Hugging Face).
-        prompt: The prompt string provided to the LLM.
-        legal_actions: The list of legal actions available (converted to tuple).
+        model_names (Dict[int, str]): Dictionary mapping player IDs to their respective LLM model names.
+        prompts (Dict[int, str]): Dictionary mapping player IDs to prompts.
+        legal_actions (Dict[int, tuple]): Dictionary mapping player IDs to legal actions.
 
     Returns:
-        int: The action selected by the LLM.
+        Dict[int, int]: Mapping of player ID to chosen action.
     """
 
-    # TODO(lkun): test this: temperature = 0.1 #less creative
+    # Load all models in use
+    llm_instances = {
+        player_id: LLM_REGISTRY[model_name]["model_loader"]()
+        for player_id, model_name in model_names.items()
+    }
+    sampling_params = SamplingParams(max_tokens=MAX_TOKENS, temperature=TEMPERATURE)
 
-    response = llm(prompt, max_new_tokens=30, pad_token_id=50256)[0]["generated_text"]
-    for word in response.split():
-         try:
-             move = int(word)
-             if move in legal_actions:  # Validate the move against legal actions
-                 return move
-         except ValueError:
-             continue
+    # Run batch inference for each LLM model separately
+    actions = {}
+    for player_id, llm in llm_instances.items():
+        response = llm.generate([prompts[player_id]], sampling_params)[0]  # Single response
 
-    return random.choice(legal_actions)   # Fallback if no valid move is found
+        # Extract action from response
+        move = None
+        for word in response.outputs[0].text.split():
+            try:
+                move = int(word)
+                if move in legal_actions[player_id]:  # Validate move
+                    actions[player_id] = move
+                    break
+            except ValueError:
+                continue
+
+        # If LLM fails to return a valid move, pick randomly  #TODO: this needs to go to the 'invalid action selection' counter
+        if player_id not in actions:
+            actions[player_id] = random.choice(legal_actions[player_id])
+
+    return actions  # dict[playerID, chosen action]

@@ -17,12 +17,13 @@ def default_simulation_config() -> Dict[str, Any]:
     },
     "num_episodes": 1,
     "seed": 42,
+    "mode": "llm_vs_random",  # "manual", "llm_vs_llm"
     "agents": {
-        0: {"type": "llm", "model": "gpt2"},   #llm, random, human
-        1: {"type": "random", "model": "None"},
+       # 0: {"type": "llm", "model": "gpt2"},   #llm, random, human
+       # 1: {"type": "random", "model": "None"},
        # 2: {"type": "random", "model": "None"}, # for matching pennies
     },
-    "log_level": "INFO",
+    "log_level": "INFO", # Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 }
 
 
@@ -84,7 +85,7 @@ def apply_override(config: Dict[str, Any], key: str, value: str) -> Dict[str, An
             k = int(k)  # Convert index to integer
             if not isinstance(current, dict) or k not in current:
                 raise ValueError(f"Invalid key '{k}' in override '{key}'")
-        current = current.setdefault(k, {})
+        current = current.setdefault(k, {}) # type: ignore
 
     # Handle the final key
     final_key = keys[-1]
@@ -92,7 +93,7 @@ def apply_override(config: Dict[str, Any], key: str, value: str) -> Dict[str, An
         final_key = int(final_key)
         if not isinstance(current, dict) or final_key not in current:
             raise ValueError(f"Invalid key '{final_key}' in override '{key}'")
-    current[final_key] = parse_value(value)
+    current[final_key] = parse_value(value)  # type: ignore
 
     return config
 

@@ -1,34 +1,56 @@
 """
 llm_registry.py - Central llm registry
+Registry of available LLMs
 """
 
-from transformers import pipeline
+import os
+import json
+from typing import Dict, Any
+from vllm import LLM
 
-# Registry of available LLMs
-# These are just examples of models that run fast enough to work in this proof of concept.
-# But they don't give us good results.
-# Ideally we would use 'intruct-finetuned' models.
-# I have tried some models and these actually worked well (i.e. followed the prompt):
-#       microsoft/Phi-3-mini-4k-instruct, Qwen/Qwen2.5-Coder-32B-Instruct,
-#       Qwen/Qwen2.5-72B-Instruct, mistralai/Mistral-7B-Instruct-v0.3,dolly-v2-3b, dolly-v2-12b
+# For Debugging:  #TODO:delete this!
+MODELS_DIR="/p/data1/mmlaion/marianna/models"
+MODEL_CONFIG_FILE="/p/project/ccstdl/cipolina-kun1/open_spiel_arena/configs/models.json"
 
-# Note. Need to read the models documentation on how to prompt them. See example for Microsoft's Phi.
+# Retrieve paths from environment variables
+#MODELS_DIR = os.getenv("MODELS_DIR")   #Commented for debugging! TODO:delete this!
+#MODEL_CONFIG_FILE = os.getenv("MODEL_CONFIG_FILE")
+if MODELS_DIR is None or MODEL_CONFIG_FILE is None:
+    raise ValueError("Error: Environment variables MODELS_DIR or MODEL_CONFIG_FILE are not set.")
+
+def load_model_list() -> list:
+    """
+    Loads the list of LLM models from a JSON file.
+
+    Returns:
+        List[str]: List of model names.
+    """
+    with open(MODEL_CONFIG_FILE, "r") as f: # type: ignore
+        data = json.load(f)
+    return data["models"]
 
 
-LLM_REGISTRY = {
-    "gpt2": {
-        "display_name": "GPT-2",
-        "description": "A medium-sized transformer-based language model by OpenAI.",
-        "model_loader": lambda: pipeline("text-generation", model="gpt2"),
-    },
-    "flan_t5_small": {
-        "display_name": "FLAN-T5 Small",
-        "description": "A fine-tuned T5 model optimized for instruction-following tasks.",
-        "model_loader": lambda: pipeline("text-generation", model="google/flan-t5-small"),
-    },
-    "distilgpt2": {
-        "display_name": "DistilGPT-2",
-        "description": "A smaller and faster version of GPT-2.",
-        "model_loader": lambda: pipeline("text-generation", model="distilgpt2"),
-    },
-}
+def load_vllm_model(model_name: str) -> LLM:
+    """
+    Loads a model using vLLM from the pre-downloaded model directory.
+
+    Args:
+        model_name (str): The name of the model to load.
+
+    Returns:
+        LLM: An instance of the vLLM model.
+    """
+    model_path = f"{MODELS_DIR}/{model_name}"
+    return LLM(model=model_path, tensor_parallel_size=1)
+
+
+# Dynamically register all models from JSON
+LLM_REGISTRY: Dict[str, Dict[str, Any]] = {}
+MODEL_LIST = load_model_list()
+
+for model in MODEL_LIST:
+    LLM_REGISTRY[model] = {
+        "display_name": model,
+        "description": f"LLM model {model} using vLLM.",
+        "model_loader": lambda model_name=model: load_vllm_model(model_name),
+    }
