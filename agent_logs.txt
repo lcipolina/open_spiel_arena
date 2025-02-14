@@ -1,0 +1,130 @@
+2025-02-05 14:42:53,472 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 14:48:23,366 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 14:57:34,097 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 15:07:15,736 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 15:07:59,169 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 15:15:02,428 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:20:49,897 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:21:20,333 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:22:39,000 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:25:50,206 - root - INFO - [llm] Observation: N/A, Action: 0, Time: 1.322808 seconds
+2025-02-05 17:28:40,558 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-05 17:28:42,483 - root - INFO - [llm] Observation: N/A, Action: 0, Time: 1.108821 seconds
+2025-02-05 17:28:42,484 - root - INFO - [random] Observation: N/A, Action: 0, Time: 0.000009 seconds
+2025-02-06 10:14:30,513 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 10:15:01,184 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 10:28:28,802 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 10:28:31,002 - root - INFO - [llm] Observation: N/A, Action: 0, Time: 1.276972 seconds
+2025-02-06 10:28:31,002 - root - INFO - [random] Observation: N/A, Action: 0, Time: 0.000008 seconds
+2025-02-06 11:12:41,175 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 11:12:43,149 - root - INFO - [llm] Observation: N/A, Action: 0, Time: 1.129158 seconds
+2025-02-06 11:12:43,149 - root - INFO - [random] Observation: N/A, Action: 0, Time: 0.000007 seconds
+2025-02-06 13:01:57,404 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:15:28,144 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:18:36,379 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:26:40,605 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:40:23,369 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:46:44,159 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:51:12,687 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:53:14,383 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 13:56:23,223 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 16:25:26,687 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 16:33:02,587 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 16:40:02,052 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 16:57:07,918 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 17:01:31,750 - root - INFO - [llm] Observation: 211, Action: 0, Time: 84.898756 seconds
+2025-02-06 17:02:55,203 - root - INFO - [random] Observation: 011, Action: 0, Time: 11.625941 seconds
+2025-02-06 17:18:17,754 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 19:40:59,659 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 19:49:25,370 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 19:51:21,754 - root - INFO - [llm] Observation: 211, Action: 0, Time: 1.107799 seconds
+2025-02-06 19:52:01,539 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 19:52:59,760 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.328465 seconds
+2025-02-06 19:53:40,642 - root - INFO - [llm] Observation: 211, Action: 0, Time: 11.677509 seconds
+2025-02-06 20:12:02,919 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 20:12:31,115 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 20:13:23,166 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 20:14:27,881 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-06 20:14:29,435 - root - INFO - [llm] Observation: 211, Action: 1, Time: 0.884153 seconds
+2025-02-06 20:14:29,435 - root - INFO - [random] Observation: 021, Action: 0, Time: 0.000006 seconds
+2025-02-07 09:54:56,210 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 09:54:58,897 - root - INFO - [llm] Observation: 211, Action: 0, Time: 1.238367 seconds
+2025-02-07 09:54:58,897 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-07 13:17:01,046 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 13:20:14,770 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 13:21:07,190 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 13:21:08,440 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.594322 seconds
+2025-02-07 13:21:08,440 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-07 13:21:08,441 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250207_132108.json
+2025-02-07 13:21:08,441 - root - INFO - run_simulation executed in 1.25 seconds
+2025-02-07 13:23:44,262 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 13:28:49,857 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 13:28:51,669 - root - INFO - [llm] Observation: 211, Action: 0, Time: 1.103030 seconds
+2025-02-07 13:28:51,670 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-07 13:28:51,670 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250207_132851.json
+2025-02-07 13:28:51,670 - root - INFO - run_simulation executed in 1.81 seconds
+2025-02-07 13:55:29,997 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 16:33:39,775 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 16:33:42,323 - root - INFO - [llm] Observation: 211, Action: 0, Time: 1.275223 seconds
+2025-02-07 16:33:42,323 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000007 seconds
+2025-02-07 16:53:06,329 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 16:53:07,978 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.945830 seconds
+2025-02-07 16:53:07,978 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-07 16:56:05,792 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 16:56:07,460 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.932586 seconds
+2025-02-07 16:56:07,460 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000007 seconds
+2025-02-07 16:58:03,949 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 16:58:05,617 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.956696 seconds
+2025-02-07 16:58:05,617 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-07 17:03:11,899 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 17:03:13,775 - root - INFO - [llm] Observation: 211, Action: 0, Time: 1.102184 seconds
+2025-02-07 17:03:13,775 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000009 seconds
+2025-02-07 17:18:08,593 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 17:41:55,123 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 18:06:10,449 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 18:08:14,575 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 18:08:16,390 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.854653 seconds
+2025-02-07 18:08:16,390 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000007 seconds
+2025-02-07 18:08:26,970 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 18:08:28,647 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.891873 seconds
+2025-02-07 18:08:28,647 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000007 seconds
+2025-02-07 18:10:18,039 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 18:10:19,624 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.640300 seconds
+2025-02-07 18:10:19,624 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000008 seconds
+2025-02-07 18:10:19,625 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250207_181019.json
+2025-02-07 18:10:19,625 - root - INFO - run_simulation executed in 1.59 seconds
+2025-02-07 18:19:49,659 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 18:19:51,536 - root - INFO - [llm] Observation: 211, Action: 0, Time: 1.067838 seconds
+2025-02-07 18:19:51,537 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000007 seconds
+2025-02-07 18:19:51,537 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250207_181951.json
+2025-02-07 18:19:51,537 - root - INFO - run_simulation executed in 1.88 seconds
+2025-02-07 18:20:23,722 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-07 18:20:25,369 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.912230 seconds
+2025-02-07 18:20:25,369 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-07 18:20:25,369 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250207_182025.json
+2025-02-07 18:20:25,370 - root - INFO - run_simulation executed in 1.65 seconds
+2025-02-08 13:45:25,107 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-08 13:49:50,639 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-08 13:51:33,187 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-08 13:52:02,490 - __main__ - INFO - Starting simulation for game: kuhn_poker
+2025-02-08 15:16:37,913 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 15:38:16,647 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:03:17,477 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:04:18,228 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:11:33,070 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:29:36,744 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:29:38,082 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.561140 seconds
+2025-02-08 16:29:38,082 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000008 seconds
+2025-02-08 16:38:06,240 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:38:26,202 - root - INFO - [llm] Observation: 211, Action: 0, Time: 2.132058 seconds
+2025-02-08 16:38:48,332 - root - INFO - [random] Observation: 011, Action: 0, Time: 3.172654 seconds
+2025-02-08 16:41:01,167 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:41:02,496 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.352535 seconds
+2025-02-08 16:41:02,496 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-08 16:41:02,497 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250208_164102.json
+2025-02-08 16:41:02,497 - root - INFO - run_simulation executed in 1.33 seconds
+2025-02-08 16:49:04,604 - __main__ - INFO - Starting simulation for game: kuhn_poker with seed 42
+2025-02-08 16:49:05,664 - root - INFO - [llm] Observation: 211, Action: 0, Time: 0.372422 seconds
+2025-02-08 16:49:05,665 - root - INFO - [random] Observation: 011, Action: 0, Time: 0.000006 seconds
+2025-02-08 16:49:05,665 - root - INFO - Simulation complete. Results saved to results/kuhn_poker_20250208_164905.json
+2025-02-08 16:49:05,666 - root - INFO - run_simulation executed in 1.06 seconds
