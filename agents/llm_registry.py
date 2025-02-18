@@ -5,17 +5,24 @@ Registry of available LLMs
 
 import os
 import json
+import torch
 from typing import Dict, Any
 
 # Set CUDA paths to ensure GPU availability #TODO: eventually delete this. It's for JFZ
-os.environ["PATH"] = "/usr/local/cuda/bin:" + os.environ["PATH"]
-os.environ["LD_LIBRARY_PATH"] = "/usr/local/cuda/lib64:" + os.environ.get("LD_LIBRARY_PATH", "")
+#os.environ["PATH"] = "/usr/local/cuda/bin:" + os.environ["PATH"]
+#os.environ["LD_LIBRARY_PATH"] = "/usr/local/cuda/lib64:" + os.environ.get("LD_LIBRARY_PATH", "")
 
 # Force vLLM to recognize the correct execution platform
 os.environ["VLLM_PLATFORM"] = "cuda"  # Use "cpu" if debugging
 
-# Ensure PyTorch detects GPUs
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"  # Adjust to match your GPU setup
+import subprocess
+
+# Load required modules
+subprocess.run("module load CUDA", shell=True, check=True)
+subprocess.run("module load Stages/2025 Python/3.12.3", shell=True, check=True)
+
+
+
 
 from vllm import LLM
 
@@ -52,7 +59,27 @@ def load_vllm_model(model_name: str) -> LLM:
         LLM: An instance of the vLLM model.
     """
     model_path = f"{MODELS_DIR}/{model_name}"
-    model = LLM(model="/p/data1/mmlaion/marianna/models/deepseek-coder-33b-instruct", tensor_parallel_size=1, device="cuda")
+    # These ones need A100's
+    #model = LLM(model="kaitchup/Mistral-7B-awq-4bit", quantization="awq", tensor_parallel_size=1, device="cuda",   dtype="half" )
+
+# "bitsandbytes" (4-bit/8-bit quantization)
+    # Auto-detect best dtype based on GPU
+    compute_capability = torch.cuda.get_device_capability()[0]
+    dtype = "bfloat16" if compute_capability >= 8 else "half"
+
+    # Initialize LLM
+    model = 0
+    '''
+    model = LLM(
+        model="HuggingFaceTB/SmolLM-135M-Instruct",
+        tensor_parallel_size=1,
+        dtype=dtype,  # Uses float16 on V100, bfloat16 on A100+
+        trust_remote_code=True  # Correct formatting
+    )
+    '''
+   # model = LLM(model="/p/data1/mmlaion/marianna/models/deepseek-coder-33b-instruct", tensor_parallel_size=1, device="cuda", dtype="half" )
+
+
     return model
 
 

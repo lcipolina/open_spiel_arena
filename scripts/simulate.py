@@ -8,7 +8,29 @@ Supports both CLI arguments and config dictionaries.
 Includes performance reporting and logging.
 """
 
+import debugpy
+
+print("Running simulate.py...")
+
 import os, sys
+
+'''
+# To debug - just run python3 scripts/simulate.py
+if "RANK" not in os.environ or os.environ["RANK"] == "0":
+    if not debugpy.is_client_connected():
+        print("Starting DebugPy...")
+        debugpy.listen(("0.0.0.0", 5678))
+        print("Waiting for debugger to attach. hit the debugger arrow")
+        debugpy.wait_for_client()
+        print("Debugger attached!")
+'''
+
+# Manually set a breakpoint
+#debugpy.breakpoint()
+
+
+
+
 
 # Dynamically add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -38,15 +60,38 @@ OUTPUT_PATH = os.getenv(
     "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/results/simulation_results.json"
 )
 
+
+'''
 # Initialize Ray from SLURM either local or distributed mode.
 #if ray.is_initialized(): # commented for faster debugging
 #   ray.shutdown()
 if os.getenv("DEBUG", "0") == "1":
     print("⚠️ Debug mode enabled: Running Ray in local mode (single process)")
-    ray.init(local_mode=True,runtime_env={"env_vars": {"PYTHONPATH": "/p/project/ccstdl/cipolina-kun1/open_spiel_arena"}})
-else:
-    ray.init(address="auto",runtime_env={"env_vars": {"PYTHONPATH": "/p/project/ccstdl/cipolina-kun1/open_spiel_arena"}})
+    #ray.init(local_mode=True,runtime_env={"env_vars": {"PYTHONPATH": "/p/project/ccstdl/cipolina-kun1/open_spiel_arena"}})
+    # Force Ray workers to use the same Python executable
+    os.environ["PYTHON_EXECUTABLE"] = sys.executable
 
+    ray.init(
+        local_mode=True,
+        runtime_env={
+            "env_vars": {
+                "PYTHON_EXECUTABLE": sys.executable,  # Ensure all Ray workers use this Python
+                "PYTHONPATH": "/p/project/ccstdl/cipolina-kun1/open_spiel_arena"
+            }
+        }
+    )
+
+else:
+    ray.init(
+        address="auto",
+        runtime_env={
+            "env_vars": {
+                "PYTHON_EXECUTABLE": sys.executable,  # Ensure all Ray workers use this Python
+                "PYTHONPATH": "/p/project/ccstdl/cipolina-kun1/open_spiel_arena"
+            }
+        }
+    )
+'''
 def detect_illegal_moves(env: OpenSpielEnv, actions_dict: Dict[int, int]) -> int:
     """
     Detects illegal moves by comparing chosen actions with OpenSpiel's legal actions.
@@ -263,7 +308,8 @@ def _get_action(
                legal_actions[player] = tuple(observation[player_key]["legal_actions"])
                model_names[player] = agent.model_name
 
-        llm_moves = ray.get(batch_llm_decide_moves.remote(model_names, prompts, legal_actions))
+        llm_moves = batch_llm_decide_moves.remote(model_names, prompts, legal_actions)
+        #llm_moves = ray.get(batch_llm_decide_moves.remote(model_names, prompts, legal_actions))
 
         # Merge LLM moves with non-LLM agent moves
         # Handle turn-based games (only one player acts)
@@ -312,12 +358,14 @@ def simulate_game(game_name: str,
     for episode in range(config["num_episodes"]):
         observation, _ = env.reset(seed=seed + episode)
         actions = {}
+        terminated = False  # Whether the episode has ended normally
+        truncated = False  # Whether the episode ended due to `max_game_rounds`
 
         # Map players to agents
         shuffled_agents = random.sample(agents, len(agents))
         player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
 
-        while not env.is_terminal():
+        while not (terminated or truncated):
             actions = _get_action(env, player_to_agent, observation)
             observation, rewards, terminated, truncated, _ = env.step(actions)
             if terminated or truncated:
@@ -379,6 +427,8 @@ if __name__ == "__main__":
         help="Key-value overrides for configuration (e.g., game_name=tic_tac_toe)."
     )
     args = parser.parse_args()
+
+
     run_simulation(args)
 
 '''

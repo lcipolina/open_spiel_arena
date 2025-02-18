@@ -45,6 +45,13 @@ export NCCL_NET_GDR_LEVEL=0
 # For longer evaluations
 export PYDEVD_WARN_EVALUATION_TIMEOUT=10
 
+# Things that have worked for me
+module load CUDA
+export PATH=/usr/local/cuda/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+module load Stages/2025 Python/3.12.3  #nodes have different python versions
+
 # Debug Mode (set to 1 for debugging)
 export DEBUG=1  # Change to 1 for debugging
 
