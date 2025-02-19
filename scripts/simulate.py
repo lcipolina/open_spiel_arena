@@ -8,7 +8,7 @@ Supports both CLI arguments and config dictionaries.
 Includes performance reporting and logging.
 """
 
-import debugpy
+
 
 print("Running simulate.py...")
 
@@ -25,10 +25,20 @@ if "RANK" not in os.environ or os.environ["RANK"] == "0":
         print("Debugger attached!")
 '''
 
-# Manually set a breakpoint
-#debugpy.breakpoint()
+# This is just to load the environment   - not sure if it is needed.
+import subprocess
 
+# Define the paths
+mamba_path = "/p/scratch/laionize/cache-kun1/miniconda3/bin/activate"
+env_path = "/p/scratch/laionize/cache-kun1/llm"
 
+# Command to activate Mamba and run Python inside the environment
+command = f"source {mamba_path} {env_path} && python -c 'import sys; print(sys.executable)'"
+
+# Run the command inside a Bash shell
+result = subprocess.run(command, shell=True, executable="/bin/bash", capture_output=True, text=True)
+
+print("Output:", result.stdout.strip())
 
 
 
