@@ -14,17 +14,6 @@ print("Running simulate.py...")
 
 import os, sys
 
-'''
-# To debug - just run python3 scripts/simulate.py
-if "RANK" not in os.environ or os.environ["RANK"] == "0":
-    if not debugpy.is_client_connected():
-        print("Starting DebugPy...")
-        debugpy.listen(("0.0.0.0", 5678))
-        print("Waiting for debugger to attach. hit the debugger arrow")
-        debugpy.wait_for_client()
-        print("Debugger attached!")
-'''
-
 # This is just to load the environment   - not sure if it is needed.
 import subprocess
 
@@ -201,14 +190,14 @@ def initialize_agents_old(config: Dict[str, Any], seed:int) -> List:
 
 def initialize_agents(config: Dict[str, Any], seed:int) -> List:
     """
-    Create agent instances based on the configuration.
+    Initializes the agents class instances based on the configuration.
 
     Args:
         config (Dict[str, Any]): Simulation configuration.
         game_name (str): The game being played.
 
     Returns:
-        List: A list of agent instances.
+        List: A list of agent class instances.
 
     Raises:
         ValueError: If an invalid agent type or missing model is found.
@@ -222,7 +211,7 @@ def initialize_agents(config: Dict[str, Any], seed:int) -> List:
         if agent_type not in AGENT_REGISTRY:
             raise ValueError(f"Unsupported agent type: '{agent_type}'")
 
-        agent_class = AGENT_REGISTRY[agent_type] #TODO: repasar que esta haciendo ACA! con el codigo viejo
+        agent_class = AGENT_REGISTRY[agent_type]  # Loads agent's base class
 
         if agent_type == "llm":
             model_name = agent.get("model")
@@ -232,15 +221,15 @@ def initialize_agents(config: Dict[str, Any], seed:int) -> List:
         else:
             agents_list.append(agent_class())
 
-    return agents_list
+    return agents_list # list of base classes for each agent type on the config dict
 
 
 def setup_agents(config: Dict[str, Any], game_name: str) -> Dict[int, Dict[str, str]]:
     """
-    Ensures agent configuration consistency:
+    Assigns agents (llm, random, human) to players and Updates the config dict with the assigned agents.
     - Uses manually assigned agents from config if present.
     - Dynamically assigns agents if missing.
-    - Supports overrides.
+    - Overrides the config dict with the updated agents.
     - Ensures correct number of agents per game.
 
     Args:
@@ -248,7 +237,7 @@ def setup_agents(config: Dict[str, Any], game_name: str) -> Dict[int, Dict[str, 
         game_name (str): The game being played.
 
     Returns:
-        Dict[int, Dict[str, str]]: Agent configuration per player.
+        Dict[int, Dict[str, str]]: Agent model per player.
     """
     num_players = registry.get_game_loader(game_name)().num_players()
     mode = config.get("mode", "llm_vs_random")
@@ -358,15 +347,14 @@ def simulate_game(game_name: str,
 
     set_seed(seed)
 
-    # Dynamically assign agents
-    config["agents"] = setup_agents(config, game_name)
 
-    env = initialize_environment(config, seed)
-    agents = initialize_agents(config, seed)  # Uses updated config["agents"]
+    config["agents"] = setup_agents(config, game_name) # Assign agent models to players
+    env = initialize_environment(config, seed) # Loads game and simulation environment
+    agents = initialize_agents(config, seed)  # list of base classes for each agent type on the config dict
 
     game_results = []
     for episode in range(config["num_episodes"]):
-        observation, _ = env.reset(seed=seed + episode)
+        observation, _ = env.reset(seed=seed + episode) #Each episode has a different seed
         actions = {}
         terminated = False  # Whether the episode has ended normally
         truncated = False  # Whether the episode ended due to `max_game_rounds`
@@ -406,7 +394,7 @@ def run_simulation(args):
         level=log_level,
         format="%(asctime)s - %(levelname)s - %(message)s"
     )
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)  #TODO: see what to do with this
 
 
     seed = config.get("seed", 42)

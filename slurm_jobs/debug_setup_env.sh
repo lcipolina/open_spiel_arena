@@ -24,8 +24,9 @@ export OMP_NUM_THREADS=1
 
 export VLLM_PLATFORM="cpu"  # Importante para VLLM!
 
-module load CUDA
-module load Stages/2025 Python/3.12.3  #nodes have different python versions
+#module load CUDA
+#module load Stages/2025 Python/3.12.3  #nodes have different python versions
+#export CUDA_VISIBLE_DEVICES=0,1,2,3
 export PATH=/usr/local/cuda/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 
@@ -43,4 +44,4 @@ chmod u+r /p/project/ccstdl/cipolina-kun1/open_spiel_arena/scripts/simulate.py
 
 source /p/scratch/laionize/cache-kun1/miniconda3/bin/activate /p/scratch/laionize/cache-kun1/llm
 
-python -m debugpy --listen 0.0.0.0:5678  /p/project/ccstdl/cipolina-kun1/open_spiel_arena/scripts/simulate.py
+python -m debugpy --listen 0.0.0.0:9000  /p/project/ccstdl/cipolina-kun1/open_spiel_arena/scripts/simulate.py

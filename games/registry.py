@@ -1,6 +1,6 @@
 """
    registry.py
-   Central game registry with decorator-based registration
+   Central game-environment registry with decorator-based registration
    Dynamically register all games at runtime
 """
 from typing import Dict, Any, Callable, Type, Optional
@@ -81,11 +81,11 @@ class GameRegistration:
                                 max_game_rounds=None,
                                 seed: Optional[int] = None) -> Any:
         """
-        Get an initialized simulator instance for a registered game.
+        Get an initialized game environment (simulator) instance for a registered game.
 
         Args:
             name: The internal name of the game.
-            *args: Positional arguments for the simulator's constructor.
+            *args: Positional arguments for the game's environment (simulator) constructor.
             **kwargs: Keyword arguments for the simulator's constructor.
 
         Returns:
