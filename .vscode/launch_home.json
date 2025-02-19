@@ -1,0 +1,36 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Python Debugger: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Debug simulate.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/simulate.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["--games", "tic_tac_toe"],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug app.py (Gradio Interface)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
