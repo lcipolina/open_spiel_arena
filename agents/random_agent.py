@@ -41,7 +41,8 @@ class RandomAgent(BaseAgent):
         '''
         game = pyspiel.load_game("kuhn_poker")  # Example: Tic-Tac-Toe
         state = game.new_initial_state()
-        bot = pyspiel.random_agent.RandomAgent(0, 0)
+        # Create a uniform random bot (player 0) with a fixed seed
+        bot = pyspiel.make_uniform_random_bot(0, 42)
         action = bot.step(state) --> chooses a random action
         print(action)
 
