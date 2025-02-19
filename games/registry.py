@@ -3,7 +3,7 @@
    Central game registry with decorator-based registration
    Dynamically register all games at runtime
 """
-from typing import Dict, Any, Callable, Type, Optional
+from typing import Dict, Any, Callable, Type, Optional, List
 from importlib import import_module
 
 
@@ -75,21 +75,23 @@ class GameRegistration:
 
 
     def get_simulator_instance(self,
-                                game_name,
-                                game,
-                                player_types,
-                                max_game_rounds=None,
+                               game_name: str,
+                                game: Any,
+                                player_types: List[str],
+                                max_game_rounds: Optional[int] = None,
                                 seed: Optional[int] = None) -> Any:
         """
-        Get an initialized simulator instance for a registered game.
+        Get an initialized environment simulator instance for a registered game.
 
         Args:
-            name: The internal name of the game.
-            *args: Positional arguments for the simulator's constructor.
-            **kwargs: Keyword arguments for the simulator's constructor.
+            game_name (str): The internal name of the game.
+            game (Any): The game object to be passed to the simulator.
+            player_types (List[str]): A list of player types for the game.
+            max_game_rounds (Optional[int], optional): The maximum number of game rounds. Defaults to None.
+            seed (Optional[int], optional): The random seed for the simulator. Defaults to None.
 
         Returns:
-            An initialized simulator instance.
+            Any: An initialized environment simulator instance.
 
         Raises:
             ValueError: If the game is not registered.
