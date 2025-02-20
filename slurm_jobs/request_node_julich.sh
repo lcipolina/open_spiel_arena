@@ -1,15 +1,11 @@
 #!/bin/bash
-
 # SCRIPT USED FOR INTERACTIVE DEBUGGING ON JUWELS AND HOME VS CODE SSH CONNECTION
-
-# Requests a compute node and prints the modified name for me to do jump forwarding from home.
-# Extracts the host name and modifies it to connect from home
-# Saves the modified hostname to ~/current_compute_node.txt (accessible from your home PC via SSH).
-
-
-# Run like this: ./slurm_jobs/request_node_julich.sh
-#chmod +x slurm_jobs/request_node_julich.sh
-
+# Requests a compute node, captures & modifies the hostname for jump forwarding,
+# and automatically starts the interactive debugger.
+#
+# Run as follows:
+#   chmod +x slurm_jobs/request_node_julich.sh
+#   ./slurm_jobs/request_node_julich.sh
 
 echo "Checking available partitions with idle nodes..."
 
@@ -59,13 +55,13 @@ case "$available_partition" in
 esac
 
 echo "Using account: $selected_account with time limit: $time_limit"
-
 echo "Requesting an interactive compute node..."
 
-# Start an interactive session with srun.
-# The command first captures the compute node's hostname,
-# replaces '.juwels' with 'i.juwels', writes the modified hostname to a file,
-# and then gives you an interactive bash shell.
+# Launch an interactive session via srun.
+# Once connected, the compute node will:
+#   - Print and modify its hostname.
+#   - Save the modified hostname for jump forwarding.
+#   - Activate your conda environment and start the interactive debugger.
 srun --gres=gpu:1 \
      --partition="$available_partition" \
      --account="$selected_account" \
@@ -76,5 +72,7 @@ srun --gres=gpu:1 \
          echo "Original hostname: $HOST"
          echo "Modified hostname for home SSH: $MODIFIED_HOST"
          echo "$MODIFIED_HOST" > ~/current_compute_node.txt
-         exec bash
+         echo "Activating environment and launching interactive debugger..."
+         source /p/scratch/laionize/cache-kun1/miniconda3/bin/activate /p/scratch/laionize/cache-kun1/llm && \
+         python -m debugpy --listen 0.0.0.0:9000 --wait-for-client /p/project/ccstdl/cipolina-kun1/open_spiel_arena/scripts/simulate.py
      '
