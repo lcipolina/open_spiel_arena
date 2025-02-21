@@ -151,46 +151,9 @@ def initialize_environment(config: Dict[str, Any], seed:int) -> OpenSpielEnv:
 
     return env
 
-def initialize_agents_old(config: Dict[str, Any], seed:int) -> List:
-    """Create agent instances based on configuration
-
-    Args:
-        config: Simulation configuration dictionary
-
-    Returns:
-        List of agent instances
-
-    Raises:
-        ValueError: For invalid agent types or missing LLM models
-    """
-    agents_list = []
-    game_name = config["env_config"]["game_name"]
-
-    # Iterate over agents in numerical order
-    for _, agent_cfg in sorted(config["agents"].items()):
-        agent_type = agent_cfg["type"].lower()
-
-        if agent_type not in AGENT_REGISTRY:
-            raise ValueError(f"Unsupported agent type: '{agent_type}'")
-
-        # Dynamically instantiate the agent class
-        agent_class = AGENT_REGISTRY[agent_type]
-
-        if agent_type in ["llm", "human"]:
-            model_name = agent_cfg.get("model", "gpt2")
-            agents_list.append(agent_class(model_name=model_name, game_name=game_name))
-        elif agent_type == "random":
-             agents_list.append(agent_class(seed=seed))
-        else:
-            try:
-              agents_list.append(agent_class(game_name=game_name))
-            except TypeError:
-              agents_list.append(agent_class())
-    return agents_list
-
 def initialize_agents(config: Dict[str, Any], seed:int) -> List:
     """
-    Initializes the agents class instances based on the configuration.
+    Initializes the agents classes (i.e policies) based on the configuration.
 
     Args:
         config (Dict[str, Any]): Simulation configuration.
@@ -221,12 +184,11 @@ def initialize_agents(config: Dict[str, Any], seed:int) -> List:
         else:
             agents_list.append(agent_class())
 
-    return agents_list # list of base classes for each agent type on the config dict
-
+    return agents_list # list of base classes for each of the agent's type on the config dict
 
 def setup_agents(config: Dict[str, Any], game_name: str) -> Dict[int, Dict[str, str]]:
     """
-    Assigns agents (llm, random, human) to players and Updates the config dict with the assigned agents.
+    Assigns agents (llm, random, human) to players and updates the config dict with the assigned agents.
     - Uses manually assigned agents from config if present.
     - Dynamically assigns agents if missing.
     - Overrides the config dict with the updated agents.
@@ -280,52 +242,72 @@ def setup_agents(config: Dict[str, Any], game_name: str) -> Dict[int, Dict[str, 
     return config["agents"]
 
 
-def _get_action(
-    env: OpenSpielEnv, player_to_agent: Dict[int, Any], observation: Dict[str, Any]
+def compute_actions(
+    env: OpenSpielEnv, player_to_agent: Dict[int, Any], observations: Dict[str, Any]
 ) -> Dict[int, int]:
     """
-    Computes actions for all (shuffled) players using batch processing where applicable.
-    Each agent handles its own prompt logic.
+    Computes actions for all players using batch processing where applicable.
+    Each agent handles its own decision logic.
 
     Args:
         env (OpenSpielEnv): The game environment.
-        player_to_agent (Dict[int, Any]): Mapping from OpenSpiel player index to shuffled agent.
-        observation (Dict[str, Any]): 'state_string' and 'legal_actions'.
+        player_to_agent (Dict[int, Any]): Mapping from player index to agent.
+        observations (Dict[str, Any]): Dictionary with state and legal actions.
 
     Returns:
         Dict[int, int]: A dictionary mapping player indices to selected actions.
     """
 
-    # Batch LLM calls for simultaneous-move games (all players act at once)
+    # Simultaneous-move game: All players act at once  #TODO: test this!!
     if env.state.is_simultaneous_node():
-        prompts, legal_actions, model_names = {}, {}, {}
+        return {player: player_to_agent[player](observations[str(player)]) for player in player_to_agent}
 
+    # Turn-based game: Only the current player acts
+    current_player = env.state.current_player()
+    return {current_player: player_to_agent[current_player](observations[current_player])}
+
+
+def compute_actions_old(
+    env: OpenSpielEnv, player_to_agent: Dict[int, Any], observations: Dict[str, Any]
+) -> Dict[int, int]:
+    """
+    Computes actions for all players using batch processing where applicable.
+    Each agent handles its own prompt logic.
+
+    Args:
+        env (OpenSpielEnv): The game environment.
+        player_to_agent (Dict[int, Any]): Mapping from OpenSpiel player index to shuffled agent.
+        observations (Dict[str, Any]): 'state_string' and 'legal_actions' for each player.
+
+    Returns:
+        Dict[int, int]: A dictionary mapping player indices to selected actions.
+    """
+
+    # Simultaneous-move game: All players act at once
+    if env.state.is_simultaneous_node():
+        actions, prompts, legal_actions, model_names = {}, {}, {}, {}
+
+        # Collect all LLM requests first
         for player, agent in player_to_agent.items():
-            if agent.agent_type == "llm": #TODO : ver como se saca el tipo de agente
-               player_key = str(player)  # Convert player index to string
-               prompts[player] = agent(observation[player_key])
-               legal_actions[player] = tuple(observation[player_key]["legal_actions"])
-               model_names[player] = agent.model_name
+            obs = observations[str(player)]
+            if agent.agent_type == "llm":
+                prompts[player] = agent(obs)
+                legal_actions[player] = tuple(obs["legal_actions"])
+                model_names[player] = agent.model_name
+            else:
+                actions[player] = agent(obs)  # Non-LLM agents act immediately
 
-        llm_moves = batch_llm_decide_moves.remote(model_names, prompts, legal_actions)
-        #llm_moves = ray.get(batch_llm_decide_moves.remote(model_names, prompts, legal_actions))
+        # Batch process LLM actions if applicable
+        if prompts:
+            llm_moves = ray.get(batch_llm_decide_moves.remote(model_names, prompts, legal_actions))
+            actions.update(llm_moves)
 
-        # Merge LLM moves with non-LLM agent moves
-        # Handle turn-based games (only one player acts)
-        # We rely on OpenSpiel's internal state to determine the current player
-        # then we map to our shuffled agents
-        player_key = str(player)
-        actions = {player: agent(observation[player_key])
-                   for player, agent in player_to_agent.items()
-                   if agent.agent_type != "llm"}
-
-        # Merge LLM moves with other agents' moves
-        actions.update(llm_moves)
         return actions
 
-    # Handle turn-based games (only current player acts)
+    # Turn-based game: Only the current player acts
     current_player = env.state.current_player()
-    return {current_player: player_to_agent[current_player](observation[current_player])}
+    return {current_player: player_to_agent[current_player](observations[current_player])}
+
 
 
 # @ray.remote # Runs on its own ray worker #TODO: just for debugging
@@ -348,9 +330,9 @@ def simulate_game(game_name: str,
     set_seed(seed)
 
 
-    config["agents"] = setup_agents(config, game_name) # Assign agent models to players
+    config["agents"] = setup_agents(config, game_name) # Assign agents (models) to players
     env = initialize_environment(config, seed) # Loads game and simulation environment
-    agents = initialize_agents(config, seed)  # list of base classes for each agent type on the config dict
+    agents = initialize_agents(config, seed)  # list of base classes (policies) for each agent type on the config dict
 
     game_results = []
     for episode in range(config["num_episodes"]):
@@ -364,7 +346,10 @@ def simulate_game(game_name: str,
         player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
 
         while not (terminated or truncated):
-            actions = _get_action(env, player_to_agent, observation)
+            actions = compute_actions(env, player_to_agent, observation) # Get batched actions for all players
+           # illegal_moves = detect_illegal_moves(env, actions)  # Detect illegal moves  #TODO: see this!
+           # if illegal_moves:
+           #     logging.warning("Illegal moves detected: %d", illegal_moves)
             observation, rewards, terminated, truncated, _ = env.step(actions)
             if terminated or truncated:
                 break
@@ -381,7 +366,7 @@ def simulate_game(game_name: str,
     ]
     model_name = ", ".join(llm_models_used) if llm_models_used else "None"
 
-    return model_name, game_results
+    return model_name, game_results #TODO: see what happens with the rewards
 
 def run_simulation(args):
     """Main function to run the simulation across multiple games."""

@@ -1,0 +1,23 @@
+[
+    "deepseek-coder-33b-instruct",
+    [
+        {
+            "game": "kuhn_poker",
+            "rounds": 1,
+            "players": {
+                "0": {
+                    "agent_type": "llm",
+                    "actions_taken": 1,
+                    "total_processing_time": 222.0248958785087,
+                    "average_response_time": 222.0248958785087
+                },
+                "1": {
+                    "agent_type": "random",
+                    "actions_taken": 2,
+                    "total_processing_time": 2.06634633988142,
+                    "average_response_time": 1.03317316994071
+                }
+            }
+        }
+    ]
+]

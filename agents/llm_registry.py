@@ -77,8 +77,14 @@ def load_vllm_model(model_name: str) -> LLM:
         trust_remote_code=True  # Correct formatting
     )
     '''
-   # model = LLM(model="/p/data1/mmlaion/marianna/models/deepseek-coder-33b-instruct", tensor_parallel_size=1, device="cuda", dtype="half" )
 
+    model = LLM(
+        model="/p/data1/mmlaion/marianna/models/deepseek-math-7b-instruct ",
+        tensor_parallel_size=1,  # Number of GPUs to use for tensor parallelism
+        device="cuda",
+        dtype="half", # Uses float16 on V100, bfloat16 on A100+
+        max_parallel_loading_tokens=512  # limits the number of tokens loaded at once and may help avoid out-of-memory errors.
+    )
 
     return model
 

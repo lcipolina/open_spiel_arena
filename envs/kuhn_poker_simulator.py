@@ -93,7 +93,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
 
         # Build the natural language prompt
         prompt = (
-            f"You are {agent_id} in the game Kuhn Poker.\n"
+            f"You are Player {agent_id} in the game Kuhn Poker.\n"
             f"Your private card: {private_card}\n"
             f"Betting history: {betting_history}\n"
             f"Total pot size: {total_pot} chips\n"

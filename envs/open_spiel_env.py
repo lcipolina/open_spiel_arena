@@ -95,7 +95,7 @@ class OpenSpielEnv(ABC):
             self._solve_chance_nodes()
             return self._state_to_observation(), {}, False, False, {}
 
-        # Handle simultaneous move games
+        # Move environment to the next state
         if self.state.is_simultaneous_node():
             actions = [action_dict[player] for player in sorted(action_dict.keys())]
             self.state.apply_actions(actions)  # Multi-agent moves
@@ -117,7 +117,7 @@ class OpenSpielEnv(ABC):
 
         # If the game is finished, store final scores; otherwise, update current player
         if self.terminated or self.truncated:
-            self.info["final_scores"] = self.state.returns()
+            self.info["final_scores"] = self.state.returns() #TODO: this is never used!
             observation_dict = {agentID: None for agentID in list(action_dict.keys())} # No observation when the game ends
         else:
             observation_dict = self._state_to_observation() # Get next observation for all agents
@@ -159,11 +159,12 @@ class OpenSpielEnv(ABC):
         Returns:
             Dict[int, Dict[str, Any]]: Mapping from agent ID to their respective observations.
         """
+        print("NEEED TO IMPLEMENT THE PROMPT FOR SIMPLE GAMES!!")
         return {
             agent_id: {
                 "state_string": self.state.observation_string(agent_id),
                 "legal_actions": self.state.legal_actions(agent_id),
-                "prompt": None  # Can be overridden in child classes
+                "prompt": None  # Can be overridden in child classes #TODO: need to implement this
             }
             for agent_id in range(self.state.num_players())  # Generate for ALL players
         }

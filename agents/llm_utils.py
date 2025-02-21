@@ -12,6 +12,11 @@ from vllm import SamplingParams
 from agents.llm_registry import LLM_REGISTRY
 import ray
 
+
+# Set environment variable to allow PyTorch to dynamically allocate more memory on GPUs
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+
 # Get values from SLURM (default if not found)
 MAX_TOKENS = int(os.getenv("MAX_TOKENS", 10))
 TEMPERATURE = float(os.getenv("TEMPERATURE", 0.1))
@@ -31,7 +36,7 @@ def generate_prompt(game_name: str,
     Returns:
         str: A prompt string for the LLM.
     """
-    info_text = f"{info}\n" if info else ""  # ✅ Separate conditional string assignment
+    info_text = f"{info}\n" if info else ""
 
     return (
         f"You are playing the Game: {game_name}\n"
@@ -42,8 +47,8 @@ def generate_prompt(game_name: str,
         "your next move from the list of legal actions. Do not provide any additional text or explanation."
     )
 
-
-@ray.remote  # The function will be a separate Ray task or actor
+#TODO: uncomment this!
+#@ray.remote  # The function will be a separate Ray task or actor
 def batch_llm_decide_moves(
     model_names: Dict[int, str],  # Supports multiple LLMs per player
     prompts: Dict[int, str],
