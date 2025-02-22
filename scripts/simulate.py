@@ -309,7 +309,6 @@ def compute_actions_old(
     return {current_player: player_to_agent[current_player](observations[current_player])}
 
 
-
 # @ray.remote # Runs on its own ray worker #TODO: just for debugging
 def simulate_game(game_name: str,
                   config: Dict[str, Any],

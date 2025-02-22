@@ -8,25 +8,36 @@ import json
 import torch
 from typing import Dict, Any
 
-# Set CUDA paths to ensure GPU availability #TODO: eventually delete this. It's for JFZ
-#os.environ["PATH"] = "/usr/local/cuda/bin:" + os.environ["PATH"]
-#os.environ["LD_LIBRARY_PATH"] = "/usr/local/cuda/lib64:" + os.environ.get("LD_LIBRARY_PATH", "")
 
+#TODO: this should go into the SLURM file
 # Force vLLM to recognize the correct execution platform
 os.environ["VLLM_PLATFORM"] = "cuda"  # Use "cpu" if debugging
+# Set KV cache allocation (reduce memory usage)
+os.environ["VLLM_OPENVINO_KVCACHE_SPACE"] = "10"
 
-import subprocess
+# Enable quantized weights (reduce model size)
+os.environ["VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS"] = "ON"
+
+# Set precision for KV cache (optional, can try "u8" or "fp16")
+os.environ["VLLM_OPENVINO_CPU_KV_CACHE_PRECISION"] = "u8"
+
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
+
+# TODO: eventually delete this as it will be on SLURM
+#import subprocess
 
 # Load required modules
-subprocess.run("module load CUDA", shell=True, check=True)
-subprocess.run("module load Stages/2025 Python/3.12.3", shell=True, check=True)
+#subprocess.run("module load CUDA", shell=True, check=True)
+#subprocess.run("module load Stages/2025 Python/3.12.3", shell=True, check=True)
 
 
 
 
-from vllm import LLM
+from vllm import LLM as vLLM # for open models
 
-# For Debugging:  #TODO:delete this!
+# For Debugging:  #TODO:later delete this!
 MODELS_DIR="/p/data1/mmlaion/marianna/models"
 MODEL_CONFIG_FILE="/p/project/ccstdl/cipolina-kun1/open_spiel_arena/configs/models.json"
 
@@ -47,8 +58,8 @@ def load_model_list() -> list:
         data = json.load(f)
     return data["models"]
 
-
-def load_vllm_model(model_name: str) -> LLM:
+# TO CHATGPT: I am not sure if I should place the model loader in the registry or in the utils file!
+def load_vllm_model(model_name: str) ->vLLM:
     """
     Loads a model using vLLM from the pre-downloaded model directory.
 
@@ -68,7 +79,8 @@ def load_vllm_model(model_name: str) -> LLM:
     dtype = "bfloat16" if compute_capability >= 8 else "half"
 
     # Initialize LLM
-    model = 0
+    model_path = '/p/data1/mmlaion/marianna/models/Mistral-7B-Instruct-v0.1'
+
     '''
     model = LLM(
         model="HuggingFaceTB/SmolLM-135M-Instruct",
@@ -78,13 +90,16 @@ def load_vllm_model(model_name: str) -> LLM:
     )
     '''
 
-    model = LLM(
-        model="/p/data1/mmlaion/marianna/models/deepseek-math-7b-instruct ",
+    #TODO Implement 'litellm' for closed models!
+
+    model = vLLM(
+        model=model_path,
         tensor_parallel_size=1,  # Number of GPUs to use for tensor parallelism
         device="cuda",
         dtype="half", # Uses float16 on V100, bfloat16 on A100+
-        max_parallel_loading_tokens=512  # limits the number of tokens loaded at once and may help avoid out-of-memory errors.
-    )
+        max_num_batched_tokens=512, # The total number of tokens processed across all requests in a batch.
+        max_model_len=512  # The max length of a single input sequence.
+)
 
     return model
 

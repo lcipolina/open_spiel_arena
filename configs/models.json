@@ -1,6 +1,6 @@
 {
     "models": [
-        "deepseek-coder-33b-instruct",
+        "llava-v1.6-mistral-7b",
         "deepseek-math-7b-instruct"
     ]
 }

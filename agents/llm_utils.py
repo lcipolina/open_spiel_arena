@@ -6,12 +6,11 @@ for decision-making in game simulations.
 """
 
 import os
-from typing import List, Any, Optional, Dict
+from typing import List, Optional, Dict
 import random
 from vllm import SamplingParams
 from agents.llm_registry import LLM_REGISTRY
 import ray
-
 
 # Set environment variable to allow PyTorch to dynamically allocate more memory on GPUs
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -94,3 +93,58 @@ def batch_llm_decide_moves(
             actions[player_id] = random.choice(legal_actions[player_id])
 
     return actions  # dict[playerID, chosen action]
+
+
+from vllm import LLM
+
+def load_model(model_name: str):
+    """Automatically assigns GPUs based on model size."""
+    if "7b" in model_name.lower():
+        device = "cuda:0"
+        tp = 1
+    elif "13b" in model_name.lower():
+        device = "cuda:0"
+        tp = 2  # Needs 2 GPUs
+    elif "33b" in model_name.lower():
+        device = "cuda:0"
+        tp = 2  # Needs tensor parallelism
+    else:
+        device = "cuda:0"
+        tp = 1  # Default to single GPU
+
+    return LLM(
+        model=model_name,
+        tensor_parallel_size=tp,
+        device=device,
+        gpu_memory_utilization=0.9
+    )
+
+# Example
+#llm1 = load_model("mistral-7b")
+#llm2 = load_model("llama-13b")
+
+
+import gc
+import torch
+import contextlib
+from vllm.distributed import (
+    destroy_model_parallel,
+    destroy_distributed_environment,
+    cleanup_dist_env_and_memory
+)
+
+def cleanup_vllm(llm=None):
+    """Properly cleans GPU memory before loading a new model."""
+    destroy_model_parallel()
+    destroy_distributed_environment()
+
+    if llm:
+        del llm.llm_engine.model_executor
+        del llm
+
+    with contextlib.suppress(AssertionError):
+        torch.distributed.destroy_process_group()
+
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.synchronize()

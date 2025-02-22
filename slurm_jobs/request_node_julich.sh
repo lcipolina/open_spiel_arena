@@ -16,7 +16,7 @@ check_partition_idle() {
 }
 
 # Define partitions in order of preference
-partitions=("develgpus" "gpus" "develbooster")
+partitions=( "gpus" "develgpus" "develbooster")
 available_partition=""
 
 # Iterate over partitions until one with idle nodes is found
