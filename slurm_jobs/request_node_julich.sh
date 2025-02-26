@@ -62,7 +62,7 @@ echo "Requesting an interactive compute node..."
 #   - Print and modify its hostname (for VS Code jump forwarding)
 #   - Activate your conda environment
 #   - Start the interactive debugger in an auto-restart loop
-srun --gres=gpu:1 \
+srun --gres=gpu:4 \
      --partition="$available_partition" \
      --account="$selected_account" \
      --time="$time_limit" \
