@@ -50,7 +50,7 @@ from games.registry import registry # Initilizes an empty registry dictionary fo
 from games import loaders  # Adds the games to the registry dictionary
 # from utils.loggers import log_simulation_results, time_execution #TODO: delete this!
 from utils.seeding import set_seed
-from agents.llm_utils import batch_llm_decide_moves
+from agents.llm_utils import batch_llm_decide_moves,close_simulation, cleanup_vllm
 
 
 # Load SLURM Output Path from Environment
@@ -334,30 +334,39 @@ def simulate_game(game_name: str,
     agents = initialize_agents(config, seed)  # list of base classes (policies) for each agent type on the config dict
 
     game_results = []
-    for episode in range(config["num_episodes"]):
-        observation, _ = env.reset(seed=seed + episode) #Each episode has a different seed
-        actions = {}
-        terminated = False  # Whether the episode has ended normally
-        truncated = False  # Whether the episode ended due to `max_game_rounds`
+    try:
+        for episode in range(config["num_episodes"]):
+            observation, _ = env.reset(seed=seed + episode) #Each episode has a different seed
+            actions = {}
+            terminated = False  # Whether the episode has ended normally
+            truncated = False  # Whether the episode ended due to `max_game_rounds`
 
-        # Map players to agents
-        shuffled_agents = random.sample(agents, len(agents))
-        player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
+            # Map players to agents
+            shuffled_agents = random.sample(agents, len(agents))
+            player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
 
-        while not (terminated or truncated):
-            actions = compute_actions(env, player_to_agent, observation) # Get batched actions for all players
-           # illegal_moves = detect_illegal_moves(env, actions)  # Detect illegal moves  #TODO: see this!
-           # if illegal_moves:
-           #     logging.warning("Illegal moves detected: %d", illegal_moves)
-            observation, rewards, terminated, truncated, _ = env.step(actions)
-            if terminated or truncated:
-                break
+            while not (terminated or truncated):
+                actions = compute_actions(env, player_to_agent, observation) # Get batched actions for all players
+            # illegal_moves = detect_illegal_moves(env, actions)  # Detect illegal moves  #TODO: see this!
+            # if illegal_moves:
+            #     logging.warning("Illegal moves detected: %d", illegal_moves)
+                observation, rewards, terminated, truncated, _ = env.step(actions)
+                if terminated or truncated:
+                    break
 
-        game_results.append({
-            "game": game_name,
-            "rounds": len(actions),
-            "players": {idx: agent.get_performance_metrics() for idx, agent in enumerate(agents)}
-        })
+            game_results.append({
+                "game": game_name,
+                "rounds": len(actions),
+                "players": {idx: agent.get_performance_metrics() for idx, agent in enumerate(agents)}
+            })
+
+    finally:
+        # Decide whether to clean up the model based on simulation mode
+        if config["mode"] == "llm_vs_llm":
+            print("ℹ️ Keeping LLM in memory for next game...")
+        else:
+            cleanup_vllm(CURRENT_LLM)
+            CURRENT_LLM = None
 
     # Identify all LLM models used
     llm_models_used = [
@@ -367,8 +376,18 @@ def simulate_game(game_name: str,
 
     return model_name, game_results #TODO: see what happens with the rewards
 
+
+#################################
+######### MAIN FUNCTION #########
+#################################
+
 def run_simulation(args):
-    """Main function to run the simulation across multiple games."""
+    """Main function to run the simulation across
+    1. Each game
+    2. Each LLM model
+    3. LLM vs Random bot
+    4. LLM vs Every other LLM
+    """
 
     config = parse_config(args)
 
@@ -387,12 +406,14 @@ def run_simulation(args):
     # Read game names from SLURM environment variable (if set)
     game_names = os.getenv("GAME_NAMES", "kuhn_poker,matrix_rps,tic_tac_toe,connect_four").split(",")
 
-    # Run simulations in parallel
+    try:
+        # Run simulations in parallel (Ray)
+        results = simulate_game("kuhn_poker", config, seed)      # Without Ray for debugging: TODO: delete this!
+        #results = ray.get([simulate_game.remote(game, config, seed) for game in game_names])
+    finally:
+        # At the end of ALL simulations, free GPU memory
+        close_simulation()
 
-    #TODO: this is whith ray
-    #results = ray.get([simulate_game.remote(game, config, seed) for game in game_names])
-    # Without Ray for debugging: TODO: delete this!
-    results = simulate_game("kuhn_poker", config, seed)
 
     # Save results
     with open(OUTPUT_PATH, "w") as f:

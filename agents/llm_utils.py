@@ -11,6 +11,14 @@ import random
 from vllm import SamplingParams
 from agents.llm_registry import LLM_REGISTRY
 import ray
+import contextlib
+
+import gc
+import torch
+from vllm.distributed import (
+    destroy_model_parallel,
+    destroy_distributed_environment
+)
 
 # Set environment variable to allow PyTorch to dynamically allocate more memory on GPUs
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -95,46 +103,10 @@ def batch_llm_decide_moves(
     return actions  # dict[playerID, chosen action]
 
 
-from vllm import LLM
-
-def load_model(model_name: str):
-    """Automatically assigns GPUs based on model size."""
-    if "7b" in model_name.lower():
-        device = "cuda:0"
-        tp = 1
-    elif "13b" in model_name.lower():
-        device = "cuda:0"
-        tp = 2  # Needs 2 GPUs
-    elif "33b" in model_name.lower():
-        device = "cuda:0"
-        tp = 2  # Needs tensor parallelism
-    else:
-        device = "cuda:0"
-        tp = 1  # Default to single GPU
-
-    return LLM(
-        model=model_name,
-        tensor_parallel_size=tp,
-        device=device,
-        gpu_memory_utilization=0.9
-    )
-
-# Example
-#llm1 = load_model("mistral-7b")
-#llm2 = load_model("llama-13b")
-
-
-import gc
-import torch
-import contextlib
-from vllm.distributed import (
-    destroy_model_parallel,
-    destroy_distributed_environment,
-    cleanup_dist_env_and_memory
-)
-
 def cleanup_vllm(llm=None):
     """Properly cleans GPU memory before loading a new model."""
+    print("🧹 Cleaning up vLLM model from GPU memory...")
+
     destroy_model_parallel()
     destroy_distributed_environment()
 
@@ -148,3 +120,34 @@ def cleanup_vllm(llm=None):
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.synchronize()
+    print("cleanup_vllm: GPU memory successfully freed.")
+
+def close_simulation():
+    """Cleans up all LLMs & GPU memory after the game ends."""
+    global CURRENT_LLM
+
+    print(" Closing simulation: Clearing all LLMs & GPU memory...")
+
+    # Ensure the currently loaded LLM is cleaned up
+    if CURRENT_LLM is not None:
+        cleanup_vllm(CURRENT_LLM)
+        CURRENT_LLM = None
+
+    # Destroy parallel processing (if any active model is still in memory)
+    destroy_model_parallel()
+    destroy_distributed_environment()
+
+    # Ensure all LLM instances are deleted (if used in batch mode)
+    if "llm_instances" in globals():
+        for llm in llm_instances.values():
+            del llm
+        del llm_instances
+
+    # Force garbage collection
+    gc.collect()  # Run garbage collection
+
+    # Free GPU memory
+    torch.cuda.empty_cache() # Free unused memory
+    torch.cuda.synchronize() # Ensure it's cleared
+
+    print("Simulation closed successfully. GPU memory freed.")
