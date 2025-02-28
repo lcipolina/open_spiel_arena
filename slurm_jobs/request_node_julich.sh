@@ -4,6 +4,7 @@
 # and automatically starts (and restarts) the interactive debugger.
 #
 # Run as follows:
+#   with VPN 'all traffic' it doesnt work!
 #   chmod +x slurm_jobs/request_node_julich.sh
 #   ./slurm_jobs/request_node_julich.sh
 

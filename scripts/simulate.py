@@ -38,20 +38,20 @@ if project_root not in sys.path:
 
 import ray
 import argparse
-import logging  # this is not used, QUESTION FOR CHAT GPT: I believe we need to initialize the logging?
+import logging  # this is not used, TODO: I believe we need to initialize the logging?
 import random
 import json
 from typing import Dict, Any, List, Tuple
 from agents.agent_registry import AGENT_REGISTRY
-from agents.llm_registry import LLM_REGISTRY
 from configs.configs import parse_config, validate_config  #TODO: delete this module or call this validate later
 from envs.open_spiel_env import OpenSpielEnv
 from games.registry import registry # Initilizes an empty registry dictionary for the games
+from agents.llm_registry import LLM_REGISTRY,cleanup_vllm,initialize_llm_registry, close_simulation
 from games import loaders  # Adds the games to the registry dictionary
 # from utils.loggers import log_simulation_results, time_execution #TODO: delete this!
 from utils.seeding import set_seed
-from agents.llm_utils import batch_llm_decide_moves,close_simulation, cleanup_vllm
 
+initialize_llm_registry()
 
 # Load SLURM Output Path from Environment
 OUTPUT_PATH = os.getenv(
@@ -363,7 +363,7 @@ def simulate_game(game_name: str,
     finally:
         # Decide whether to clean up the model based on simulation mode
         if config["mode"] == "llm_vs_llm":
-            print("ℹ️ Keeping LLM in memory for next game...")
+            print("Keeping LLM in memory for next game...")
         else:
             cleanup_vllm(CURRENT_LLM)
             CURRENT_LLM = None

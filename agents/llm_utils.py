@@ -9,16 +9,18 @@ import os
 from typing import List, Optional, Dict
 import random
 from vllm import SamplingParams
-from agents.llm_registry import LLM_REGISTRY
 import ray
 import contextlib
 
 import gc
 import torch
-from vllm.distributed import (
-    destroy_model_parallel,
-    destroy_distributed_environment
-)
+
+
+from agents.llm_registry import initialize_llm_registry
+
+initialize_llm_registry()
+from agents.llm_registry import LLM_REGISTRY
+
 
 # Set environment variable to allow PyTorch to dynamically allocate more memory on GPUs
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -101,53 +103,3 @@ def batch_llm_decide_moves(
             actions[player_id] = random.choice(legal_actions[player_id])
 
     return actions  # dict[playerID, chosen action]
-
-
-def cleanup_vllm(llm=None):
-    """Properly cleans GPU memory before loading a new model."""
-    print("🧹 Cleaning up vLLM model from GPU memory...")
-
-    destroy_model_parallel()
-    destroy_distributed_environment()
-
-    if llm:
-        del llm.llm_engine.model_executor
-        del llm
-
-    with contextlib.suppress(AssertionError):
-        torch.distributed.destroy_process_group()
-
-    gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.synchronize()
-    print("cleanup_vllm: GPU memory successfully freed.")
-
-def close_simulation():
-    """Cleans up all LLMs & GPU memory after the game ends."""
-    global CURRENT_LLM
-
-    print(" Closing simulation: Clearing all LLMs & GPU memory...")
-
-    # Ensure the currently loaded LLM is cleaned up
-    if CURRENT_LLM is not None:
-        cleanup_vllm(CURRENT_LLM)
-        CURRENT_LLM = None
-
-    # Destroy parallel processing (if any active model is still in memory)
-    destroy_model_parallel()
-    destroy_distributed_environment()
-
-    # Ensure all LLM instances are deleted (if used in batch mode)
-    if "llm_instances" in globals():
-        for llm in llm_instances.values():
-            del llm
-        del llm_instances
-
-    # Force garbage collection
-    gc.collect()  # Run garbage collection
-
-    # Free GPU memory
-    torch.cuda.empty_cache() # Free unused memory
-    torch.cuda.synchronize() # Ensure it's cleared
-
-    print("Simulation closed successfully. GPU memory freed.")

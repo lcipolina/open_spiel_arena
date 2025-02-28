@@ -8,29 +8,33 @@ import json
 import torch
 import gc
 import litellm
+import contextlib
 from typing import Dict, Any
 from vllm import LLM as vLLM
-from llm_utils import cleanup_vllm
+from vllm.distributed import (
+    destroy_model_parallel,
+    destroy_distributed_environment
+)
 
 
 #TODO: this should go into the SLURM file
 
-# Enable quantized weights (reduce model size)
-os.environ["VLLM_OPENVINO_ENABLE_QUANTIZED_WEIGHTS"] = "ON"
+# Ensure all GPUs are visible
+num_gpus = torch.cuda.device_count()
+os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(i) for i in range(num_gpus))
+print(f"Using {num_gpus} GPUs: {os.environ['CUDA_VISIBLE_DEVICES']}")
 
-# Set precision for KV cache (optional, can try "u8" or "fp16")
-os.environ["VLLM_OPENVINO_CPU_KV_CACHE_PRECISION"] = "u8"
+# Set NCCL variables to optimize multi-GPU and multi-node communication
+os.environ["NCCL_DEBUG"] = "WARN"  # Reduce verbosity, change to "INFO" for debugging
+''''
+os.environ["NCCL_P2P_DISABLE"] = "0"  # Enable direct GPU-to-GPU communication
+os.environ["NCCL_IB_DISABLE"] = "0"  # Enable Infiniband for multi-node
+os.environ["NCCL_SHM_DISABLE"] = "0"  # Enable shared memory communication
+os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"  # Avoid deadlocks on NCCL failures
+'''
 
-
+# Enable better CUDA memory management (prevents OOM errors)
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-
-
-# TODO: eventually delete this as it will be on SLURM
-#import subprocess
-
-# Load required modules
-#subprocess.run("module load CUDA", shell=True, check=True)
-#subprocess.run("module load Stages/2025 Python/3.12.3", shell=True, check=True)
 
 
 # Debugging Paths - Set these via SLURM later  #TODO:later delete this!
@@ -72,7 +76,10 @@ def load_model_list() -> list:
         data = json.load(f)
     return data["models"]
 
+#######################################################################
 # Master Function: Detects Model Type & Calls Correct Loader
+#######################################################################
+
 CURRENT_LLM = None
 def load_llm_model(model_name: str):
     """
@@ -86,6 +93,8 @@ def load_llm_model(model_name: str):
         vLLM instance (if local) or LiteLLM API response handler (if API-based).
     """
 
+    global CURRENT_LLM  # Explicitly refer to the global variable
+
     # Skip unloading if the model is already loaded
     if CURRENT_LLM is not None and CURRENT_LLM.model == model_name:
         print(f"{model_name} is already loaded, skipping reload.")
@@ -96,7 +105,7 @@ def load_llm_model(model_name: str):
     required_memory = estimate_model_memory(model_name)
 
     if free_memory < required_memory:
-        print(f"⚠️ Not enough memory! Unloading {CURRENT_LLM.model} to load {model_name}...")
+        print(f"Not enough memory! Unloading {CURRENT_LLM.model} to load {model_name}...")
         cleanup_vllm(CURRENT_LLM)
         CURRENT_LLM = None
 
@@ -126,12 +135,20 @@ def load_litellm_model(model_name: str):
 
 # Detect Quantization Type for vLLM Models
 def detect_quantization(model_path: str) -> str:
-    """Detects if a model is quantized (4-bit, 8-bit) based on saved files."""
+    """Detects if a model is quantized (4-bit, 8-bit) based on saved files.
+
+    Args:
+        model_path (str): The directory containing model files.
+
+    Returns:
+        str: The detected quantization type (`"4bit"`, `"8bit"`, or `"fp16"`).
+    """
     if not os.path.exists(model_path):
         return "fp16"  # Default assumption if we can't check files
 
     files = os.listdir(model_path)
-    if any("4bit" in f or "awq" in f or "ggml" in files):
+
+    if any("4bit" in f or "awq" in f or "ggml" in f for f in files):
         return "4bit"
     elif any("8bit" in f for f in files):
         return "8bit"
@@ -155,8 +172,11 @@ def auto_assign_gpu(model_name: str, model_path: str) -> vLLM:
         - Ensures GPU memory utilization does not exceed 90% (`gpu_memory_utilization=0.9`).
     """
 
+    model_name = 'Mistral-7B-Instruct-v0.1' #TODO: later delete this!
+
     num_params = detect_model_size(model_name)  # Get the model size
     quantization = detect_quantization(model_path)
+    total_free_memory = get_free_gpu_memory() # Get total free GPU memory
 
     # Adjust Memory Calculation Based on Quantization
     if quantization == "4bit":
@@ -169,92 +189,33 @@ def auto_assign_gpu(model_name: str, model_path: str) -> vLLM:
     # Compute Required GPU Memory (GB)
     required_memory = (num_params * bytes_per_param)
 
-    # Get Available GPUs
-    num_gpus = torch.cuda.device_count()
-    free_gpus = []
+    # Assign Tensor Parallelism Based on Model Size & Memory
+    if required_memory > (total_free_memory * 0.9):  # Not enough memory even with multiple GPUs → OOM Risk
+        raise MemoryError(f" Not enough GPU memory for {model_name}! Required: {required_memory:.2f} GB, Available: {total_free_memory:.2f} GB.")
 
-    # Check Available Memory Per GPU
-    for gpu_id in range(num_gpus):
-        free_mem = torch.cuda.mem_get_info(gpu_id)[0] / 1e9  # Convert to GB
-        if free_mem > required_memory * 1.2:  # 20% safety margin
-            free_gpus.append(gpu_id)
-
-    # Assign Tensor Parallelism Based on Model Size
-    if num_params > 70:
-        tensor_parallel_size = min(4, num_gpus)  # Use up to 4 GPUs
-    elif num_params > 13:
-        tensor_parallel_size = min(2, num_gpus)  # Use up to 2 GPUs
+    if required_memory > (torch.cuda.mem_get_info(0)[0] / 1e9 * 0.9):  # Model won't fit in a single GPU → Use TP
+        tensor_parallel_size = min(torch.cuda.device_count(), max(2, required_memory // (torch.cuda.mem_get_info(0)[0] / 1e9 * 0.9)))
     else:
-        tensor_parallel_size = 1  # Default to 1 GPU
+        tensor_parallel_size = 1  # Model fits in a single GPU
 
     # Assign GPUs
-    assigned_gpus = free_gpus[:tensor_parallel_size]
+    assigned_gpus = list(range(tensor_parallel_size))
     assigned_gpus_str = ", ".join([f"cuda:{gpu}" for gpu in assigned_gpus])
 
-    print(f"🖥️ Loading {model_name} on GPUs [{assigned_gpus_str}] with TP={tensor_parallel_size}")
+    print(f" Loading {model_name} on GPUs [{assigned_gpus_str}] with TP={tensor_parallel_size}")
 
+    model_path = "/p/data1/mmlaion/marianna/models/Mistral-7B-Instruct-v0.1"
+    tensor_parallel_size = 2 # TODO: needs to be an even number!
     return vLLM(
         model=model_path,
         tensor_parallel_size=tensor_parallel_size,
-        device=f"cuda:{assigned_gpus[0]}",  # Gets the first GPU from the assigned list as the primary GPU
-        gpu_memory_utilization=0.9,
-        disable_custom_all_reduce=(tensor_parallel_size > 1)
-    )
-
-    """Dynamically assigns GPU & tensor parallelism based on model size & quantization."""
-
-    # Detect Model Size
-    if "7b" in model_name.lower():
-        num_params = 7
-    elif "13b" in model_name.lower():
-        num_params = 13
-    elif "33b" in model_name.lower():
-        num_params = 33
-    elif "70b" in model_name.lower() or "72b" in model_name.lower():
-        num_params = 70
-    else:
-        num_params = 7  # Default assumption
-
-    # Detect Quantization Type
-    quantization = detect_quantization(model_path)
-
-    # Adjust Memory Calculation Based on Quantization
-    if quantization == "4bit":
-        bytes_per_param = 0.5  # 4-bit quantization → 0.5 bytes per param
-    elif quantization == "8bit":
-        bytes_per_param = 1  # 8-bit quantization → 1 byte per param
-    else:  # Default: FP16/BF16
-        bytes_per_param = 2
-
-    # Compute Required GPU Memory (GB)
-    required_memory = (num_params * bytes_per_param)
-
-    # Get Available GPUs
-    num_gpus = torch.cuda.device_count()
-    free_gpus = []
-
-    # Check Available Memory Per GPU
-    for gpu_id in range(num_gpus):
-        free_mem = torch.cuda.mem_get_info(gpu_id)[0] / 1e9  # Convert to GB
-        if free_mem > required_memory * 1.2:  # 20% safety margin
-            free_gpus.append(gpu_id)
-
-    # Assign GPU and Tensor Parallelism
-    if free_gpus:
-        assigned_gpu = free_gpus[0]
-        tensor_parallel_size = 1
-    else:
-        assigned_gpu = 0  # Default to first GPU
-        tensor_parallel_size = 2 if num_params > 10 else 1  # Use TP if large model
-
-    print(f"🖥️ Loading {model_name} on GPU {assigned_gpu} with TP={tensor_parallel_size} (Quantization: {quantization})")
-
-    # Disable `custom_all_reduce` when `tp > 1`
-    return vLLM(
-        model=model_path,
-        tensor_parallel_size=tensor_parallel_size,
-        device=f"cuda:{assigned_gpu}",
-        disable_custom_all_reduce=(tensor_parallel_size > 1)  # Disable custom reduce when TP > 1
+        #device=f"cuda:{assigned_gpus[0]}",  # Gets the first GPU from the assigned list as the primary GPU
+        gpu_memory_utilization=0.7,
+        disable_custom_all_reduce=(tensor_parallel_size > 1),
+        trust_remote_code=True,
+        dtype="half",  # Force float16 on V100, bfloat16 on A100+
+        max_num_batched_tokens=1096,  # 512 - Increase to match reduced max_model_len
+        max_model_len=1096  # 512 -  Reduce max sequence length
     )
 
 # Loads vLLM Models with Dynamic GPU Allocation
@@ -301,7 +262,7 @@ def get_free_gpu_memory() -> float:
         free_mem = torch.cuda.mem_get_info(gpu_id)[0] / 1e9  # Convert to GB
         total_free_memory += free_mem
 
-    print(f"Available GPU memory: {total_free_memory:.2f} GB")
+    print(f"Available GPU memory: {total_free_memory:.2f} GB") if total_free_memory == 0 else None
     return total_free_memory
 
 def estimate_model_memory(model_name: str) -> float:
@@ -322,17 +283,65 @@ def estimate_model_memory(model_name: str) -> float:
 
     return estimated_memory
 
+def cleanup_vllm(llm=None):
+    """Properly cleans GPU memory before loading a new model."""
+    print("Cleaning up vLLM model from GPU memory...")
+
+    destroy_model_parallel()
+    destroy_distributed_environment()
+
+    if llm:
+        del llm.llm_engine.model_executor
+        del llm
+
+    with contextlib.suppress(AssertionError):
+        torch.distributed.destroy_process_group()
+
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.synchronize()
+    print("cleanup_vllm: GPU memory successfully freed.")
+
+def close_simulation():
+    """Cleans up all LLMs & GPU memory after the game ends."""
+    global CURRENT_LLM
+
+    print(" Closing simulation: Clearing all LLMs & GPU memory...")
+
+    # Ensure the currently loaded LLM is cleaned up
+    if CURRENT_LLM is not None:
+        cleanup_vllm(CURRENT_LLM)
+        CURRENT_LLM = None
+
+    # Destroy parallel processing (if any active model is still in memory)
+    destroy_model_parallel()
+    destroy_distributed_environment()
+
+    # Ensure all LLM instances are deleted (if used in batch mode)
+    if "llm_instances" in globals():
+        for llm in llm_instances.values():
+            del llm
+        del llm_instances
+
+    # Force garbage collection
+    gc.collect()  # Run garbage collection
+
+    # Free GPU memory
+    torch.cuda.empty_cache() # Free unused memory
+    torch.cuda.synchronize() # Ensure it's cleared
+
+    print("Simulation closed successfully. GPU memory freed.")
 
 
-
-
-# Dynamically Register All Models
 LLM_REGISTRY: Dict[str, Dict[str, Any]] = {}
-MODEL_LIST = load_model_list() + load_litellm_model_list()  # Combine Local & LiteLLM Models
 
-for model in MODEL_LIST:
-    LLM_REGISTRY[model] = {
-        "display_name": model,
-        "description": f"LLM model {model} (vLLM or LiteLLM detected automatically).",
-        "model_loader": lambda model_name=model: load_llm_model(model_name),
-    }
+def initialize_llm_registry():
+    """Initializes the LLM registry dynamically."""
+    global LLM_REGISTRY
+    MODEL_LIST = load_model_list() + load_litellm_model_list()
+    for model in MODEL_LIST:
+        LLM_REGISTRY[model] = {
+            "display_name": model,
+            "description": f"LLM model {model} (vLLM or LiteLLM detected automatically).",
+            "model_loader": lambda model_name=model: load_llm_model(model_name),
+        }
