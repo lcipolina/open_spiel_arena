@@ -96,7 +96,7 @@ def load_llm_model(model_name: str):
     global CURRENT_LLM  # Explicitly refer to the global variable
 
     # Skip unloading if the model is already loaded
-    if CURRENT_LLM is not None and CURRENT_LLM.model == model_name:
+    if CURRENT_LLM is not None: # and CURRENT_LLM.model == model_name: #TODO: see if we need to load the model again!
         print(f"{model_name} is already loaded, skipping reload.")
         return CURRENT_LLM
 

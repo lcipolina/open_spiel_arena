@@ -1,6 +1,5 @@
 {
     "models": [
-        "llava-v1.6-mistral-7b",
-        "deepseek-math-7b-instruct"
+        "Mistral-7B-Instruct-v0.1"
     ]
 }

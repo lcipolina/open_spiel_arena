@@ -8,6 +8,8 @@
 #   chmod +x slurm_jobs/request_node_julich.sh
 #   ./slurm_jobs/request_node_julich.sh
 
+# pkill -9 python
+
 echo "Checking available partitions with idle nodes..."
 
 # Function to check if a partition has idle nodes

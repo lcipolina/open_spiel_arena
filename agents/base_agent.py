@@ -60,7 +60,7 @@ class BaseAgent(ABC):
 
     def _process_action(self, observation: Dict[str, Any]) -> int:
             """Logs the observation, times the response, and calls `compute_action()`."""
-            start_time = time.perf_counter() 
+            start_time = time.perf_counter()
             action = self.compute_action(observation)
             duration = time.perf_counter() - start_time
 
@@ -84,7 +84,7 @@ class BaseAgent(ABC):
         avg_time = self.total_time / self.action_count if self.action_count > 0 else 0
         return {
             "agent_type": self.agent_type,
-            "actions_taken": self.action_count,
+            "action_count": self.action_count,
             "total_processing_time": self.total_time,
             "average_response_time": avg_time
         }

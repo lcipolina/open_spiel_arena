@@ -27,8 +27,8 @@ os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
 # Get values from SLURM (default if not found)
-MAX_TOKENS = int(os.getenv("MAX_TOKENS", 10))
-TEMPERATURE = float(os.getenv("TEMPERATURE", 0.1))
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", 250))
+TEMPERATURE = float(os.getenv("TEMPERATURE", 0.1))  # the lower the more deterministic
 
 def generate_prompt(game_name: str,
                     state: str,

@@ -107,7 +107,7 @@ def detect_illegal_moves(env: OpenSpielEnv, actions_dict: Dict[int, int]) -> int
         if action not in env.state.legal_actions(player)
     )
 
-
+#TODO: use this in the code!!
 def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[int, Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Processes episode results for all players.
@@ -365,8 +365,8 @@ def simulate_game(game_name: str,
         if config["mode"] == "llm_vs_llm":
             print("Keeping LLM in memory for next game...")
         else:
-            cleanup_vllm(CURRENT_LLM)
-            CURRENT_LLM = None
+           # cleanup_vllm(CURRENT_LLM) #TODO: see this, i am not sure
+            CURRENT_LLM = None #TODO: I am not sure this is used
 
     # Identify all LLM models used
     llm_models_used = [
@@ -412,7 +412,8 @@ def run_simulation(args):
         #results = ray.get([simulate_game.remote(game, config, seed) for game in game_names])
     finally:
         # At the end of ALL simulations, free GPU memory
-        close_simulation()
+       # close_simulation() #TODO: delete this once finish debugging
+       a = 0
 
 
     # Save results

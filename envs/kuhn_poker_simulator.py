@@ -91,7 +91,6 @@ class KuhnPokerSimulator(OpenSpielEnv):
 
         actions_str = "\n".join(f"{action}: {action_labels[action]}" for action in legal_actions)
 
-        # Build the natural language prompt
         prompt = (
             f"You are Player {agent_id} in the game Kuhn Poker.\n"
             f"Your private card: {private_card}\n"
@@ -99,8 +98,8 @@ class KuhnPokerSimulator(OpenSpielEnv):
             f"Total pot size: {total_pot} chips\n"
             f"Your contribution: {player_contribution} chips\n\n"
             f"Available actions:\n{actions_str}\n\n"
-            "What action do you choose? Reply with the number corresponding to your action."
-        )
+            "What action do you choose? Reply **only** with '0' or '1'. Do not repeat the options.."
+     )
 
         return prompt
 

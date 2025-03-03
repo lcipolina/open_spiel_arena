@@ -1,5 +1,5 @@
 [
-    "deepseek-coder-33b-instruct",
+    "Mistral-7B-Instruct-v0.1",
     [
         {
             "game": "kuhn_poker",
@@ -8,14 +8,14 @@
                 "0": {
                     "agent_type": "llm",
                     "actions_taken": 1,
-                    "total_processing_time": 222.0248958785087,
-                    "average_response_time": 222.0248958785087
+                    "total_processing_time": 745.9357417561114,
+                    "average_response_time": 745.9357417561114
                 },
                 "1": {
                     "agent_type": "random",
-                    "actions_taken": 2,
-                    "total_processing_time": 2.06634633988142,
-                    "average_response_time": 1.03317316994071
+                    "actions_taken": 1,
+                    "total_processing_time": 41.987155336886644,
+                    "average_response_time": 41.987155336886644
                 }
             }
         }
