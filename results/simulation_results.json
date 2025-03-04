@@ -1,5 +1,5 @@
 [
-    "Mistral-7B-Instruct-v0.1",
+    "codegemma-7b-it",
     [
         {
             "game": "kuhn_poker",
@@ -7,15 +7,15 @@
             "players": {
                 "0": {
                     "agent_type": "llm",
-                    "actions_taken": 1,
-                    "total_processing_time": 745.9357417561114,
-                    "average_response_time": 745.9357417561114
+                    "action_count": 1,
+                    "total_processing_time": 422.91373340040445,
+                    "average_response_time": 422.91373340040445
                 },
                 "1": {
                     "agent_type": "random",
-                    "actions_taken": 1,
-                    "total_processing_time": 41.987155336886644,
-                    "average_response_time": 41.987155336886644
+                    "action_count": 1,
+                    "total_processing_time": 3.343261778354645e-05,
+                    "average_response_time": 3.343261778354645e-05
                 }
             }
         }

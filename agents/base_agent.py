@@ -8,7 +8,7 @@ HumanAgent, RandomAgent, LLMAgent, etc.
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(

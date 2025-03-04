@@ -1,5 +1,6 @@
 {
     "models": [
+        "codegemma-7b-it",
         "Mistral-7B-Instruct-v0.1"
     ]
 }

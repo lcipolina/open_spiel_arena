@@ -49,6 +49,20 @@ if MODELS_DIR is None or MODEL_CONFIG_FILE is None:
     raise ValueError("Error: Environment variables MODELS_DIR or MODEL_CONFIG_FILE are not set.")
 
 
+LLM_REGISTRY: Dict[str, Dict[str, Any]] = {}
+
+def initialize_llm_registry():
+    """Initializes the LLM registry dynamically."""
+    global LLM_REGISTRY
+    MODEL_LIST = load_model_list() + load_litellm_model_list()
+    for model in MODEL_LIST:
+        LLM_REGISTRY[model] = {
+            "display_name": model,
+            "description": f"LLM model {model} (vLLM or LiteLLM detected automatically).",
+            "model_loader": lambda model_name=model: load_llm_model(model_name),
+        }
+
+
 # Load LiteLLM Model List from JSON
 def load_litellm_model_list() -> list:
     """Loads the list of models served by LiteLLM from a JSON file."""
@@ -155,8 +169,8 @@ def detect_quantization(model_path: str) -> str:
     else:
         return "fp16"
 
-# Assigns GPU Based on Model Size & Quantization
-def auto_assign_gpu(model_name: str, model_path: str) -> vLLM:
+# Loads vLLM Models with Dynamic GPU Allocation
+def load_vllm_model(model_name: str) -> vLLM:
     """Dynamically assigns GPU & tensor parallelism based on model size, available memory, and quantization.
 
     Args:
@@ -172,7 +186,9 @@ def auto_assign_gpu(model_name: str, model_path: str) -> vLLM:
         - Ensures GPU memory utilization does not exceed 90% (`gpu_memory_utilization=0.9`).
     """
 
-    model_name = 'Mistral-7B-Instruct-v0.1' #TODO: later delete this!
+    model_path = f"{MODELS_DIR}/{model_name}"
+
+    model_name = 'gemma-2-27b-it' #'Mistral-7B-Instruct-v0.1' #TODO: later delete this!
 
     num_params = detect_model_size(model_name)  # Get the model size
     quantization = detect_quantization(model_path)
@@ -204,7 +220,8 @@ def auto_assign_gpu(model_name: str, model_path: str) -> vLLM:
 
     print(f" Loading {model_name} on GPUs [{assigned_gpus_str}] with TP={tensor_parallel_size}")
 
-    model_path = "/p/data1/mmlaion/marianna/models/Mistral-7B-Instruct-v0.1"
+    #model_path = "/p/data1/mmlaion/marianna/models/Mistral-7B-Instruct-v0.1"
+    model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
     tensor_parallel_size = 2 # TODO: needs to be an even number!
     return vLLM(
         model=model_path,
@@ -217,21 +234,6 @@ def auto_assign_gpu(model_name: str, model_path: str) -> vLLM:
         max_num_batched_tokens=1096,  # 512 - Increase to match reduced max_model_len
         max_model_len=1096  # 512 -  Reduce max sequence length
     )
-
-# Loads vLLM Models with Dynamic GPU Allocation
-def load_vllm_model(model_name: str) -> vLLM:
-    """
-    Loads a model using vLLM from the pre-downloaded model directory
-    and assigns it dynamically to a GPU.
-
-    Args:
-        model_name (str): The name of the model to load.
-
-    Returns:
-        vLLM: An instance of the vLLM model.
-    """
-    model_path = f"{MODELS_DIR}/{model_name}"
-    return auto_assign_gpu(model_name, model_path)
 
 def detect_model_size(model_name: str) -> int:
     """Detects the approximate model size in billions of parameters from the name."""
@@ -331,17 +333,3 @@ def close_simulation():
     torch.cuda.synchronize() # Ensure it's cleared
 
     print("Simulation closed successfully. GPU memory freed.")
-
-
-LLM_REGISTRY: Dict[str, Dict[str, Any]] = {}
-
-def initialize_llm_registry():
-    """Initializes the LLM registry dynamically."""
-    global LLM_REGISTRY
-    MODEL_LIST = load_model_list() + load_litellm_model_list()
-    for model in MODEL_LIST:
-        LLM_REGISTRY[model] = {
-            "display_name": model,
-            "description": f"LLM model {model} (vLLM or LiteLLM detected automatically).",
-            "model_loader": lambda model_name=model: load_llm_model(model_name),
-        }

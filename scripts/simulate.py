@@ -51,7 +51,7 @@ from games import loaders  # Adds the games to the registry dictionary
 # from utils.loggers import log_simulation_results, time_execution #TODO: delete this!
 from utils.seeding import set_seed
 
-initialize_llm_registry()
+initialize_llm_registry() #TODO: fix this, I don't like it!
 
 # Load SLURM Output Path from Environment
 OUTPUT_PATH = os.getenv(
@@ -129,7 +129,6 @@ def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[in
         }
         for player_idx, player_data in episode_players.items()
     ]
-
 
 def initialize_environment(config: Dict[str, Any], seed:int) -> OpenSpielEnv:
     """Loads the game from pyspiel and initializes the game environment simulator."""
@@ -266,7 +265,6 @@ def compute_actions(
     current_player = env.state.current_player()
     return {current_player: player_to_agent[current_player](observations[current_player])}
 
-
 def compute_actions_old(
     env: OpenSpielEnv, player_to_agent: Dict[int, Any], observations: Dict[str, Any]
 ) -> Dict[int, int]:
@@ -328,7 +326,6 @@ def simulate_game(game_name: str,
 
     set_seed(seed)
 
-
     config["agents"] = setup_agents(config, game_name) # Assign agents (models) to players
     env = initialize_environment(config, seed) # Loads game and simulation environment
     agents = initialize_agents(config, seed)  # list of base classes (policies) for each agent type on the config dict
@@ -336,21 +333,22 @@ def simulate_game(game_name: str,
     game_results = []
     try:
         for episode in range(config["num_episodes"]):
-            observation, _ = env.reset(seed=seed + episode) #Each episode has a different seed
+            observation_dict, _ = env.reset(seed=seed + episode) # Each episode has a different seed
             actions = {}
             terminated = False  # Whether the episode has ended normally
             truncated = False  # Whether the episode ended due to `max_game_rounds`
 
             # Map players to agents
-            shuffled_agents = random.sample(agents, len(agents))
-            player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
+            #shuffled_agents = random.sample(agents, len(agents))
+            #player_to_agent = {player_idx: shuffled_agents[player_idx] for player_idx in range(len(shuffled_agents))}
 
+            player_to_agent = {player_idx: agents[player_idx] for player_idx in range(len(agents))}
             while not (terminated or truncated):
-                actions = compute_actions(env, player_to_agent, observation) # Get batched actions for all players
+                actions = compute_actions(env, player_to_agent, observation_dict) # Get batched actions for all players
             # illegal_moves = detect_illegal_moves(env, actions)  # Detect illegal moves  #TODO: see this!
             # if illegal_moves:
             #     logging.warning("Illegal moves detected: %d", illegal_moves)
-                observation, rewards, terminated, truncated, _ = env.step(actions)
+                observation_dict, rewards, terminated, truncated, _ = env.step(actions)
                 if terminated or truncated:
                     break
 

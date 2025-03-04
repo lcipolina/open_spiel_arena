@@ -153,6 +153,9 @@ class OpenSpielEnv(ABC):
     # Additional methods
     # ----------------------------------------------------------------
 
+    # TODO: the function below should call this!
+    # formatted_prompt = format_prompt(prompt, state_string, info)
+
     def _state_to_observation(self) -> Dict[int, Dict[str, Any]]:
         """Returns the observation for each agent in the game.
 
@@ -160,13 +163,21 @@ class OpenSpielEnv(ABC):
             Dict[int, Dict[str, Any]]: Mapping from agent ID to their respective observations.
         """
         print("NEEED TO IMPLEMENT THE PROMPT FOR SIMPLE GAMES!!")
+        #return {
+        #    agent_id: {
+        #        "state_string": self.state.observation_string(agent_id),
+        #        "legal_actions": self.state.legal_actions(agent_id),
+        #        "prompt": None  # Can be overridden in child classes #TODO: need to implement this
+        #    }
+        #    for agent_id in range(self.state.num_players())  # TODO: Generate for ALL players
+        #}
+        agent_id = self.state.current_player()
         return {
             agent_id: {
                 "state_string": self.state.observation_string(agent_id),
                 "legal_actions": self.state.legal_actions(agent_id),
                 "prompt": None  # Can be overridden in child classes #TODO: need to implement this
             }
-            for agent_id in range(self.state.num_players())  # Generate for ALL players
         }
 
     def _solve_chance_nodes(self) -> None:

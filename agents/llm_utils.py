@@ -6,100 +6,67 @@ for decision-making in game simulations.
 """
 
 import os
-from typing import List, Optional, Dict
-import random
-from vllm import SamplingParams
-import ray
-import contextlib
-
-import gc
-import torch
-
+import json
+from typing import List, Optional
+from transformers import AutoTokenizer, pipeline
 
 from agents.llm_registry import initialize_llm_registry
 
-initialize_llm_registry()
+initialize_llm_registry() #TODO: I don't kike this design!
 from agents.llm_registry import LLM_REGISTRY
 
-
+#TODO: all this goes into the SLURM later! delete!
 # Set environment variable to allow PyTorch to dynamically allocate more memory on GPUs
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
-# Get values from SLURM (default if not found)
-MAX_TOKENS = int(os.getenv("MAX_TOKENS", 250))
-TEMPERATURE = float(os.getenv("TEMPERATURE", 0.1))  # the lower the more deterministic
+def format_prompt(input_text:str)->str:
+    """Formats the input prompt using Hugging Face's chat template function.
 
-def generate_prompt(game_name: str,
+    Args:
+        input_text (str): The game prompt.
+
+    Returns:
+        str: The correctly formatted prompt for the model.
+    """
+    messages = [{"role": "user", "content": input_text}]
+
+    # TODO: construir esto con el model name nomas y el model path del OS
+    model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
+
+    # Format using apply_chat_template
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    formatted_prompt = tokenizer.apply_chat_template(
+        messages, tokenize=False, add_generation_prompt=True
+    )
+
+    return formatted_prompt  # This is passed to vLLM
+
+
+
+def generate_prompt_old(game_name: str,
                     state: str,
                     legal_actions: List[int],
                     info: Optional[str] = None) -> str:
-    """Generate a natural language prompt for the LLM to decide the next move.
+        """Generate a structured JSON prompt for an LLM to decide the next move.
 
-    Args:
-        game_name (str): The name of the game.
-        state (str): The current game state as a string.
-        legal_actions (List[int]): The list of legal actions available to the player.
-        info (Optional[str]): Additional information to include in the prompt (optional).
+        Args:
+            game_name (str): The name of the game.
+            state (str): The current game state as a string.
+            legal_actions (List[int]): The list of legal actions available to the player.
+            info (Optional[str]): Additional contextual information.
 
-    Returns:
-        str: A prompt string for the LLM.
-    """
-    info_text = f"{info}\n" if info else ""
+        Returns:
+            str: A JSON-structured prompt.
+        """
+        action_numbers = [action_dict["action"] for action_dict in legal_actions]
 
-    return (
-        f"You are playing the Game: {game_name}\n"
-        f"State:\n{state}\n"
-        f"Legal actions: {legal_actions}\n"
-        f"{info_text}"
-        "Your task is to choose the next action. Provide only the number of "
-        "your next move from the list of legal actions. Do not provide any additional text or explanation."
-    )
-
-#TODO: uncomment this!
-#@ray.remote  # The function will be a separate Ray task or actor
-def batch_llm_decide_moves(
-    model_names: Dict[int, str],  # Supports multiple LLMs per player
-    prompts: Dict[int, str],
-    legal_actions: Dict[int, tuple]
-) -> Dict[int, int]:
-    """
-    Queries vLLM in batch mode to decide moves for multiple players, supporting multiple LLM models.
-
-    Args:
-        model_names (Dict[int, str]): Dictionary mapping player IDs to their respective LLM model names.
-        prompts (Dict[int, str]): Dictionary mapping player IDs to prompts.
-        legal_actions (Dict[int, tuple]): Dictionary mapping player IDs to legal actions.
-
-    Returns:
-        Dict[int, int]: Mapping of player ID to chosen action.
-    """
-
-    # Load all models in use
-    llm_instances = {
-        player_id: LLM_REGISTRY[model_name]["model_loader"]()
-        for player_id, model_name in model_names.items()
-    }
-    sampling_params = SamplingParams(max_tokens=MAX_TOKENS, temperature=TEMPERATURE)
-
-    # Run batch inference for each LLM model separately
-    actions = {}
-    for player_id, llm in llm_instances.items():
-        response = llm.generate([prompts[player_id]], sampling_params)[0]  # Single response
-
-        # Extract action from response
-        move = None
-        for word in response.outputs[0].text.split():
-            try:
-                move = int(word)
-                if move in legal_actions[player_id]:  # Validate move
-                    actions[player_id] = move
-                    break
-            except ValueError:
-                continue
-
-        # If LLM fails to return a valid move, pick randomly  #TODO: this needs to go to the 'invalid action selection' counter
-        if player_id not in actions:
-            actions[player_id] = random.choice(legal_actions[player_id])
-
-    return actions  # dict[playerID, chosen action]
+        prompt_dict = {
+            "game": game_name,
+            "state": state,
+            "legal_actions": legal_actions,
+            "info": info if info else "",
+            "instruction": (f"Your task is to choose the next action. Reply only with a JSON object like "
+                f"{{'action': {legal_actions[0]['action']}}} where the value must be one of {action_numbers}.")
+        }
+        return json.dumps(prompt_dict, indent=2)
