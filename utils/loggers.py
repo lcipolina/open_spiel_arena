@@ -3,6 +3,7 @@ Logging utilities for tracking simulations, agent behavior, and game outcomes.
 Supports structured logging and experiment tracking.
 """
 
+import os
 import logging
 import json
 from pathlib import Path
@@ -10,7 +11,6 @@ from datetime import datetime
 from typing import Callable, Dict, Any, List
 import traceback
 from logging.handlers import RotatingFileHandler
-import os
 import time
 from functools import wraps
 
@@ -252,3 +252,29 @@ def log_simulation_results(func: Callable) -> Callable:
         return result  # Return the original function output
 
     return wrapper
+
+
+
+
+def parse_and_log_response(response_text):
+    """Parses the model response and logs it to a file.
+
+    Args:
+        response_text (str): The raw response from the model.
+    """
+    # TODO: change this, it should come from the SLURM!
+    LOG_FILE = "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/agent_logs.txt"
+
+    # Extract JSON from response
+    response_data = json.loads(response_text.replace("```json", "").replace("```", "").strip())
+
+    # Log the parsed response
+    if not os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "w") as f:
+            json.dump([], f)  # Create an empty list in JSON file
+
+    with open(LOG_FILE, "r+") as f:
+        logs = json.load(f)
+        logs.append(response_data)
+        f.seek(0)
+        json.dump(logs, f, indent=4)

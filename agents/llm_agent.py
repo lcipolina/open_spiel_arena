@@ -118,21 +118,11 @@ def batch_llm_decide_moves(
     actions = {}
     for player_id, llm in llm_instances.items():
         response = llm.generate([prompts[player_id]], sampling_params)[0]  # Single response
-        # TODO: delete this!
-    #     prompt1 = (
-    #     "<|user|>\n"
-    #     "You are Player 0 in the game Kuhn Poker.\n"
-    #     "Your private card: K \n"
-    #     "Betting history: No actions yet \n"
-    #     "Total pot size: 2.0 chips\n"
-    #     "Your contribution: 1.0 chips\n\n"
-    #     "Available actions:\n\n"
-    #     " 0: Fold (give up and lose the pot) or 1: Call (match the opponent's bet)\n\n"
-    #     "What action do you choose? Reply only with '0' or '1'.<|end|>\n"
-    #     "<|assistant|>"
-    # )
 
-    #     response1 = llm.generate(prompt1, sampling_params)[0]
+        # TODO: delete this
+        print('PROMPT: ',prompts[player_id])
+        print('LLM RESPONSE: ',response.outputs[0].text)
+
         # Extract action from response
         move = None
         for word in response.outputs[0].text.split():

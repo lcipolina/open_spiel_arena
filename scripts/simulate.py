@@ -65,7 +65,7 @@ OUTPUT_PATH = os.getenv(
 #if ray.is_initialized(): # commented for faster debugging
 #   ray.shutdown()
 if os.getenv("DEBUG", "0") == "1":
-    print("⚠️ Debug mode enabled: Running Ray in local mode (single process)")
+    print("Debug mode enabled: Running Ray in local mode (single process)")
     #ray.init(local_mode=True,runtime_env={"env_vars": {"PYTHONPATH": "/p/project/ccstdl/cipolina-kun1/open_spiel_arena"}})
     # Force Ray workers to use the same Python executable
     os.environ["PYTHON_EXECUTABLE"] = sys.executable

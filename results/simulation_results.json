@@ -8,14 +8,14 @@
                 "0": {
                     "agent_type": "llm",
                     "action_count": 1,
-                    "total_processing_time": 422.91373340040445,
-                    "average_response_time": 422.91373340040445
+                    "total_processing_time": 601.6668033394963,
+                    "average_response_time": 601.6668033394963
                 },
                 "1": {
                     "agent_type": "random",
                     "action_count": 1,
-                    "total_processing_time": 3.343261778354645e-05,
-                    "average_response_time": 3.343261778354645e-05
+                    "total_processing_time": 2.532096426934004,
+                    "average_response_time": 2.532096426934004
                 }
             }
         }

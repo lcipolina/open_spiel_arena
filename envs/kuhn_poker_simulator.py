@@ -197,6 +197,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
         betting_history = self._get_betting_history(state)
         total_pot = sum(tensor_observation[-2:])
         player_contribution = tensor_observation[-2 + agent_id]
+        move_number  = state.move_number()
 
         # Detect if an opponent has already bet
         previous_actions = state.history()
@@ -255,6 +256,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
         prompt_string = (
                 f"You are Player {agent_id} in the game Kuhn Poker.\n"
                 f"Your private card: {private_card}\n"
+                f"This is move number: {move_number}\n"
                 f"Betting history: {betting_history}\n"
                 f"Total pot size: {total_pot} chips\n"
                 f"Your contribution: {player_contribution} chips\n\n"
@@ -303,7 +305,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
 
         # FIX: If no betting has happened yet, return "No actions yet" #TODO: check with Marc
         if len(betting_actions) == 0:
-            return "No actions yet"
+            return "First round after card dealing"
 
         # Iterate over the betting actions
         for i, action in enumerate(betting_actions):
