@@ -13,8 +13,9 @@ import traceback
 from logging.handlers import RotatingFileHandler
 import time
 from functools import wraps
+import sqlite3
 
-from utils.results_utils import print_total_scores
+from utils.results_utils import print_total_scores #TODO: see if we need this one -  or bring it here!
 
 def generate_game_log(model_name: str, games: List[Dict[str, Any]], seed: int) -> Dict[str, Any]:
     """
@@ -99,9 +100,6 @@ def generate_game_log(model_name: str, games: List[Dict[str, Any]], seed: int) -
         "summary": summary,
         "seed": seed
     }
-
-
-
 
 def save_game_log(file_path: str, game_log: Dict[str, Any]):
     """
@@ -254,8 +252,6 @@ def log_simulation_results(func: Callable) -> Callable:
     return wrapper
 
 
-
-
 def parse_and_log_response(response_text):
     """Parses the model response and logs it to a file.
 
@@ -278,3 +274,88 @@ def parse_and_log_response(response_text):
         logs.append(response_data)
         f.seek(0)
         json.dump(logs, f, indent=4)
+
+
+class GameLogger:
+    """Handles logging of LLM decisions into a structured SQLite database."""
+
+    def __init__(self, llm_name: str, game_name: str):
+        """
+        Initializes the logger with a unique database file for each LLM-game session.
+
+        Args:
+            llm_name (str): The name of the LLM agent.
+            game_name (str): The name of the game being played.
+        """
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        self.db_path = f"logs/{llm_name}_{game_name}_{timestamp}.db"
+
+        # Ensure the logs directory exists
+        os.makedirs("logs", exist_ok=True)
+
+        # Create the database schema
+        self._create_database()
+
+    def _create_database(self):
+        """Creates the database schema for storing LLM responses."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS moves (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                game_name TEXT,
+                llm_name TEXT,
+                turn INTEGER,
+                action INTEGER,
+                reasoning TEXT,
+                timestamp TEXT
+            )
+        """)
+
+        conn.commit()
+        conn.close()
+
+    def log_move(self, turn: int, action: int, reasoning: str):
+        """
+        Logs an LLM move into the database.
+
+        Args:
+            turn (int): The turn number of the game.
+            action (int): The action taken by the LLM.
+            reasoning (str): The LLM's explanation for the action.
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO moves (game_name, llm_name, turn, action, reasoning, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, ("game_name", "llm_name", turn, action, reasoning, datetime.now().isoformat()))
+
+        conn.commit()
+        conn.close()
+
+    def get_moves(self):
+        """Fetches all moves recorded for the current game session.
+
+        Returns:
+            list: A list of tuples containing (turn, action, reasoning, timestamp).
+        """
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT turn, action, reasoning, timestamp FROM moves ORDER BY turn ASC
+        """)
+
+        moves = cursor.fetchall()
+        conn.close()
+
+        return moves
+
+    def print_log(self):
+        """Prints all logged moves for debugging and analysis."""
+        moves = self.get_moves()
+        for move in moves:
+            print(f"Turn {move[0]}: Action {move[1]}, Reasoning: {move[2]}, Time: {move[3]}")

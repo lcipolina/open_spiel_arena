@@ -48,9 +48,10 @@ from envs.open_spiel_env import OpenSpielEnv
 from games.registry import registry # Initilizes an empty registry dictionary for the games
 from agents.llm_registry import LLM_REGISTRY,initialize_llm_registry
 from utils.cleanup import full_cleanup
-from games import loaders  # Adds the games to the registry dictionary
-# from utils.loggers import log_simulation_results, time_execution #TODO: delete this!
 from utils.seeding import set_seed
+from games import loaders  # Adds the games to the registry dictionary
+from utils.loggers import GameLogger, log_simulation_results, time_execution #TODO: delete this!
+
 
 initialize_llm_registry() #TODO: fix this, I don't like it!
 
@@ -412,6 +413,14 @@ def run_simulation(args):
     # Save results
     with open(OUTPUT_PATH, "w") as f:
         json.dump(results, f, indent=4)
+
+    # Generate unique log file for each LLM per game
+    logger = GameLogger(llm_name="codegemma", game_name="kuhn_poker")
+    # Log moves during the game - Example: Logging a move at turn 1
+    logger.log_move(turn=1, action=1, reasoning="King is a strong hand, calling is optimal.")
+    # Fetch and display all logged moves
+    logger.print_log()
+
 
     return results
 
