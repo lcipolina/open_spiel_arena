@@ -132,3 +132,5 @@
 2025-03-05 12:50:13,325 - root - INFO - [random] Observation: 121, Action: 0, Time: 0.000014 seconds
 2025-03-05 13:04:02,095 - root - INFO - [llm] Observation: 211, Action: 1, Time: 601.666803 seconds
 2025-03-05 13:04:19,261 - root - INFO - [random] Observation: 121, Action: 0, Time: 2.532096 seconds
+2025-03-07 10:57:44,375 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2025-03-07 10:59:11,670 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"

@@ -224,9 +224,6 @@ class KuhnPokerSimulator(OpenSpielEnv):
         #     "player_contribution": player_contribution
         # }
 
-        # Actions with descriptions
-        actions_with_desc = [{"action": action, "description": action_labels[action]} for action in legal_actions]
-
         # Generate prompt based on model type
         #model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
         # tokenizer = AutoTokenizer.from_pretrained(model_path)

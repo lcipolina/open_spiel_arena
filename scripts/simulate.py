@@ -46,7 +46,8 @@ from agents.agent_registry import AGENT_REGISTRY
 from configs.configs import parse_config, validate_config  #TODO: delete this module or call this validate later
 from envs.open_spiel_env import OpenSpielEnv
 from games.registry import registry # Initilizes an empty registry dictionary for the games
-from agents.llm_registry import LLM_REGISTRY,cleanup_vllm,initialize_llm_registry, close_simulation
+from agents.llm_registry import LLM_REGISTRY,initialize_llm_registry
+from utils.cleanup import full_cleanup
 from games import loaders  # Adds the games to the registry dictionary
 # from utils.loggers import log_simulation_results, time_execution #TODO: delete this!
 from utils.seeding import set_seed
@@ -404,15 +405,9 @@ def run_simulation(args):
     # Read game names from SLURM environment variable (if set)
     game_names = os.getenv("GAME_NAMES", "kuhn_poker,matrix_rps,tic_tac_toe,connect_four").split(",")
 
-    try:
-        # Run simulations in parallel (Ray)
-        results = simulate_game("kuhn_poker", config, seed)      # Without Ray for debugging: TODO: delete this!
-        #results = ray.get([simulate_game.remote(game, config, seed) for game in game_names])
-    finally:
-        # At the end of ALL simulations, free GPU memory
-       # close_simulation() #TODO: delete this once finish debugging
-       a = 0
-
+    # Run simulations in parallel (Ray)
+    results = simulate_game("kuhn_poker", config, seed)      # Without Ray for debugging: TODO: delete this!
+    #results = ray.get([simulate_game.remote(game, config, seed) for game in game_names])
 
     # Save results
     with open(OUTPUT_PATH, "w") as f:
@@ -430,8 +425,12 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    try:
+        run_simulation(args)
+    finally:
+        full_cleanup()     # Free GPU memory
 
-    run_simulation(args)
+
 
 '''
 
