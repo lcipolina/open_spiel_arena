@@ -114,7 +114,7 @@ def load_llm_model(model_name: str):
 
     if free_memory < required_memory:
         print(f"Not enough memory! Unloading {CURRENT_LLM.model} to load {model_name}...")
-        cleanup_vllm(CURRENT_LLM)
+        # cleanup_vllm(CURRENT_LLM) # TODO
         CURRENT_LLM = None
 
     # Load model using the appropriate method

@@ -144,6 +144,24 @@ class OpenSpielEnv(ABC):
 
         self.seed_value = seed  # Store the seed for tracking
 
+    # TODO: use this!
+    def detect_illegal_moves(self, actions_dict: Dict[int, int]) -> int:
+        """
+        Detects illegal moves by comparing chosen actions with OpenSpiel's legal actions.
+
+        Args:
+            env: The game environment.
+            actions_dict: Dictionary mapping player IDs to chosen actions.
+
+        Returns:
+            int: The number of illegal moves detected.
+        """
+        return sum(
+            1 for player, action in actions_dict.items()
+            if action not in self.env.state.legal_actions(player)
+        )
+
+
 
     def close(self):
         """Cleanup."""

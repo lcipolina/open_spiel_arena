@@ -82,7 +82,7 @@ srun --gres=gpu:4 \
          # Auto-restart loop for the debugger.
          while true; do
              echo "Starting debugpy session..."
-             python -m debugpy --listen 0.0.0.0:9000 --wait-for-client /p/project/ccstdl/cipolina-kun1/open_spiel_arena/scripts/simulate.py
+             python -m debugpy --listen 0.0.0.0:9000 --wait-for-client /p/project/ccstdl/cipolina-kun1/open_spiel_arena/scripts/runner.py
              echo "Debug session ended. Restarting in 5 seconds..."
              sleep 5
          done

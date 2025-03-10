@@ -134,3 +134,28 @@
 2025-03-05 13:04:19,261 - root - INFO - [random] Observation: 121, Action: 0, Time: 2.532096 seconds
 2025-03-07 10:57:44,375 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
 2025-03-07 10:59:11,670 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
+2025-03-10 17:39:57,693 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 17:41:40,217 - simulate - INFO - Initializing environment for k with seed 42.
+2025-03-10 17:55:06,660 - simulate - INFO - Initializing environment for k with seed 42.
+2025-03-10 17:55:49,782 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 17:57:36,605 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:03:44,032 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:09:02,330 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:10:45,677 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:13:34,390 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:17:27,102 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:41:45,947 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:45:30,270 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:55:48,774 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 18:56:47,137 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 19:07:12,352 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 19:07:56,119 - agents.agent_registry - INFO - Initializing policies for game: kuhn_poker, mode: llm_vs_random
+2025-03-10 19:50:02,170 - agents.agent_registry - INFO - Assigned policy_0 -> RANDOM (N/A)
+2025-03-10 19:50:02,170 - agents.agent_registry - INFO - Assigned policy_1 -> RANDOM (N/A)
+2025-03-10 19:50:03,328 - simulate - INFO - Episode 1 started.
+2025-03-10 19:51:12,614 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-10 19:52:06,794 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-10 20:10:09,682 - agents.policy_manager - INFO - Initializing policies for game: kuhn_poker, mode: llm_vs_random
+2025-03-10 20:12:57,134 - agents.policy_manager - INFO - Assigned policy_0 -> LLM (codegemma-7b-it)
+2025-03-10 20:12:57,135 - agents.policy_manager - INFO - Assigned policy_1 -> RANDOM (None)
+2025-03-10 20:13:43,876 - simulate - INFO - Episode 1 started.
