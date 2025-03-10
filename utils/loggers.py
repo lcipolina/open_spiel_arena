@@ -2,7 +2,7 @@
 Logging utilities for tracking simulations, agent behavior, and game outcomes.
 Supports structured logging and experiment tracking.
 """
-
+import psycopg2
 import os
 import logging
 import json
@@ -15,7 +15,7 @@ import time
 from functools import wraps
 import sqlite3
 
-from utils.results_utils import print_total_scores #TODO: see if we need this one -  or bring it here!
+from utils.plotting_utils import print_total_scores #TODO: see if we need this one -  or bring it here!
 
 def generate_game_log(model_name: str, games: List[Dict[str, Any]], seed: int) -> Dict[str, Any]:
     """
@@ -275,6 +275,28 @@ def parse_and_log_response(response_text):
         f.seek(0)
         json.dump(logs, f, indent=4)
 
+#TODO: use this in the code!!
+def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[int, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Processes episode results for all players.
+
+    Args:
+        rewards_dict: Dictionary mapping player IDs to their rewards.
+        episode_players: Dictionary mapping player IDs to their type and model.
+
+    Returns:
+        List[Dict[str, Any]]: List of dictionaries containing player results.
+    """
+    return [
+        {
+            "player_id": player_idx,
+            "player_type": player_data["player_type"],
+            "player_model": player_data["player_model"],
+            "result": "win" if rewards_dict.get(player_idx, 0) > 0 else
+                      "loss" if rewards_dict.get(player_idx, 0) < 0 else "draw"
+        }
+        for player_idx, player_data in episode_players.items()
+    ]
 
 class GameLogger:
     """Handles logging of LLM decisions into a structured SQLite database."""

@@ -109,28 +109,6 @@ def detect_illegal_moves(env: OpenSpielEnv, actions_dict: Dict[int, int]) -> int
         if action not in env.state.legal_actions(player)
     )
 
-#TODO: use this in the code!!
-def get_episode_results(rewards_dict: Dict[int, float], episode_players: Dict[int, Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Processes episode results for all players.
-
-    Args:
-        rewards_dict: Dictionary mapping player IDs to their rewards.
-        episode_players: Dictionary mapping player IDs to their type and model.
-
-    Returns:
-        List[Dict[str, Any]]: List of dictionaries containing player results.
-    """
-    return [
-        {
-            "player_id": player_idx,
-            "player_type": player_data["player_type"],
-            "player_model": player_data["player_model"],
-            "result": "win" if rewards_dict.get(player_idx, 0) > 0 else
-                      "loss" if rewards_dict.get(player_idx, 0) < 0 else "draw"
-        }
-        for player_idx, player_data in episode_players.items()
-    ]
 
 def initialize_environment(config: Dict[str, Any], seed:int) -> OpenSpielEnv:
     """Loads the game from pyspiel and initializes the game environment simulator."""
@@ -312,7 +290,8 @@ def compute_actions_old(
 # @ray.remote # Runs on its own ray worker #TODO: just for debugging
 def simulate_game(game_name: str,
                   config: Dict[str, Any],
-                  seed: int
+                  seed: int,
+                  logger: GameLogger,
                   ) -> Tuple[str, List[Dict[str, Any]]]:
     """
     Runs multiple episodes of a single game in parallel.
@@ -374,6 +353,9 @@ def simulate_game(game_name: str,
     ]
     model_name = ", ".join(llm_models_used) if llm_models_used else "None"
 
+    # Log moves during the game - Example: Logging a move at turn 1
+    logger.log_move(turn=1, action=1, reasoning="King is a strong hand, calling is optimal.")
+
     return model_name, game_results #TODO: see what happens with the rewards
 
 
@@ -407,7 +389,7 @@ def run_simulation(args):
     game_names = os.getenv("GAME_NAMES", "kuhn_poker,matrix_rps,tic_tac_toe,connect_four").split(",")
 
     # Run simulations in parallel (Ray)
-    results = simulate_game("kuhn_poker", config, seed)      # Without Ray for debugging: TODO: delete this!
+    results = simulate_game("kuhn_poker", config, logger, seed)      # Without Ray for debugging: TODO: delete this!
     #results = ray.get([simulate_game.remote(game, config, seed) for game in game_names])
 
     # Save results
@@ -416,8 +398,6 @@ def run_simulation(args):
 
     # Generate unique log file for each LLM per game
     logger = GameLogger(llm_name="codegemma", game_name="kuhn_poker")
-    # Log moves during the game - Example: Logging a move at turn 1
-    logger.log_move(turn=1, action=1, reasoning="King is a strong hand, calling is optimal.")
     # Fetch and display all logged moves
     logger.print_log()
 
@@ -452,6 +432,6 @@ oki doki, now that is working! Let's proceed on thinking our loop. We need to ru
 
 I believe we only have the game loop, but not the loop (3) and (4)
 
-I cna re-share the 'simulate.py' script if needed
+The looping through games needs to be parallelized with Ray!!
 
 '''
