@@ -17,6 +17,7 @@ def default_simulation_config() -> Dict[str, Any]:
     },
     "num_episodes": 1,
     "seed": 42,
+    "use_ray": False,
     "mode": "llm_vs_random",  # "manual", "llm_vs_llm"
     "agents": {
        # 0: {"type": "llm", "model": "gpt2"},   #llm, random, human
