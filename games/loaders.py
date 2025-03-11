@@ -2,6 +2,7 @@
 /games/loaders.py
 
 Centralized game loader module with decorator-based registration.
+Loaded by 'registry.py' according to the mapping in 'game_specs.py'.
 """
 
 import pyspiel

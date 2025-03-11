@@ -81,4 +81,5 @@ if __name__ == "__main__":
     try:
         run_simulation(args)
     finally:
-        full_cleanup()
+        a = 0
+      #  full_cleanup()

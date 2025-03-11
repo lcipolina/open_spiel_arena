@@ -11,8 +11,8 @@ from typing import Dict, Any, List, Tuple
 
 from utils.seeding import set_seed
 from envs.env_initializer import env_creator  # Environment factory function
-from games.registry import registry # Initilizes an empty registry dictionary for the games
-from games import loaders  # Adds the games to the registry dictionary
+from games.registry import registry # Games registry
+#from games import loaders  # Adds the games to the registry dictionary
 from agents.llm_registry import LLM_REGISTRY,initialize_llm_registry
 initialize_llm_registry() #TODO: fix this, I don't like it!
 from agents.policy_manager import initialize_policies, policy_mapping_fn
@@ -35,7 +35,8 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> Tuple[st
     """
     set_seed(seed)
     logger.info(f"Initializing environment for {game_name} with seed {seed}.")
-    env = env_creator(game_name, config)
+   # env = env_creator(game_name, config)
+    env = registry.make_env(game_name, config)
     policies = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
     game_results = []
