@@ -6,7 +6,7 @@ Implements an agent that queries an LLM for its action.
 
 import logging
 import random
-import os
+import os, json
 import ray
 from typing import Any, Dict, List, Optional
 from agents.llm_registry import LLM_REGISTRY
@@ -55,14 +55,7 @@ class LLMAgent(BaseAgent):
         legal_actions = observation["legal_actions"]
         state = observation.get("state_string")
         info = observation.get("info", None)
-        prompt = observation.get("prompt", None) # TODO: check if the wording is coming correctly
-
-        # If there are no legal actions, return a safe fallback move
-        #if not legal_actions:
-        #    logging.error(f"LLMAgent for {self.game_name} encountered an empty legal_actions list.")
-        #    return -1  # Safe fallback action (invalid but won't break the game)
-
-
+        prompt = observation.get("prompt", None)
 
         # Call batch function (use Ray if initialized, otherwise call directly for debugging)
         if ray.is_initialized():
@@ -115,7 +108,7 @@ def batch_llm_decide_moves(
     sampling_params = SamplingParams(max_tokens=MAX_TOKENS, temperature=TEMPERATURE)
 
     # Run batch inference for each LLM model separately
-    actions = {}
+    actions_dict = {}
     for player_id, llm in llm_instances.items():
         response = llm.generate([prompts[player_id]], sampling_params)[0]  # Single response
 
@@ -124,18 +117,12 @@ def batch_llm_decide_moves(
         print('LLM RESPONSE: ',response.outputs[0].text)
 
         # Extract action from response
-        move = None
-        for word in response.outputs[0].text.split():
-            try:
-                move = int(word)
-                if move in legal_actions[player_id]:  # Validate move
-                    actions[player_id] = move
-                    break
-            except ValueError:
-                continue
+        response_text = response.outputs[0].text  # Assuming this is a string
+        parsed_response = json.loads(response_text.replace("'", '"'))  # Convert to valid JSON
 
-        # If LLM fails to return a valid move, pick randomly  #TODO: this needs to go to the 'invalid action selection' counter
-        if player_id not in actions:
-            actions[player_id] = random.choice(legal_actions[player_id])
+        actions_dict[player_id] = {
+                'action': parsed_response.get('action'),
+                'reasoning': parsed_response.get('reasoning')
+            }
 
-    return actions  # dict[playerID, chosen action]
+    return actions_dict  # dict[playerID, {chosen action, reasoning}]

@@ -165,3 +165,16 @@
 2025-03-11 09:45:57,137 - agents.policy_manager - INFO - Assigned policy_1 -> RANDOM (None)
 2025-03-11 09:59:07,078 - simulate - INFO - Episode 1 started.
 2025-03-11 13:08:02,607 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-11 17:05:47,570 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-11 17:05:54,588 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-11 17:08:40,560 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-11 17:08:40,560 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-11 17:08:41,636 - simulate - INFO - Episode 1 started.
+2025-03-11 17:40:07,084 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-11 18:01:49,382 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-11 18:04:32,522 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-11 18:04:32,524 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-11 18:06:46,124 - simulate - INFO - Episode 1 started.
+2025-03-11 18:34:08,016 - simulate - INFO - Episode 1 ended. Rewards: {0: 1.0, 1: -1.0}
+2025-03-11 18:34:08,018 - simulate - INFO - Simulation for kuhn_poker completed.
+2025-03-11 19:04:14,948 - __main__ - INFO - Simulation results saved to results/simulation_results.json

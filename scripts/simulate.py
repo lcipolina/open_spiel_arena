@@ -35,7 +35,6 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> Tuple[st
     """
     set_seed(seed)
     logger.info(f"Initializing environment for {game_name} with seed {seed}.")
-   # env = env_creator(game_name, config)
     env = registry.make_env(game_name, config)
     policies = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
@@ -48,12 +47,14 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> Tuple[st
         while not (terminated or truncated):
             actions = {}
             for agent_id, observation in observation_dict.items():
-                policy_key = policy_mapping_fn(agent_id)
+                policy_key = policy_mapping_fn(agent_id) # Map agentID to policy key
                 policy = policies[policy_key]  # Map environment agent IDs to policy keys.
                 actions[agent_id] = policy.compute_action(observation)
                 logger.debug(f"Agent {agent_id} ({policy_key}) selected action {actions[agent_id]}.")
             observation_dict, rewards, terminated, truncated, _ = env.step(actions)
         logger.info(f"Episode {episode + 1} ended. Rewards: {rewards}")
+
+        # TODO: improve this - save results in a more structured way, add name of the agent and probably save into SQL data
         game_results.append({"game": game_name, "episodes": episode + 1, "rewards": rewards})
 
     logger.info(f"Simulation for {game_name} completed.")

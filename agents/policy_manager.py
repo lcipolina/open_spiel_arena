@@ -71,7 +71,7 @@ def initialize_policies(config: Dict[str, Any], game_name: str, seed: int) -> Di
 
         if agent_type == "llm":
             model_name = agent_config.get("model", list(LLM_REGISTRY.keys())[0])
-            policies[f"policy_{i}"] = agent_class(model_name=model_name, game_name=game_name)
+            policies[f"policy_{i}"] = agent_class(model_name=model_name, game_name=game_name)  # Load LLMS into GPU memory
         elif agent_type == "random":
             policies[f"policy_{i}"] = agent_class(seed=seed)
         elif agent_type == "human":
@@ -91,7 +91,8 @@ def policy_mapping_fn(agent_id: str) -> str:
     Returns:
         str: The corresponding policy key (e.g., "policy_0").
     """
-    index = agent_id.split("_")[-1]
+    agent_id_str = str(agent_id)
+    index = agent_id_str.split("_")[-1]
     policy_key = f"policy_{index}"
-    logger.debug(f"Mapping agent {agent_id} -> {policy_key}")
+    logger.debug(f"Mapping agent {agent_id_str} -> {policy_key}")
     return policy_key

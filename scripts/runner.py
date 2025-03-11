@@ -64,6 +64,7 @@ def run_simulation(args):
 
     results = ray.get(simulation_tasks) if use_ray else simulation_tasks
 
+    # TODO: implement SQL logging - and save the results in a SQL database
     output_path = config.get("output_path", "results/simulation_results.json")
     with open(output_path, "w") as f:
         json.dump(results, f, indent=4)
@@ -80,6 +81,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     try:
         run_simulation(args)
+        print("Simulation completed.")
     finally:
-        a = 0
-      #  full_cleanup()
+        full_cleanup()

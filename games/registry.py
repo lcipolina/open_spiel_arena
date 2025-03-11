@@ -76,8 +76,8 @@ class GameRegistration:
         max_game_rounds = config["env_config"].get("max_game_rounds")
         seed = config.get("seed", 42)
 
-        # Lazy-load the game loader.
-        loader = self.get_game_loader(game_name)()  # Call the static load() method.
+        # Call the static load() method.
+        loader = self.get_game_loader(game_name)()
 
         # Retrieve the simulator instance.
         env = self.get_simulator_instance(
