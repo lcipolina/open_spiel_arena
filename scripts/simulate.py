@@ -36,9 +36,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> Tuple[st
     set_seed(seed)
     logger.info(f"Initializing environment for {game_name} with seed {seed}.")
     env = env_creator(game_name, config)
-    policies = initialize_policies(config, game_name, seed) # Initialize the policies for the agents
-
-
+    policies = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
     game_results = []
     for episode in range(config["num_episodes"]):
@@ -48,10 +46,9 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> Tuple[st
         logger.info(f"Episode {episode + 1} started.")
         while not (terminated or truncated):
             actions = {}
-            # Map environment agent IDs to policy keys.
             for agent_id, observation in observation_dict.items():
                 policy_key = policy_mapping_fn(agent_id)
-                policy = policies[policy_key]
+                policy = policies[policy_key]  # Map environment agent IDs to policy keys.
                 actions[agent_id] = policy.compute_action(observation)
                 logger.debug(f"Agent {agent_id} ({policy_key}) selected action {actions[agent_id]}.")
             observation_dict, rewards, terminated, truncated, _ = env.step(actions)

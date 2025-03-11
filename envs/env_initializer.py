@@ -48,7 +48,7 @@ def env_creator(game_name:str,config: Dict[str, Any]) -> OpenSpielEnv:
         seed=config.get("seed", 42)
     )
 
-    #logger.info(f"Environment initialized: {game_name} with {len(player_types)} players.")
+    logger.info(f"Environment initialized: {game_name} with {len(player_types)} players.")
 
     return env
 
@@ -56,8 +56,6 @@ def env_creator(game_name:str,config: Dict[str, Any]) -> OpenSpielEnv:
 def register_env():
     """
     Registers the OpenSpiel environment with Gym-like API.
-
-    This makes it compatible with RLlib-style environment handling.
     """
     gym.register(
         id="OpenSpielEnv-v0",

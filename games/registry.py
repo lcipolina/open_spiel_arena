@@ -73,8 +73,6 @@ class GameRegistration:
         # Retrieve and return the method
         return getattr(cls, method_name)
 
-
-    # TODO: see if this one below is used
     def get_simulator_instance(self,
                                game_name: str,
                                 game: Any,

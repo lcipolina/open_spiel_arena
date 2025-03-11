@@ -52,7 +52,7 @@ def initialize_llm_registry():
     for model in MODEL_LIST:
         LLM_REGISTRY[model] = {
             "display_name": model,
-            "description": f"LLM model {model} (vLLM or LiteLLM detected automatically).",
+            "description": f"LLM model {model}.",
             "model_loader": lambda model_name=model: load_llm_model(model_name),
         }
 

@@ -31,11 +31,11 @@ def initialize_policies(config: Dict[str, Any], game_name: str, seed: int) -> Di
     Returns:
         Dict[str, Any]: A dictionary mapping policy names to agent instances.
     """
+    # Assign LLM models to players in the game
     num_players = registry.get_game_loader(game_name)().num_players()
     mode = config.get("mode", "llm_vs_random")
     llm_models = list(LLM_REGISTRY.keys())
 
-    # Ensure agents are correctly assigned in config
     if "agents" not in config or len(config["agents"]) != num_players:
         agents = {}
         if mode == "llm_vs_random":
@@ -55,10 +55,10 @@ def initialize_policies(config: Dict[str, Any], game_name: str, seed: int) -> Di
             for key, value in config["agents"].items():
                 agents[int(key)] = value
 
-        config["agents"] = agents  # Update config with agent assignments
+        config["agents"] = agents  # Update config with agent assignments #TODO: see if we still need to update the config dict or we can remove this logic
         logger.info(f"Agent setup completed for mode: {mode}. Assigned agents: {agents}")
 
-    # Now initialize policies based on assigned agents
+    # Initialize policies based on assigned agents - Loads the LLMs into GPU memory
     policies = {}
     for i in range(num_players):
         agent_config = config["agents"].get(i, {"type": "random"})
@@ -77,7 +77,7 @@ def initialize_policies(config: Dict[str, Any], game_name: str, seed: int) -> Di
         elif agent_type == "human":
             policies[f"policy_{i}"] = agent_class()
 
-        logger.info(f"Assigned policy_{i} -> {agent_type.upper()} ({agent_config.get('model', 'N/A')})")
+        logger.info(f"Assigned: policy_{i} -> {agent_type.upper()} ({agent_config.get('model', 'N/A')})")
 
     return policies
 
