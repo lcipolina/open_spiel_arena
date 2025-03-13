@@ -52,41 +52,29 @@ class LLMAgent(BaseAgent):
         Returns:
             int: The action chosen by the LLM.
         """
-        legal_actions = observation["legal_actions"]
-        state = observation.get("state_string")
-        info = observation.get("info", None)
         prompt = observation.get("prompt", None)
 
         # Call batch function (use Ray if initialized, otherwise call directly for debugging)
         if ray.is_initialized():
             action_dict = ray.get(batch_llm_decide_moves.remote(
                 {0: self.model_name},
-                {0: prompt},
-                {0: tuple(legal_actions)}
+                {0: prompt}
             ))
         else:
             action_dict = batch_llm_decide_moves(
                 {0: self.model_name},
-                {0: prompt},
-                {0: tuple(legal_actions)}
+                {0: prompt}
             )
 
-        # Extract the single action
-        chosen_action = action_dict.get(0, None)
-
-        # If LLM fails to return a valid move, pick randomly
-        if chosen_action not in legal_actions:
-            logging.warning(f"LLM returned an invalid move: {chosen_action}. Choosing randomly.")
-            chosen_action = random.choice(legal_actions)
-
-        return chosen_action
+        chosen_action = action_dict[0]["action"]
+        reasoning = action_dict[0].get("reasoning", "N/A")
+        return {"action": chosen_action, "reasoning": reasoning} #TODO: should be a dictionary for the other agents too!
 
     #TODO: uncomment this!
 #@ray.remote  # The function will be a separate Ray task or actor
 def batch_llm_decide_moves(
     model_names: Dict[int, str],  # Supports multiple LLMs per player
-    prompts: Dict[int, str],
-    legal_actions: Dict[int, tuple]
+    prompts: Dict[int, str]
 ) -> Dict[int, int]:
     """
     Queries vLLM in batch mode to decide moves for multiple players, supporting multiple LLM models.
@@ -111,10 +99,6 @@ def batch_llm_decide_moves(
     actions_dict = {}
     for player_id, llm in llm_instances.items():
         response = llm.generate([prompts[player_id]], sampling_params)[0]  # Single response
-
-        # TODO: delete this
-        print('PROMPT: ',prompts[player_id])
-        print('LLM RESPONSE: ',response.outputs[0].text)
 
         # Extract action from response
         response_text = response.outputs[0].text  # Assuming this is a string

@@ -1,15 +1,3 @@
 [
-    [
-        "kuhn_poker",
-        [
-            {
-                "game": "kuhn_poker",
-                "episodes": 1,
-                "rewards": {
-                    "0": 1.0,
-                    "1": -1.0
-                }
-            }
-        ]
-    ]
+    "Simulation Completed"
 ]

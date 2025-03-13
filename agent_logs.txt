@@ -1,180 +1,84 @@
-2025-02-27 23:01:05,026 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:08:31,187 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:19:56,844 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:22:57,008 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:35:35,853 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:37:08,383 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:38:40,175 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:46:37,570 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:47:46,084 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-27 23:50:03,971 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-28 00:02:11,547 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-28 00:08:26,106 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-02-28 13:05:47,516 - root - INFO - [random] Observation: 211, Action: 0, Time: 5.450944 seconds
-2025-02-28 13:21:57,634 - root - INFO - [random] Observation: 211, Action: 0, Time: 0.000017 seconds
-2025-02-28 13:38:40,843 - root - INFO - [random] Observation: 211, Action: 0, Time: 2.906168 seconds
-2025-02-28 13:53:23,110 - root - INFO - [random] Observation: 211, Action: 0, Time: 0.000026 seconds
-2025-02-28 13:53:27,185 - root - INFO - [llm] Observation: 111, Action: 1, Time: 1.290892 seconds
-2025-02-28 13:53:34,710 - root - INFO - [random] Observation: 212, Action: 0, Time: 0.000013 seconds
-2025-02-28 14:00:54,032 - root - INFO - [random] Observation: 211, Action: 0, Time: 0.000046 seconds
-2025-02-28 14:17:54,530 - root - INFO - [random] Observation: 211, Action: 0, Time: 0.000026 seconds
-2025-02-28 14:22:04,255 - root - INFO - [llm] Observation: 111, Action: 1, Time: 227.457022 seconds
-2025-02-28 14:22:04,256 - root - INFO - [random] Observation: 212, Action: 0, Time: 0.000012 seconds
-2025-02-28 14:33:12,741 - root - INFO - [random] Observation: 211, Action: 0, Time: 41.987155 seconds
-2025-02-28 14:46:12,576 - root - INFO - [llm] Observation: 111, Action: 0, Time: 745.935742 seconds
-2025-03-03 10:40:28,587 - root - INFO - [random] Observation: 211, Action: 0, Time: 0.000019 seconds
-2025-03-03 10:40:29,879 - root - INFO - [llm] Observation: 111, Action: 0, Time: 1.272913 seconds
-2025-03-03 14:17:06,229 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 14:27:40,073 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 14:40:55,850 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 14:44:43,474 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 14:48:18,060 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 14:50:19,241 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 14:57:54,831 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:03:04,102 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:03:57,848 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:04:48,489 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:05:12,566 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:08:31,498 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:12:50,944 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:15:45,907 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:17:23,952 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:23:01,483 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:23:40,613 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:32:07,372 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 15:33:41,745 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:33:52,332 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:36:10,022 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:42:34,751 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:43:31,058 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:46:29,807 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:49:49,294 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:56:33,141 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 19:57:30,899 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 20:05:59,929 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 20:06:51,057 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 20:25:11,134 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 20:25:35,066 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 20:31:28,804 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 20:31:52,777 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 21:48:40,182 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 21:52:15,203 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:05:11,870 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:05:39,583 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:09:49,907 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:10:14,129 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:19:52,135 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:20:16,443 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:24:11,983 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:24:36,284 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:27:10,373 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:27:34,606 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:34:37,642 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:35:01,916 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:37:38,374 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:38:02,659 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:46:32,724 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:46:57,033 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:49:37,605 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:50:01,910 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:54:19,706 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:55:10,890 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 22:55:43,299 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 23:00:35,443 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 23:00:59,711 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 23:21:06,133 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 23:21:30,300 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 23:33:21,525 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-03 23:33:45,611 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 13:23:08,038 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 13:25:01,623 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 15:45:53,335 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 17:28:24,825 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 17:29:30,532 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 17:31:27,944 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 17:38:14,762 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 17:39:16,600 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 18:55:18,798 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 18:55:43,728 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 19:42:15,180 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 19:43:51,986 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 19:48:14,347 - root - INFO - [llm] Observation: 211, Action: 1, Time: 4.637981 seconds
-2025-03-04 19:48:54,328 - root - INFO - [random] Observation: 121, Action: 0, Time: 8.279443 seconds
-2025-03-04 19:49:37,649 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 19:50:27,478 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 20:06:40,938 - root - INFO - [llm] Observation: 211, Action: 1, Time: 811.732147 seconds
-2025-03-04 20:06:41,788 - root - INFO - [random] Observation: 121, Action: 0, Time: 0.000024 seconds
-2025-03-04 20:07:27,706 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 20:07:52,261 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 20:13:13,262 - root - INFO - [llm] Observation: 211, Action: 1, Time: 152.553800 seconds
-2025-03-04 20:14:25,454 - root - INFO - [random] Observation: 121, Action: 0, Time: 1.218673 seconds
-2025-03-04 20:15:17,656 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 20:15:41,960 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 20:19:07,588 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 20:19:31,676 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 23:12:42,010 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 23:15:41,969 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 23:21:58,030 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 23:23:30,538 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 23:43:38,736 - root - INFO - [llm] Observation: 211, Action: 1, Time: 699.499644 seconds
-2025-03-04 23:43:39,636 - root - INFO - [random] Observation: 121, Action: 0, Time: 0.000023 seconds
-2025-03-04 23:51:04,260 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-04 23:51:35,388 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-05 00:18:41,262 - root - INFO - [llm] Observation: 211, Action: 1, Time: 1397.406168 seconds
-2025-03-05 00:21:20,482 - root - INFO - [random] Observation: 121, Action: 0, Time: 0.000045 seconds
-2025-03-05 00:21:48,486 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-05 00:22:40,285 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-05 00:32:09,967 - root - INFO - [llm] Observation: 211, Action: 0, Time: 422.913733 seconds
-2025-03-05 00:32:10,788 - root - INFO - [random] Observation: 111, Action: 0, Time: 0.000033 seconds
-2025-03-05 11:37:43,774 - root - INFO - [llm] Observation: 211, Action: 1, Time: 1462.122737 seconds
-2025-03-05 11:37:44,641 - root - INFO - [random] Observation: 121, Action: 0, Time: 0.000045 seconds
-2025-03-05 12:50:12,541 - root - INFO - [llm] Observation: 211, Action: 1, Time: 3205.517262 seconds
-2025-03-05 12:50:13,325 - root - INFO - [random] Observation: 121, Action: 0, Time: 0.000014 seconds
-2025-03-05 13:04:02,095 - root - INFO - [llm] Observation: 211, Action: 1, Time: 601.666803 seconds
-2025-03-05 13:04:19,261 - root - INFO - [random] Observation: 121, Action: 0, Time: 2.532096 seconds
-2025-03-07 10:57:44,375 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-07 10:59:11,670 - httpx - INFO - HTTP Request: GET https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json "HTTP/1.1 200 OK"
-2025-03-10 17:39:57,693 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 17:41:40,217 - simulate - INFO - Initializing environment for k with seed 42.
-2025-03-10 17:55:06,660 - simulate - INFO - Initializing environment for k with seed 42.
-2025-03-10 17:55:49,782 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 17:57:36,605 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:03:44,032 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:09:02,330 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:10:45,677 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:13:34,390 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:17:27,102 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:41:45,947 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:45:30,270 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:55:48,774 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 18:56:47,137 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 19:07:12,352 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 19:07:56,119 - agents.agent_registry - INFO - Initializing policies for game: kuhn_poker, mode: llm_vs_random
-2025-03-10 19:50:02,170 - agents.agent_registry - INFO - Assigned policy_0 -> RANDOM (N/A)
-2025-03-10 19:50:02,170 - agents.agent_registry - INFO - Assigned policy_1 -> RANDOM (N/A)
-2025-03-10 19:50:03,328 - simulate - INFO - Episode 1 started.
-2025-03-10 19:51:12,614 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-10 19:52:06,794 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
-2025-03-10 20:10:09,682 - agents.policy_manager - INFO - Initializing policies for game: kuhn_poker, mode: llm_vs_random
-2025-03-10 20:12:57,134 - agents.policy_manager - INFO - Assigned policy_0 -> LLM (codegemma-7b-it)
-2025-03-10 20:12:57,135 - agents.policy_manager - INFO - Assigned policy_1 -> RANDOM (None)
-2025-03-10 20:13:43,876 - simulate - INFO - Episode 1 started.
-2025-03-11 09:04:37,509 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-11 09:29:28,419 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
-2025-03-11 09:45:57,135 - agents.policy_manager - INFO - Assigned policy_0 -> LLM (codegemma-7b-it)
-2025-03-11 09:45:57,137 - agents.policy_manager - INFO - Assigned policy_1 -> RANDOM (None)
-2025-03-11 09:59:07,078 - simulate - INFO - Episode 1 started.
-2025-03-11 13:08:02,607 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-11 17:05:47,570 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-11 17:05:54,588 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
-2025-03-11 17:08:40,560 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
-2025-03-11 17:08:40,560 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
-2025-03-11 17:08:41,636 - simulate - INFO - Episode 1 started.
-2025-03-11 17:40:07,084 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
-2025-03-11 18:01:49,382 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
-2025-03-11 18:04:32,522 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
-2025-03-11 18:04:32,524 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
-2025-03-11 18:06:46,124 - simulate - INFO - Episode 1 started.
-2025-03-11 18:34:08,016 - simulate - INFO - Episode 1 ended. Rewards: {0: 1.0, 1: -1.0}
-2025-03-11 18:34:08,018 - simulate - INFO - Simulation for kuhn_poker completed.
-2025-03-11 19:04:14,948 - __main__ - INFO - Simulation results saved to results/simulation_results.json
+2025-03-12 16:55:16,857 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 16:58:06,152 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 17:07:54,273 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 17:07:54,274 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 17:08:03,832 - simulate - INFO - Episode 1 started.
+2025-03-12 17:14:24,613 - root - WARNING - LLM returned an invalid move: {'action': 1, 'reasoning': 'I am calling because I believe I have a strong hand with my King. I can win the pot with a pair or a higher card.'}. Choosing randomly.
+2025-03-12 17:40:06,320 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 17:40:13,855 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 17:43:05,930 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 17:43:05,930 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 17:43:07,584 - simulate - INFO - Episode 1 started.
+2025-03-12 18:04:44,349 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 18:04:57,743 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 18:08:49,471 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 18:08:49,471 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 18:09:51,541 - simulate - INFO - Episode 1 started.
+2025-03-12 18:22:27,682 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 18:22:35,853 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 18:25:52,917 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 18:25:52,917 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 18:25:54,270 - simulate - INFO - Episode 1 started.
+2025-03-12 18:31:47,124 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 18:32:02,518 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 18:35:18,045 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 18:35:18,045 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 18:35:19,297 - simulate - INFO - Episode 1 started.
+2025-03-12 18:39:21,062 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 18:39:28,613 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 18:42:39,057 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 18:42:39,059 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 18:42:40,357 - simulate - INFO - Episode 1 started.
+2025-03-12 18:50:15,519 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 18:50:22,769 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 18:53:30,066 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 18:53:30,083 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 18:53:31,363 - simulate - INFO - Episode 1 started.
+2025-03-12 19:01:55,075 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 19:02:02,034 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 19:05:05,733 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 19:05:05,733 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 19:05:07,673 - simulate - INFO - Episode 1 started.
+2025-03-12 22:30:29,298 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 22:30:36,410 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 22:33:32,636 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 22:33:32,636 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-12 22:33:33,779 - simulate - INFO - Episode 1 started.
+2025-03-12 22:41:08,688 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 22:41:16,125 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 23:14:12,200 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-12 23:14:21,109 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-12 23:17:17,790 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-12 23:17:17,790 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-13 00:08:42,761 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-13 00:08:50,424 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-13 00:11:37,512 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-13 00:11:37,515 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-13 00:11:38,775 - simulate - INFO - Episode 1 started.
+2025-03-13 00:21:30,730 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-13 00:21:37,880 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-13 00:25:12,320 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-13 00:25:12,320 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-13 00:25:13,803 - simulate - INFO - Episode 1 started.
+2025-03-13 00:40:00,298 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-13 00:40:07,400 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-13 00:43:00,100 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-13 00:43:00,100 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-13 00:43:01,275 - simulate - INFO - Episode 1 started.
+2025-03-13 00:51:04,486 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-13 00:51:11,689 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-13 00:53:59,418 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-13 00:53:59,438 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-13 00:54:00,589 - simulate - INFO - Episode 1 started.
+2025-03-13 01:06:43,423 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-13 01:06:51,576 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-13 01:09:49,790 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-13 01:09:49,790 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-13 01:09:51,080 - simulate - INFO - Episode 1 started.
+2025-03-13 01:18:38,367 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-13 01:18:46,770 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-13 01:21:51,335 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-13 01:21:51,335 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-13 01:21:52,621 - simulate - INFO - Episode 1 started.
+2025-03-13 01:25:40,886 - simulate - INFO - Simulation for kuhn_poker, Episode 1 completed.
+2025-03-13 01:25:40,887 - __main__ - INFO - Simulation results saved to results/simulation_results.json

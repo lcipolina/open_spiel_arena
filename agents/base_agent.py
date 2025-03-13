@@ -6,9 +6,8 @@ HumanAgent, RandomAgent, LLMAgent, etc.
 """
 
 import logging
-import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 # Configure logging
 logging.basicConfig(
@@ -59,20 +58,10 @@ class BaseAgent(ABC):
         return self._process_action(observation)
 
     def _process_action(self, observation: Dict[str, Any]) -> int:
-            """Logs the observation, times the response, and calls `compute_action()`."""
-            start_time = time.perf_counter()
-            action = self.compute_action(observation)
-            duration = time.perf_counter() - start_time
-
-            self.action_count += 1
-            self.total_time += duration
-
-            logging.info(
-                "[%s] Observation: %s, Action: %d, Time: %.6f seconds",
-                self.agent_type, observation.get('state_string', 'N/A'), action, duration
-            )
-
-            return action
+        """Logs the observation, times the response, and calls `compute_action()`."""
+        action = self.compute_action(observation)
+        self.action_count += 1
+        return action
 
     def get_performance_metrics(self):
         """
@@ -85,6 +74,4 @@ class BaseAgent(ABC):
         return {
             "agent_type": self.agent_type,
             "action_count": self.action_count,
-            "total_processing_time": self.total_time,
-            "average_response_time": avg_time
         }

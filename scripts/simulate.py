@@ -5,25 +5,23 @@ simulate.py
 Core simulation logic for a single game simulation.
 Handles environment creation, policy initialization, and the simulation loop.
 """
-
+import time
 import logging
 from typing import Dict, Any, List, Tuple
-
 from utils.seeding import set_seed
-from envs.env_initializer import env_creator  # Environment factory function
 from games.registry import registry # Games registry
-#from games import loaders  # Adds the games to the registry dictionary
 from agents.llm_registry import LLM_REGISTRY,initialize_llm_registry
 initialize_llm_registry() #TODO: fix this, I don't like it!
 from agents.policy_manager import initialize_policies, policy_mapping_fn
-
+from utils.loggers import SQLiteLogger
+from torch.utils.tensorboard import SummaryWriter
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> Tuple[str, List[Dict[str, Any]]]:
+def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
     """
-    Runs a single game simulation for multiple episodes.
+    Runs a game simulation, logs agent actions and final rewards to TensorBoard.
 
     Args:
         game_name: The name of the game.
@@ -31,31 +29,104 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> Tuple[st
         seed: Random seed for reproducibility.
 
     Returns:
-        Tuple containing the game name and a list of simulation results.
+        str: Confirmation that the simulation is complete.
     """
     set_seed(seed)
     logger.info(f"Initializing environment for {game_name} with seed {seed}.")
     env = registry.make_env(game_name, config)
-    policies = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
+    policies_dict = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
-    game_results = []
+    # Initialize loggers for all agents
+    agent_loggers_dict = {
+        policy_name: SQLiteLogger(
+            agent_type=config["agents"][agent_id]["type"],
+            model_name=config["agents"][agent_id].get("model", "N/A").replace("-", "_")
+        )
+        for agent_id, policy_name in enumerate(policies_dict.keys())
+    }
+
+    writer = SummaryWriter(log_dir=f"runs/{game_name}") # Tensorboard
+
     for episode in range(config["num_episodes"]):
         observation_dict, _ = env.reset(seed=seed + episode)
         terminated = truncated = False
 
         logger.info(f"Episode {episode + 1} started.")
+        turn = 0
+
         while not (terminated or truncated):
             actions = {}
             for agent_id, observation in observation_dict.items():
                 policy_key = policy_mapping_fn(agent_id) # Map agentID to policy key
-                policy = policies[policy_key]  # Map environment agent IDs to policy keys.
-                actions[agent_id] = policy.compute_action(observation)
-                logger.debug(f"Agent {agent_id} ({policy_key}) selected action {actions[agent_id]}.")
-            observation_dict, rewards, terminated, truncated, _ = env.step(actions)
-        logger.info(f"Episode {episode + 1} ended. Rewards: {rewards}")
+                policy = policies_dict[policy_key]  # Policy class
+                agent_logger = agent_loggers_dict[policy_key]
+                agent_type = config["agents"][agent_id]["type"]  # "llm", "random", "human"
+                agent_model = config["agents"][agent_id].get("model", "N/A")  # Model name (for LLMs)
 
-        # TODO: improve this - save results in a more structured way, add name of the agent and probably save into SQL data
-        game_results.append({"game": game_name, "episodes": episode + 1, "rewards": rewards})
+                start_time = time.perf_counter()
+                action_metadata =  policy(observation) #Calls `__call__()` -> `_process_action()` -> `log_move()`
+                # actions[agent_id] = policy.compute_action(observation) # TODO: investigate, this is for Kuhn poker - should be the above for everyone
+                duration = time.perf_counter() - start_time
 
-    logger.info(f"Simulation for {game_name} completed.")
-    return game_name, game_results
+                if isinstance(action_metadata, int):
+                    chosen_action = action_metadata
+                    reasoning = "N/A"  # No reasoning for non-LLM agents
+                else:
+                    chosen_action = action_metadata.get("action", -1)  # Default to -1 if missing
+                    reasoning = str(action_metadata.get("reasoning", "N/A") or "N/A")
+
+                actions[agent_id] = chosen_action
+
+                # Check if the chosen action is legal
+                if chosen_action is None or chosen_action not in observation["legal_actions"]:
+                    logging.error(f"Game {game_name}, Episode {episode + 1} terminated due to illegal move.")
+                    truncated = True
+                    break  # Exit the loop immediately
+
+                # Log the action to the database
+                opponents = ", ".join(
+                    f"{config['agents'][a_id]['type']}_{config['agents'][a_id].get('model', 'N/A').replace('-', '_')}"
+                    for a_id in config["agents"] if a_id != agent_id
+                )
+
+                agent_logger.log_move(
+                    game_name=game_name,
+                    episode=episode + 1,
+                    turn=turn,
+                    action=chosen_action,
+                    reasoning=reasoning,
+                    opponent= opponents,  # Get all opponents
+                    generation_time=duration,
+                    agent_type=agent_type,
+                    agent_model=agent_model
+                )
+
+           # Step forward in the environment
+            if not truncated:
+                observation_dict, rewards, terminated, truncated, _ = env.step(actions)
+                turn += 1
+
+    # Logging
+    game_status = "truncated" if truncated else "terminated"
+
+    for agent_id, reward in rewards.items():
+        policy_key = policy_mapping_fn(agent_id)
+        agent_logger = agent_loggers_dict[policy_key]
+        agent_logger.log_game_result(
+                game_name=game_name,
+                episode=episode + 1,
+                status=game_status,
+                reward=reward
+            )
+        # Tensorboard logging
+        writer.add_scalar(f"Rewards/{policy_key}", reward, episode + 1)
+
+    writer.close()
+    logger.info(f"Simulation for {game_name}, Episode {episode + 1} completed.")
+    return "Simulation Completed"
+
+# start tensorboard from the terminal:
+# tensorboard --logdir=runs
+
+# In the browser:
+# http://localhost:6006/

@@ -6,6 +6,10 @@ Entry point for game simulations.
 Handles Ray initialization, SLURM environment variables, and orchestration.
 """
 
+# Suppress errors from DynamoRIO - TODO: delete this!!
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
+
 import json
 import argparse
 import logging
@@ -83,4 +87,4 @@ if __name__ == "__main__":
         run_simulation(args)
         print("Simulation completed.")
     finally:
-        full_cleanup()
+        full_cleanup() # this doesn't seem to end!
