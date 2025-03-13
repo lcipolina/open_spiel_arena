@@ -24,7 +24,6 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
         pd.DataFrame: Merged DataFrame containing all moves, rewards, and game outcomes.
     """
     all_moves = []
-    all_rewards = []
     all_results = []
 
     sqlite_files = glob.glob(os.path.join(log_dir, "*.db"))
@@ -34,65 +33,44 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
 
         conn = sqlite3.connect(db_file)
 
-        # Extract game name directly from the database instead of filename
+        # Retrieve move logs
         try:
             df_moves = pd.read_sql_query(
                 "SELECT game_name, episode, turn, action, reasoning, generation_time, opponent FROM moves",
                 conn
             )
             df_moves["agent_name"] = agent_name
-            all_moves.append(df_moves.drop_duplicates())  # Remove duplicates immediately
+            all_moves.append(df_moves.drop_duplicates())  # Remove duplicates
         except Exception as e:
             print(f"No moves table in {db_file}: {e}")
 
-        # Retrieve rewards correctly
-        try:
-            df_rewards = pd.read_sql_query(
-                "SELECT game_name, episode, reward FROM rewards",
-                conn
-            )
-            df_rewards["agent_name"] = agent_name
-            all_rewards.append(df_rewards.drop_duplicates())  # Remove duplicates immediately
-        except Exception as e:
-            print(f"No rewards table in {db_file}: {e}")
-
-        # Retrieve game results
+        # Retrieve game results (includes rewards)
         try:
             df_results = pd.read_sql_query(
-                "SELECT game_name, episode, status FROM game_results",
+                "SELECT game_name, episode, status, reward FROM game_results",  # ✅ Now includes rewards
                 conn
             )
             df_results["agent_name"] = agent_name
-            all_results.append(df_results.drop_duplicates())  # Remove duplicates immediately
+            all_results.append(df_results.drop_duplicates())  # Remove duplicates
         except Exception as e:
             print(f"No game_results table in {db_file}: {e}")
 
         conn.close()
 
     df_moves = pd.concat(all_moves, ignore_index=True) if all_moves else pd.DataFrame()
-    df_rewards = pd.concat(all_rewards, ignore_index=True) if all_rewards else pd.DataFrame()
     df_results = pd.concat(all_results, ignore_index=True) if all_results else pd.DataFrame()
 
     # Convert `opponent` lists into hashable strings before merging
     if "opponent" in df_moves.columns:
         df_moves["opponent"] = df_moves["opponent"].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
 
-    # Ensure rewards are correctly merged
-    if not df_rewards.empty:
-        df_full = df_moves.merge(df_rewards, on=["game_name", "episode", "agent_name"], how="left")
-
-    else:
-        df_full = df_moves.copy()  # If no rewards exist, still return moves
-
-    # Merge game results per agent properly
+    # Merge moves with game results (which includes rewards)
     if not df_results.empty:
-        df_full = df_full.merge(df_results, on=["game_name", "episode", "agent_name"], how="left")
+        df_full = df_moves.merge(df_results, on=["game_name", "episode", "agent_name"], how="left")
+    else:
+        df_full = df_moves.copy()
 
-    # Ensure the `reward` column is explicitly present
-    if "reward" not in df_full.columns:
-        df_full["reward"] = None  # Fill missing rewards with None
-
-    # Drop duplicates **before returning** (final safeguard)
+    # Drop duplicates before returning (final safeguard)
     df_full = df_full.drop_duplicates()
 
     return df_full

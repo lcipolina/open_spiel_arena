@@ -1,0 +1,3 @@
+game_name,episode,turn,action,reasoning,generation_time,opponent,agent_name,status,reward
+kuhn_poker,1,0,1,I am calling because I believe I have a strong hand with my King. I can win the pot with a pair or a higher card.,2.093794947490096,random_None,llm_codegemma_7b_it,terminated,1.0
+kuhn_poker,1,1,0,N/A,5.691498517990112e-05,llm_codegemma_7b_it,random_None,terminated,-1.0
