@@ -1,0 +1,20 @@
+{
+    "kuhn_poker": {
+        "llm_codegemma_7b_it": {
+            "games_played": 1,
+            "total_moves": 1,
+            "average_generation_time": 2.093794947490096,
+            "total_rewards": 0,
+            "games_terminated": 1,
+            "games_truncated": 0
+        },
+        "random_None": {
+            "games_played": 1,
+            "total_moves": 1,
+            "average_generation_time": 5.691498517990112e-05,
+            "total_rewards": 0,
+            "games_terminated": 1,
+            "games_truncated": 0
+        }
+    }
+}

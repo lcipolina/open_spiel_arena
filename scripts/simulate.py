@@ -119,7 +119,10 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                 reward=reward
             )
         # Tensorboard logging
-        writer.add_scalar(f"Rewards/{policy_key}", reward, episode + 1)
+        agent_type = config["agents"][agent_id]["type"]
+        agent_model = config["agents"][agent_id].get("model", "N/A").replace("-", "_")
+        tensorboard_key = f"{agent_type}_{agent_model}"
+        writer.add_scalar(f"Rewards/{tensorboard_key}", reward, episode + 1)
 
     writer.close()
     logger.info(f"Simulation for {game_name}, Episode {episode + 1} completed.")
