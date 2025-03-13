@@ -125,7 +125,7 @@ def save_summary(summary: dict, output_dir: str = "results/") -> str:
 # Main entry point
 ###########################################################
 def main():
-
+    #  Merge all SQLite logs
     merged_df = merge_sqlite_logs(log_dir="results")
     if merged_df.empty:
         print("No log files found or merged.")
@@ -133,6 +133,12 @@ def main():
 
     # Compute statistics
     summary = compute_summary_statistics(merged_df)
+
+    # Ensure `agent_name` is the second column
+    column_order = ["game_name", "agent_name"] + [
+        col for col in merged_df.columns if col not in ["game_name", "agent_name"]
+    ]
+    merged_df = merged_df[column_order]
 
     # Save logs for review
     os.makedirs("results", exist_ok=True)
@@ -143,6 +149,7 @@ def main():
     # Save summary results
     save_summary(summary, output_dir="results")
 
+    # Show how games ended
     print("Game Outcomes Summary:")
     if "status" in merged_df:
         game_end_counts = merged_df["status"].value_counts()
@@ -151,7 +158,6 @@ def main():
     # Display first 5 moves
     print("\nMerged Log DataFrame (First 5 Rows):")
     print(merged_df.head())
-
 
 if __name__ == "__main__":
     main()
