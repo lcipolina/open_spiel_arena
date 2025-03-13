@@ -1,166 +1,151 @@
+'''
+Gradio app for the model
+'''
+
 import os
 import json
+import sqlite3
+import glob
 import pandas as pd
 import gradio as gr
-from agents.llm_registry import LLM_REGISTRY  # Dynamically fetch LLM models
-from simulators.tic_tac_toe_simulator import TicTacToeSimulator
-from simulators.prisoners_dilemma_simulator import PrisonersDilemmaSimulator
-from simulators.rock_paper_scissors_simulator import RockPaperScissorsSimulator
-from games_registry import GAMES_REGISTRY
-from simulators.base_simulator import PlayerType
-from typing import Dict
+from datetime import datetime
+from typing import Dict, List
 
-# Extract available LLM models from the registry
-llm_models = list(LLM_REGISTRY.keys())
+# Directory to store SQLite results
+db_dir = "results/"
 
-# List of available games (manually defined for now)
-games_list = [
-    "rock_paper_scissors",
-    "prisoners_dilemma",
-    "tic_tac_toe",
-    "connect_four",
-    "matching_pennies",
-    "kuhn_poker",
-]
+def find_or_download_db():
+    """Check if SQLite .db files exist; if not, attempt to download from cloud storage."""
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+    db_files = glob.glob(os.path.join(db_dir, "*.db"))
 
-# Special leaderboard option for aggregating stats across all games
-games_list.insert(0, "Total Performance")
+    # Ensure the random bot database exists
+    if "results/random_None.db" not in db_files:
+        raise FileNotFoundError("Please upload results for the random agent in a file named 'random_None.db'.")
 
-# File to persist game results
-RESULTS_TRACKER_FILE = "results_tracker.json"
+    return db_files
 
-# Load or initialize the results tracker
-if os.path.exists(RESULTS_TRACKER_FILE):
-    with open(RESULTS_TRACKER_FILE, "r") as f:
-        results_tracker = json.load(f)
-else:
-    # Initialize tracking for all LLMs and games
-    results_tracker = {
-        llm: {game: {"games": 0, "moves/game": 0, "illegal-moves": 0,
-                     "win-rate": 0, "vs Random": 0} for game in games_list[1:]}
-        for llm in llm_models
-    }
+def extract_agent_info(filename: str):
+    """Extract agent type and model name from the filename."""
+    base_name = os.path.basename(filename).replace(".db", "")
+    parts = base_name.split("_", 1)
+    if len(parts) == 2:
+        agent_type, model_name = parts
+    else:
+        agent_type, model_name = parts[0], "Unknown"
+    return agent_type, model_name
 
-def save_results_tracker():
-    """Save the results tracker to a JSON file."""
-    with open(RESULTS_TRACKER_FILE, "w") as f:
-        json.dump(results_tracker, f, indent=4)
+def get_available_games() -> List[str]:
+    """Extracts all unique game names from all SQLite databases and includes 'Aggregated Performance'."""
+    db_files = find_or_download_db()
+    game_names = set()
 
-def generate_stats_file(model_name: str) -> str:
-    """Generate a JSON file with detailed statistics for the selected LLM model."""
-    file_path = f"{model_name}_stats.json"
-    with open(file_path, "w") as f:
-        json.dump(results_tracker.get(model_name, {}), f, indent=4)
-    return file_path
+    for db_file in db_files:
+        conn = sqlite3.connect(db_file)
+        try:
+            query = "SELECT DISTINCT game_name FROM moves"
+            df = pd.read_sql_query(query, conn)
+            game_names.update(df["game_name"].tolist())
+        except Exception:
+            pass  # Ignore errors if table doesn't exist
+        finally:
+            conn.close()
 
-def provide_download_file(model_name):
-    """Creates a downloadable JSON file with stats for the selected model."""
-    return generate_stats_file(model_name)
+    game_list = sorted(game_names) if game_names else ["No Games Found"]
+    game_list.insert(0, "Aggregated Performance")  # Ensure 'Aggregated Performance' is always first
+    return game_list
 
-def calculate_leaderboard(selected_game: str) -> pd.DataFrame:
-    """
-    Generate a structured leaderboard table.
-    - If a specific game is selected, returns performance stats per LLM for that game.
-    - If 'Total Performance' is selected, aggregates stats across all games.
-    """
-    leaderboard_df = pd.DataFrame(
-        index=llm_models,
-        columns=["# games", "moves/game", "illegal-moves", "win-rate", "vs Random"]
-    )
+def extract_leaderboard_stats(game_name: str) -> pd.DataFrame:
+    """Extract and aggregate leaderboard stats from all SQLite databases."""
+    db_files = find_or_download_db()
+    all_stats = []
 
-    for llm in llm_models:
-        if selected_game == "Total Performance":
-            # Aggregate stats across all games
-            total_games = sum(results_tracker[llm][game]["games"] for game in games_list[1:])
-            total_moves = sum(results_tracker[llm][game]["moves/game"] * results_tracker[llm][game]["games"]
-                              for game in games_list[1:])
-            total_illegal_moves = sum(results_tracker[llm][game]["illegal-moves"] for game in games_list[1:])
-            avg_win_rate = sum(results_tracker[llm][game]["win-rate"] * results_tracker[llm][game]["games"]
-                               for game in games_list[1:]) / total_games if total_games > 0 else 0
-            avg_vs_random = sum(results_tracker[llm][game]["vs Random"] * results_tracker[llm][game]["games"]
-                                for game in games_list[1:]) / total_games if total_games > 0 else 0
+    for db_file in db_files:
+        conn = sqlite3.connect(db_file)
+        agent_type, model_name = extract_agent_info(db_file)
 
-            leaderboard_df.loc[llm] = [
-                total_games,
-                f"{(total_moves / total_games) if total_games > 0 else 0:.1f}",
-                total_illegal_moves,
-                f"{avg_win_rate:.1f}%",
-                f"{avg_vs_random:.1f}%"
-            ]
+        # Skip random agent rows
+        if agent_type == "random":
+            conn.close()
+            continue
+
+        if game_name == "Aggregated Performance":
+            query = "SELECT COUNT(DISTINCT episode) AS games_played, " \
+                    "SUM(reward) AS total_rewards " \
+                    "FROM game_results"
+            df = pd.read_sql_query(query, conn)
+
+            # Use avg_generation_time from a specific game (e.g., Kuhn Poker)
+            game_query = "SELECT AVG(generation_time) FROM moves WHERE game_name = 'kuhn_poker'"
+            avg_gen_time = conn.execute(game_query).fetchone()[0] or 0
         else:
-            # Retrieve stats for the selected game
-            game_stats = results_tracker[llm].get(selected_game, {})
-            leaderboard_df.loc[llm] = [
-                game_stats.get("games", 0),
-                game_stats.get("moves/game", 0),
-                game_stats.get("illegal-moves", 0),
-                f"{game_stats.get('win-rate', 0):.1f}%",
-                f"{game_stats.get('vs Random', 0):.1f}%"
-            ]
+            query = "SELECT COUNT(DISTINCT episode) AS games_played, " \
+                    "SUM(reward) AS total_rewards " \
+                    "FROM game_results WHERE game_name = ?"
+            df = pd.read_sql_query(query, conn, params=(game_name,))
 
-    leaderboard_df = leaderboard_df.reset_index()
-    leaderboard_df.rename(columns={"index": "LLM Model"}, inplace=True)
+            # Fetch average generation time from moves table
+            gen_time_query = "SELECT AVG(generation_time) FROM moves WHERE game_name = ?"
+            avg_gen_time = conn.execute(gen_time_query, (game_name,)).fetchone()[0] or 0
+
+        # Keep division by 2 for total rewards
+        df["total_rewards"] = df["total_rewards"].fillna(0).astype(float) / 2
+
+        # Ensure avg_gen_time has decimals
+        avg_gen_time = round(avg_gen_time, 3)
+
+        # Calculate win rate against random bot using moves table
+        vs_random_query = """
+            SELECT COUNT(DISTINCT gr.episode) FROM game_results gr
+            JOIN moves m ON gr.game_name = m.game_name AND gr.episode = m.episode
+            WHERE m.opponent = 'random_None' AND gr.reward > 0
+        """
+        total_vs_random_query = """
+            SELECT COUNT(DISTINCT gr.episode) FROM game_results gr
+            JOIN moves m ON gr.game_name = m.game_name AND gr.episode = m.episode
+            WHERE m.opponent = 'random_None'
+        """
+        wins_vs_random = conn.execute(vs_random_query).fetchone()[0] or 0
+        total_vs_random = conn.execute(total_vs_random_query).fetchone()[0] or 0
+        vs_random_rate = (wins_vs_random / total_vs_random * 100) if total_vs_random > 0 else 0
+
+        df.insert(0, "agent_name", model_name)  # Ensure agent_name is the first column
+        df.insert(1, "agent_type", agent_type)  # Ensure agent_type is second column
+        df["avg_generation_time (sec)"] = avg_gen_time
+        df["win vs_random (%)"] = round(vs_random_rate, 2)
+
+        all_stats.append(df)
+        conn.close()
+
+    leaderboard_df = pd.concat(all_stats, ignore_index=True) if all_stats else pd.DataFrame()
+
+    if leaderboard_df.empty:
+        leaderboard_df = pd.DataFrame(columns=["agent_name", "agent_type", "# games", "total rewards", "avg_generation_time (sec)", "win-rate", "win vs_random (%)"])
+
     return leaderboard_df
 
-def play_game(game_name, player1_type, player2_type, player1_model, player2_model, rounds):
-    """Simulates a game session with the chosen players and logs results."""
-    llms = {}
-    if player1_type == "llm":
-        llms["Player 1"] = player1_model
-    if player2_type == "llm":
-        llms["Player 2"] = player2_model
+def generate_leaderboard_json():
+    """Generate a JSON file containing leaderboard stats."""
+    available_games = get_available_games()
+    leaderboard = extract_leaderboard_stats("Aggregated Performance").to_dict(orient="records")
+    json_file = "results/leaderboard_stats.json"
+    with open(json_file, "w", encoding="utf-8") as f:
+        json.dump({"timestamp": datetime.utcnow().isoformat(), "leaderboard": leaderboard}, f, indent=4)
+    return json_file
 
-    simulator_class = GAMES_REGISTRY[game_name]
-    simulator = simulator_class(game_name, llms=llms)
-    game_states = []
-
-    def log_fn(state):
-        """Logs the current game state and available moves."""
-        current_player = state.current_player()
-        legal_moves = state.legal_actions(current_player)
-        board = str(state)
-        game_states.append(f"Current Player: {current_player}\nBoard:\n{board}\nLegal Moves: {legal_moves}")
-
-    results = simulator.simulate(rounds=int(rounds), log_fn=log_fn)
-    return "\n".join(game_states) + f"\nGame Result: {results}"
-
-# Gradio Interface
 with gr.Blocks() as interface:
-    # Game Arena Tab
-    with gr.Tab("Game Arena"):
-        gr.Markdown("# LLM Game Arena\nSelect a game and players to play against LLMs.")
-
-        game_dropdown = gr.Dropdown(choices=games_list[1:], label="Select a Game", value=games_list[1])
-        player1_dropdown = gr.Dropdown(choices=["human", "random_bot", "llm"], label="Player 1 Type", value="llm")
-        player2_dropdown = gr.Dropdown(choices=["human", "random_bot", "llm"], label="Player 2 Type", value="random_bot")
-        player1_model_dropdown = gr.Dropdown(choices=llm_models, label="Player 1 Model", visible=False)
-        player2_model_dropdown = gr.Dropdown(choices=llm_models, label="Player 2 Model", visible=False)
-        rounds_slider = gr.Slider(1, 10, step=1, label="Rounds")
-        result_output = gr.Textbox(label="Game Result")
-
-        play_button = gr.Button("Play Game")
-        play_button.click(
-            play_game,
-            inputs=[game_dropdown, player1_dropdown, player2_dropdown, player1_model_dropdown, player2_model_dropdown, rounds_slider],
-            outputs=result_output,
-        )
-
-    # Leaderboard Tab
     with gr.Tab("Leaderboard"):
         gr.Markdown("# LLM Model Leaderboard\nTrack performance across different games!")
-
-        game_dropdown = gr.Dropdown(choices=games_list, label="Select Game", value="Total Performance")
-        leaderboard_table = gr.Dataframe(value=calculate_leaderboard("Total Performance"), label="Leaderboard")
-        model_dropdown = gr.Dropdown(choices=llm_models, label="Select LLM Model")
-        download_button = gr.File(label="Download Statistics File")
+        available_games = get_available_games()
+        leaderboard_game_dropdown = gr.Dropdown(available_games, label="Select Game", value="Aggregated Performance")
+        leaderboard_table = gr.Dataframe(headers=["agent_name", "agent_type", "# games", "total rewards", "avg_generation_time (sec)", "win-rate", "win vs_random (%)"])
         refresh_button = gr.Button("Refresh Leaderboard")
+        generate_button = gr.Button("Generate Leaderboard JSON")
+        download_component = gr.File(label="Download Leaderboard JSON")
 
-        def update_leaderboard(selected_game):
-            """Updates the leaderboard based on the selected game."""
-            return calculate_leaderboard(selected_game)
-
-        model_dropdown.change(fn=provide_download_file, inputs=[model_dropdown], outputs=[download_button])
-        game_dropdown.change(fn=update_leaderboard, inputs=[game_dropdown], outputs=[leaderboard_table])
-        refresh_button.click(fn=update_leaderboard, inputs=[game_dropdown], outputs=[leaderboard_table])
+        leaderboard_game_dropdown.change(extract_leaderboard_stats, inputs=[leaderboard_game_dropdown], outputs=[leaderboard_table])
+        refresh_button.click(extract_leaderboard_stats, inputs=[leaderboard_game_dropdown], outputs=[leaderboard_table])
+        generate_button.click(generate_leaderboard_json, outputs=[download_component])
 
 interface.launch()

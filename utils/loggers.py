@@ -15,13 +15,12 @@ class SQLiteLogger:
             model_name (str): The model name (for LLMs), or "None" for random/human.
         """
         self.db_path = f"results/{agent_type}_{model_name.replace('-', '_')}.db"
-        os.makedirs("results", exist_ok=True)  # Ensure results directory exists
+        os.makedirs("results", exist_ok=True)
         self._create_database()
 
     def _create_database(self):
         """
         Creates necessary tables if they do not exist.
-        This function runs only once per database file.
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -66,6 +65,7 @@ class SQLiteLogger:
         """)
 
         # Create 'game_results' table (stores final results of games played)
+        # TODO: add opponents to this table !
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS game_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
