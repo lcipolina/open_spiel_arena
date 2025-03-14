@@ -82,7 +82,7 @@ class SQLiteLogger:
 
     def log_game_result(self, game_name: str, episode: int, status: str, reward: float):
         """
-        Logs the final result of a game.
+        Logs the final result of a game into table 'game_results'.
 
         Args:
             game_name (str): Name of the game played.
@@ -107,7 +107,7 @@ class SQLiteLogger:
                  reasoning: str, opponent: str, generation_time: float,
                  agent_type: str, agent_model: str):
         """
-        Logs an agent's move into the database.
+        Logs an agent's move into the table 'moves'
 
         Args:
             game_name (str): Name of the game.

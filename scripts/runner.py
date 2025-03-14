@@ -52,11 +52,11 @@ def run_simulation(args):
         initialize_ray()
 
     # TODO: add on SLURM  - Read game names from an environment variable (e.g., set via SLURM) or config.
-    # TODO: add in the config a way to pass a list of games to simulate
+    # TODO: add in the config a way to pass a **list** of games to simulate
     # TODO: add a debugger config!
     # TODO: each game should have its own: "max_game_rounds", "num_episodes", "agents" and "output_path"
 
-    game_names = ["kuhn_poker"] # TODO: later delete this! - it should be a list of games!
+    game_names = ["tic_tac_toe"] # TODO: later delete this! - it should be a list of games!
 
     simulation_tasks = []
     for game in game_names:

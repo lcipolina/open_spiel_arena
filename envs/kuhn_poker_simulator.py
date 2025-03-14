@@ -10,7 +10,7 @@ For Kuhn Poker, the game mechanics involve:
 import json
 from typing import Any, Dict, Optional
 from envs.open_spiel_env import OpenSpielEnv
-from agents.llm_utils import format_prompt # generate_prompt #TODO:delete unused
+from agents.llm_utils import format_prompt
 from transformers import AutoTokenizer
 
 
@@ -60,121 +60,6 @@ class KuhnPokerSimulator(OpenSpielEnv):
         }
 
         # OBS: only current player has legal actions!!!!!
-
-    def _generate_prompt_old_old(self, state: Any, legal_actions: list, agent_id: int) -> str:
-        """Generates a detailed observation for Kuhn Poker.
-
-        Args:
-            state (pyspiel.State): The current game state.
-            legal_actions (list): Legal actions available to the player.
-            agent_id (int): The agent/player ID.
-
-        Returns:
-            str: A structured LLM prompt for decision-making.
-        """
-
-        if self.state.is_chance_node():  # If in a chance node, return empty observation
-            return {}
-
-        # RL Observation: One-hot encoded tensor
-        tensor_observation = state.observation_tensor(agent_id)
-
-        # Extract private card from tensor
-        private_card = self.extract_private_card_from_tensor(tensor_observation)
-
-        # Extract structured betting history
-        betting_history = self._get_betting_history(state)
-
-        # Extract total pot size and player's contribution
-        total_pot = sum(tensor_observation[-2:])  # Last two values are pot contributions
-        player_contribution = tensor_observation[-2 +  agent_id]  # Index -2 (P1) or -1 (P2)
-
-        # Detect if an opponent has already bet
-        previous_actions = state.history()
-        opponent_has_bet = 1 in previous_actions  # True if opponent bet
-
-        # Map actions correctly based on game state
-        if opponent_has_bet:
-            action_labels = {
-                0: "Fold (give up and lose the pot)",
-                1: "Call (match the opponent's bet)"
-            }
-        else:
-            action_labels = {
-                0: "Check (stay in the game without betting)",
-                1: "Bet (add a chip to the pot)"
-            }
-
-        actions_str = "\n".join(f"{action}: {action_labels[action]}" for action in legal_actions)
-
-        prompt = (
-            f"You are Player {agent_id} in the game Kuhn Poker.\n"
-            f"Your private card: {private_card}\n"
-            f"Betting history: {betting_history}\n"
-            f"Total pot size: {total_pot} chips\n"
-            f"Your contribution: {player_contribution} chips\n\n"
-            f"Available actions:\n{actions_str}\n\n"
-            "What action do you choose? Reply **only** with '0' or '1'. Do not repeat the options.."
-     )
-
-        return prompt
-
-    def _generate_prompt_old(self, state: Any, legal_actions: list, agent_id: int) -> str:
-        """Generates a JSON prompt specific to Kuhn Poker.
-
-        Args:
-            state (pyspiel.State): The current game state.
-            legal_actions (list): The legal actions available.
-            agent_id (int): The player's ID.
-
-        Returns:
-            str: A JSON prompt for the LLM.
-        """
-
-        if self.state.is_chance_node():  # Chance node, return empty JSON
-            return json.dumps({})
-
-        # Extract Kuhn Poker specific state information
-        tensor_observation = state.observation_tensor(agent_id)      # RL Observation: One-hot encoded tensor
-        private_card = self.extract_private_card_from_tensor(tensor_observation)  # Extract private card from tensor
-        betting_history = self._get_betting_history(state)   # Extract structured betting history
-        total_pot = sum(tensor_observation[-2:])  # Last two values are pot contributions
-        player_contribution = tensor_observation[-2 + agent_id]  # Index -2 (P1) or -1 (P2)
-
-        # Detect if an opponent has already bet
-        previous_actions = state.history()
-        opponent_has_bet = 1 in previous_actions  # True if opponent bet
-
-        # Define action labels dynamically based on game context
-        if opponent_has_bet:
-            action_labels = {
-                0: "Fold (give up and lose the pot)",
-                1: "Call (match the opponent's bet)"
-            }
-        else:
-            action_labels = {
-                0: "Check (stay in the game without betting)",
-                1: "Bet (add a chip to the pot)"
-            }
-
-        # Construct the structured JSON game state
-        kuhn_state = {
-            "private_card": private_card,
-            "betting_history": betting_history,
-            "total_pot": total_pot,
-            "player_contribution": player_contribution
-        }
-
-        actions_str = [{"action": action, "description": action_labels[action]} for action in legal_actions]
-
-        # Generate json prompt
-        return generate_prompt(
-            game_name="Kuhn Poker",
-            state=json.dumps(kuhn_state, indent=2),  # JSON state formatted for clarity
-            legal_actions=actions_str,  # Keep descriptions in actions
-            info=f"You are playing as Player {agent_id} in the game Kuhn Poker."
-        )
-
 
     def _generate_prompt(self, state: Any, legal_actions: list, agent_id: int) -> str:
         """Generates a structured prompt for chat-based or non-chat models.
@@ -248,8 +133,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
         #     return tokenizer.apply_chat_template(messages, return_tensors=None)
         # else:
         #     # Use plain-text formatting for non-chat models
-        # TODO: this should be an override of the parent class
-        # NEed to implement this in
+
         prompt_string = (
                 f"You are Player {agent_id} in the game Kuhn Poker.\n"
                 f"Your private card: {private_card}\n"
@@ -261,7 +145,7 @@ class KuhnPokerSimulator(OpenSpielEnv):
                 + "\n".join(f"{action}: {action_labels[action]}" for action in legal_actions)
                 + "\n\nWhat action do you choose? Reply only with '0' or '1'."
             )
-        formatted_prompt = format_prompt(prompt_string)
+        formatted_prompt = format_prompt(prompt_string)  # format to JSON file and adds reasoning
         return formatted_prompt
 
     def extract_private_card_from_tensor(self,observation_tensor: list) -> str:

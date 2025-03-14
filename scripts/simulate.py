@@ -32,11 +32,12 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
         str: Confirmation that the simulation is complete.
     """
     set_seed(seed)
+
+     # Initialize loggers for all agents
     logger.info(f"Initializing environment for {game_name} with seed {seed}.")
-    env = registry.make_env(game_name, config)
+
     policies_dict = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
-    # Initialize loggers for all agents
     agent_loggers_dict = {
         policy_name: SQLiteLogger(
             agent_type=config["agents"][agent_id]["type"],
@@ -45,8 +46,10 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
         for agent_id, policy_name in enumerate(policies_dict.keys())
     }
 
-    writer = SummaryWriter(log_dir=f"runs/{game_name}") # Tensorboard
+    writer = SummaryWriter(log_dir=f"runs/{game_name}") # Tensorboard writer
 
+    # Run the simulation loop
+    env = registry.make_env(game_name, config)
     for episode in range(config["num_episodes"]):
         observation_dict, _ = env.reset(seed=seed + episode)
         terminated = truncated = False
@@ -65,7 +68,6 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
                 start_time = time.perf_counter()
                 action_metadata =  policy(observation) #Calls `__call__()` -> `_process_action()` -> `log_move()`
-                # actions[agent_id] = policy.compute_action(observation) # TODO: investigate, this is for Kuhn poker - should be the above for everyone
                 duration = time.perf_counter() - start_time
 
                 if isinstance(action_metadata, int):
@@ -101,7 +103,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                     agent_model=agent_model
                 )
 
-           # Step forward in the environment
+           # Step forward in the environment #TODO: check if this works for turn-based games (track the agent playing)
             if not truncated:
                 observation_dict, rewards, terminated, truncated, _ = env.step(actions)
                 turn += 1

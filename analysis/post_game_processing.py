@@ -26,16 +26,16 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
     all_moves = []
     all_results = []
 
-    sqlite_files = glob.glob(os.path.join(log_dir, "*.db"))
+    sqlite_files = glob.glob(os.path.join(log_dir, "*.db")) # I don't understand this line
 
     for db_file in sqlite_files:
-        agent_name = os.path.basename(db_file).replace(".db", "")
+        agent_name = os.path.basename(db_file).replace(".db", "") # I don't understand this line
 
         conn = sqlite3.connect(db_file)
 
         # Retrieve move logs
         try:
-            df_moves = pd.read_sql_query(
+            df_moves = pd.read_sql_query(  # I don't understand this line
                 "SELECT game_name, episode, turn, action, reasoning, generation_time, opponent FROM moves",
                 conn
             )
@@ -47,7 +47,7 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
         # Retrieve game results (includes rewards)
         try:
             df_results = pd.read_sql_query(
-                "SELECT game_name, episode, status, reward FROM game_results",  # ✅ Now includes rewards
+                "SELECT game_name, episode, status, reward FROM game_results", 
                 conn
             )
             df_results["agent_name"] = agent_name
@@ -57,21 +57,21 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
 
         conn.close()
 
-    df_moves = pd.concat(all_moves, ignore_index=True) if all_moves else pd.DataFrame()
-    df_results = pd.concat(all_results, ignore_index=True) if all_results else pd.DataFrame()
+    df_moves = pd.concat(all_moves, ignore_index=True) if all_moves else pd.DataFrame() # I don't understand this line
+    df_results = pd.concat(all_results, ignore_index=True) if all_results else pd.DataFrame() # I don't understand this line
 
     # Convert `opponent` lists into hashable strings before merging
     if "opponent" in df_moves.columns:
-        df_moves["opponent"] = df_moves["opponent"].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
+        df_moves["opponent"] = df_moves["opponent"].apply(lambda x: ", ".join(x) if isinstance(x, list) else x) # I don't understand this line
 
     # Merge moves with game results (which includes rewards)
     if not df_results.empty:
-        df_full = df_moves.merge(df_results, on=["game_name", "episode", "agent_name"], how="left")
+        df_full = df_moves.merge(df_results, on=["game_name", "episode", "agent_name"], how="left") # I don't understand this line
     else:
-        df_full = df_moves.copy()
+        df_full = df_moves.copy() # I don't understand this line
 
     # Drop duplicates before returning (final safeguard)
-    df_full = df_full.drop_duplicates()
+    df_full = df_full.drop_duplicates() # I don't understand this line
 
     return df_full
 
@@ -142,7 +142,7 @@ def main():
 
     # Save logs for review
     os.makedirs("results", exist_ok=True)
-    merged_csv = os.path.join("results", f"merged_logs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv")
+    merged_csv = os.path.join("results", f"merged_logs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv") # what is 'utcnow()'?
     merged_df.to_csv(merged_csv, index=False)
     print(f"Merged logs saved as CSV to {merged_csv}")
 

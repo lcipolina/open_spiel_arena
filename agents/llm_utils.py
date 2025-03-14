@@ -33,6 +33,8 @@ def format_prompt(input_text:str,request_explanation=True)->str:
     # TODO: construir esto con el model name nomas y el model path del OS
     model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
 
+    print("Using hardcoded codegemma-7b-it, fix me!!!!")
+
     # Modify prompt to request structured JSON output
     json_instruction = (
             "\n\nReply in the following JSON format:\n"
