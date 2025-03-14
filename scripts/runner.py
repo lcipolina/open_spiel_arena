@@ -85,6 +85,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     try:
         run_simulation(args)
+        print("Running post-game processing...")
+        import subprocess
+        subprocess.run(
+            ["python", "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/analysis/post_game_processing.py"],
+            check=True
+        )
+
         print("Simulation completed.")
     finally:
         full_cleanup() # this doesn't seem to end!

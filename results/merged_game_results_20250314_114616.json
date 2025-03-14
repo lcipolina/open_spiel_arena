@@ -1,0 +1,38 @@
+{
+    "kuhn_poker": {
+        "llm_codegemma_7b_it": {
+            "games_played": 1,
+            "total_moves": 2,
+            "average_generation_time": 2.1515176882967353,
+            "total_rewards": 2.0,
+            "games_terminated": 2,
+            "games_truncated": 0
+        },
+        "random_None": {
+            "games_played": 1,
+            "total_moves": 2,
+            "average_generation_time": 5.434267222881317e-05,
+            "total_rewards": -2.0,
+            "games_terminated": 2,
+            "games_truncated": 0
+        }
+    },
+    "tic_tac_toe": {
+        "llm_codegemma_7b_it": {
+            "games_played": 1,
+            "total_moves": 4,
+            "average_generation_time": 1.7869573468342423,
+            "total_rewards": 4.0,
+            "games_terminated": 4,
+            "games_truncated": 0
+        },
+        "random_None": {
+            "games_played": 1,
+            "total_moves": 3,
+            "average_generation_time": 2.6705364386240642e-05,
+            "total_rewards": -3.0,
+            "games_terminated": 3,
+            "games_truncated": 0
+        }
+    }
+}
