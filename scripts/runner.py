@@ -51,28 +51,41 @@ def run_simulation(args):
     if use_ray:
         initialize_ray()
 
-    # TODO: add on SLURM  - Read game names from an environment variable (e.g., set via SLURM) or config.
-    # TODO: add in the config a way to pass a **list** of games to simulate
-    # TODO: add a debugger config!
-    # TODO: each game should have its own: "max_game_rounds", "num_episodes", "agents" and "output_path"
-
-    game_names = ["tic_tac_toe"] # TODO: later delete this! - it should be a list of games!
+    # Extract list of games and their configurations
+    game_configs = config.get("env_configs", [])
 
     simulation_tasks = []
-    for game in game_names:
-        # (Optional) Adjust config["agents"] here for different matchups if needed.
+    results = []
+    for game_config in game_configs:
+        game_name = game_config["game_name"]
+
+        # Merge base config with game-specific config
+        game_specific_config = {
+            **config,  # Inherit global settings
+            "env_config": game_config,  # Override only env_config for this game
+            "max_game_rounds": game_config.get("max_game_rounds", None),
+            "num_episodes": game_config.get("num_episodes", config.get("num_episodes", 1)),
+            "agents": game_config.get("agents", config.get("agents", {})),
+            "output_path": game_config.get("output_path", f"results/{game_name}_simulation_results.json"),
+        }
+
         if use_ray:
-            simulation_tasks.append(simulate_game_ray.remote(game, config, seed))
+            simulation_tasks.append(
+                simulate_game_ray.remote(game_name, game_specific_config, seed)
+            )
         else:
-            simulation_tasks.append(simulate_game(game, config, seed))
+            results.append(simulate_game(game_name, game_specific_config, seed))
 
-    results = ray.get(simulation_tasks) if use_ray else simulation_tasks
+    if use_ray:
+        results = ray.get(simulation_tasks)
 
-    # TODO: implement SQL logging - and save the results in a SQL database
-    output_path = config.get("output_path", "results/simulation_results.json")
-    with open(output_path, "w") as f:
-        json.dump(results, f, indent=4)
-    logger.info(f"Simulation results saved to {output_path}")
+    # Save results per game
+    for game_result, game_config in zip(results, game_configs):
+        output_path = game_config.get("output_path", f"results/{game_config['game_name']}_simulation_results.json")
+        with open(output_path, "w") as f:
+            json.dump(game_result, f, indent=4)
+        logger.info(f"Simulation results for {game_config['game_name']} saved to {output_path}")
+
     return results
 
 if __name__ == "__main__":

@@ -9,23 +9,32 @@ from games.registry import registry # Initilizes an empty registry dictionary
 
 
 def default_simulation_config() -> Dict[str, Any]:
-    """Returns the default simulation configuration."""
+    """Returns the default simulation configuration for multiple games."""
     return {
-    "env_config": {
-        "game_name":"connect_four",  # kuhn_poker, matrix_rps, tic_tac_toe, connect_four, matrix_pd, matching_pennies (requires 3 agents)
-        "max_game_rounds": None,
-    },
-    "num_episodes": 1,
-    "seed": 42,
-    "use_ray": False,
-    "mode": "llm_vs_random",  # "manual", "llm_vs_llm"
-    "agents": {
-       # 0: {"type": "llm", "model": "gpt2"},   #llm, random, human
-       # 1: {"type": "random", "model": "None"},
-       # 2: {"type": "random", "model": "None"}, # for matching pennies
-    },
-    "log_level": "INFO", # Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-}
+        "env_configs": [  # A list of game-specific configurations
+            {
+                "game_name": "connect_four",
+                "max_game_rounds": None,
+            # Additional game-specific parameters
+            },
+           # {
+           #     "game_name": "kuhn_poker",
+           #     "max_game_rounds": 100,
+           # },
+           #{
+           #     "game_name": "tic_tac_toe",
+           #     "max_game_rounds": 50,
+           # }
+        ],
+        "num_episodes": 1,
+        "seed": 42,
+        "use_ray": False,
+        "mode": "llm_vs_random",  # "manual", "llm_vs_llm"
+        "agents": {
+            # Define agent settings (shared across games)
+        },
+        "log_level": "INFO",
+    }
 
 
 def build_cli_parser() -> argparse.ArgumentParser:

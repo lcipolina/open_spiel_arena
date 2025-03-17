@@ -26,20 +26,28 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
     all_moves = []
     all_results = []
 
-    sqlite_files = glob.glob(os.path.join(log_dir, "*.db")) # I don't understand this line
+    # Find all SQLite files in the specified directory
+    sqlite_files = glob.glob(os.path.join(log_dir, "*.db"))
+    if not sqlite_files:
+        print(f"No SQLite files found in {log_dir}")
+        return pd.DataFrame()
 
     for db_file in sqlite_files:
-        agent_name = os.path.basename(db_file).replace(".db", "") # I don't understand this line
 
+        # Extract agent name from the SQLite file name
+        agent_name = os.path.basename(db_file).replace(".db", "")
+
+        # Connect to the SQLite database
         conn = sqlite3.connect(db_file)
 
-        # Retrieve move logs
+        # Retrieve move logs and save as DataFrame
         try:
-            df_moves = pd.read_sql_query(  # I don't understand this line
+            df_moves = pd.read_sql_query(
                 "SELECT game_name, episode, turn, action, reasoning, generation_time, opponent FROM moves",
                 conn
             )
             df_moves["agent_name"] = agent_name
+            # Append to list of DataFrames
             all_moves.append(df_moves.drop_duplicates())  # Remove duplicates
         except Exception as e:
             print(f"No moves table in {db_file}: {e}")
@@ -47,7 +55,7 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
         # Retrieve game results (includes rewards)
         try:
             df_results = pd.read_sql_query(
-                "SELECT game_name, episode, status, reward FROM game_results", 
+                "SELECT game_name, episode, status, reward FROM game_results",
                 conn
             )
             df_results["agent_name"] = agent_name
@@ -146,8 +154,8 @@ def main():
     merged_df.to_csv(merged_csv, index=False)
     print(f"Merged logs saved as CSV to {merged_csv}")
 
-    # Save summary results
-    save_summary(summary, output_dir="results")
+    # Save summary results into a JSON file
+   # save_summary(summary, output_dir="results")
 
     # Show how games ended
     print("Game Outcomes Summary:")

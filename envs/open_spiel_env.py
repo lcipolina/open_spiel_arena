@@ -172,9 +172,6 @@ class OpenSpielEnv(ABC):
     # Additional methods
     # ----------------------------------------------------------------
 
-    # TODO: the function below should call this!
-    # formatted_prompt = format_prompt(prompt, state_string, info)
-
     def _state_to_observation(self) -> Dict[int, Dict[str, Any]]:
         """Returns the observation for each agent in the game.
 
