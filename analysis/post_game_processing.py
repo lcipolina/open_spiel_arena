@@ -46,9 +46,9 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
                 "SELECT game_name, episode, turn, action, reasoning, generation_time, opponent FROM moves",
                 conn
             )
-            df_moves["agent_name"] = agent_name
+            df_moves["agent_name"] = agent_name # Add agent name as a column
             # Append to list of DataFrames
-            all_moves.append(df_moves.drop_duplicates())  # Remove duplicates
+            all_moves.append(df_moves.drop_duplicates())  #  Remove duplicates and  Store agent's moves
         except Exception as e:
             print(f"No moves table in {db_file}: {e}")
 
@@ -65,21 +65,22 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
 
         conn.close()
 
-    df_moves = pd.concat(all_moves, ignore_index=True) if all_moves else pd.DataFrame() # I don't understand this line
-    df_results = pd.concat(all_results, ignore_index=True) if all_results else pd.DataFrame() # I don't understand this line
+    # Merge the same table across all agents
+    df_moves = pd.concat(all_moves, ignore_index=True) if all_moves else pd.DataFrame()
+    df_results = pd.concat(all_results, ignore_index=True) if all_results else pd.DataFrame()
 
     # Convert `opponent` lists into hashable strings before merging
     if "opponent" in df_moves.columns:
-        df_moves["opponent"] = df_moves["opponent"].apply(lambda x: ", ".join(x) if isinstance(x, list) else x) # I don't understand this line
+        df_moves["opponent"] = df_moves["opponent"].apply(lambda x: ", ".join(x) if isinstance(x, list) else x)
 
     # Merge moves with game results (which includes rewards)
     if not df_results.empty:
-        df_full = df_moves.merge(df_results, on=["game_name", "episode", "agent_name"], how="left") # I don't understand this line
+        df_full = df_moves.merge(df_results, on=["game_name", "episode", "agent_name"], how="left")
     else:
         df_full = df_moves.copy() # I don't understand this line
 
     # Drop duplicates before returning (final safeguard)
-    df_full = df_full.drop_duplicates() # I don't understand this line
+    df_full = df_full.drop_duplicates() 
 
     return df_full
 
@@ -139,8 +140,8 @@ def main():
         print("No log files found or merged.")
         return
 
-    # Compute statistics
-    summary = compute_summary_statistics(merged_df)
+    # Compute statistics - Not needed for now
+    # summary = compute_summary_statistics(merged_df)
 
     # Ensure `agent_name` is the second column
     column_order = ["game_name", "agent_name"] + [
@@ -148,13 +149,13 @@ def main():
     ]
     merged_df = merged_df[column_order]
 
-    # Save logs for review
+    # Save logs for review - saves the reasoning behind each move !
     os.makedirs("results", exist_ok=True)
-    merged_csv = os.path.join("results", f"merged_logs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv") # what is 'utcnow()'?
+    merged_csv = os.path.join("results", f"merged_logs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv")
     merged_df.to_csv(merged_csv, index=False)
     print(f"Merged logs saved as CSV to {merged_csv}")
 
-    # Save summary results into a JSON file
+    # Save summary results into a JSON file - not needed for now
    # save_summary(summary, output_dir="results")
 
     # Show how games ended
