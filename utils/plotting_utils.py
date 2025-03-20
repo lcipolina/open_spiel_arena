@@ -53,3 +53,39 @@ def print_total_scores(game_name: str, summary: Dict[str, Any]):
     else:
         for player_id, stats in summary.items():
             print(f"Player {player_id}: {stats}")
+
+
+def get_win_rate(db_conn, llm_name):  #TODO: use this!
+    """Calculates the win rate of an LLM from logged games."""
+    cursor = db_conn.cursor()
+
+    cursor.execute("""
+        SELECT COUNT(*) AS total_games,
+               SUM(CASE WHEN action = 1 THEN 1 ELSE 0 END) AS wins
+        FROM moves WHERE llm_name = %s
+    """, (llm_name,))
+
+    total_games, total_wins = cursor.fetchone()
+
+    win_rate = (total_wins / total_games) * 100 if total_games > 0 else 0
+    return win_rate
+
+import matplotlib.pyplot as plt
+
+def plot_action_distribution(db_conn, llm_name): #TODO: use this!
+    """Plots the distribution of LLM's chosen actions."""
+    cursor = db_conn.cursor()
+
+    cursor.execute("""
+        SELECT action, COUNT(*) FROM moves WHERE llm_name = %s GROUP BY action
+    """, (llm_name,))
+
+    results = cursor.fetchall()
+    actions = [r[0] for r in results]
+    counts = [r[1] for r in results]
+
+    plt.bar(actions, counts, tick_label=["Fold", "Call"])
+    plt.xlabel("Action")
+    plt.ylabel("Frequency")
+    plt.title(f"Action Distribution for {llm_name}")
+    plt.show()

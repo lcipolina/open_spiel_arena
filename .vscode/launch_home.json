@@ -11,10 +11,10 @@
             "justMyCode": false
         },
         {
-            "name": "Debug simulate.py",
+            "name": "Debug runner.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/scripts/simulate.py",
+            "program": "${workspaceFolder}/scripts/runner.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["--games", "tic_tac_toe"],

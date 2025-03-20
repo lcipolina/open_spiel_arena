@@ -4,21 +4,18 @@ agent_registry.py
 Centralized agent registry for dynamic agent loading.
 '''
 
-from typing import Type, Dict
-from agents.human_agent import HumanAgent
+import logging
+from agents.llm_registry import LLM_REGISTRY
 from agents.random_agent import RandomAgent
+from agents.human_agent import HumanAgent
 from agents.llm_agent import LLMAgent
-from agents.base_agent import BaseAgent
 
-# Centralized agent registry
-AGENT_REGISTRY: Dict[str, Type[BaseAgent]] = {
-    "human": HumanAgent,
-    "random": RandomAgent,
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# Register all available agent types
+AGENT_REGISTRY = {
     "llm": LLMAgent,
+    "random": RandomAgent,
+    "human": HumanAgent,
 }
-
-def register_agent(agent_name: str, agent_class: Type[BaseAgent]):
-    """Registers a new agent type dynamically."""
-    if agent_name in AGENT_REGISTRY:
-        raise ValueError(f"Agent type '{agent_name}' is already registered.")
-    AGENT_REGISTRY[agent_name] = agent_class

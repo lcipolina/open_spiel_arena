@@ -7,6 +7,7 @@ Implements a Gymnasium-like environment on top of an OpenSpiel game.
 from typing import Optional, Tuple, Dict, Any
 import random
 from abc import ABC
+from agents.llm_utils import format_prompt
 
 
 class OpenSpielEnv(ABC):
@@ -95,7 +96,7 @@ class OpenSpielEnv(ABC):
             self._solve_chance_nodes()
             return self._state_to_observation(), {}, False, False, {}
 
-        # Handle simultaneous move games
+        # Move environment to the next state
         if self.state.is_simultaneous_node():
             actions = [action_dict[player] for player in sorted(action_dict.keys())]
             self.state.apply_actions(actions)  # Multi-agent moves
@@ -117,7 +118,7 @@ class OpenSpielEnv(ABC):
 
         # If the game is finished, store final scores; otherwise, update current player
         if self.terminated or self.truncated:
-            self.info["final_scores"] = self.state.returns()
+            self.info["final_scores"] = self.state.returns() #TODO: this is never used!
             observation_dict = {agentID: None for agentID in list(action_dict.keys())} # No observation when the game ends
         else:
             observation_dict = self._state_to_observation() # Get next observation for all agents
@@ -136,13 +137,31 @@ class OpenSpielEnv(ABC):
         Args:
             seed (int): The random seed.
         """
-        self.random_generator = random.Random(seed)  # 🔹 Ensure Python's RNG is seeded
+        self.random_generator = random.Random(seed)  # Ensure Python's RNG is seeded
 
-        # 🔹 Set game seed if OpenSpiel supports it
+        # Set game seed if OpenSpiel supports it
         if hasattr(self.game, "set_seed"):
             self.game.set_seed(seed)
 
         self.seed_value = seed  # Store the seed for tracking
+
+    # TODO: use this!
+    def detect_illegal_moves(self, actions_dict: Dict[int, int]) -> int:
+        """
+        Detects illegal moves by comparing chosen actions with OpenSpiel's legal actions.
+
+        Args:
+            env: The game environment.
+            actions_dict: Dictionary mapping player IDs to chosen actions.
+
+        Returns:
+            int: The number of illegal moves detected.
+        """
+        return sum(
+            1 for player, action in actions_dict.items()
+            if action not in self.env.state.legal_actions(player)
+        )
+
 
 
     def close(self):
@@ -159,14 +178,64 @@ class OpenSpielEnv(ABC):
         Returns:
             Dict[int, Dict[str, Any]]: Mapping from agent ID to their respective observations.
         """
+
+        agent_id = self.state.current_player()
         return {
             agent_id: {
                 "state_string": self.state.observation_string(agent_id),
                 "legal_actions": self.state.legal_actions(agent_id),
-                "prompt": None  # Can be overridden in child classes
+                "prompt": self._generate_prompt(agent_id) # Overriden in some child classes
             }
-            for agent_id in range(self.state.num_players())  # Generate for ALL players
         }
+
+    def _generate_prompt(self, agent_id: int) -> str:
+        """Generates a structured prompt for chat-based or non-chat models.
+
+        Args:
+            agent_id (int): The player's ID.
+
+        Returns:
+            str: A formatted prompt.
+        """
+
+        if self.state.is_chance_node():
+            return ""
+
+        # Generate prompt based on model type
+        #model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
+        # tokenizer = AutoTokenizer.from_pretrained(model_path)
+        # is_chat_model = "chat" in model_path.lower() or "instruct" in model_path.lower()
+
+        # if is_chat_model:
+        #     # Use Hugging Face's chat formatting for chat models
+        #     messages = [
+        #         {"role": "system", "content": "You are an AI trained to play Kuhn Poker."},
+        #         {"role": "user", "content": f"""
+        #             Here is the current game state:
+        #             {json.dumps(kuhn_state, indent=2)}
+
+        #             Available actions:
+        #             {json.dumps(actions_with_desc, indent=2)}
+
+        #             What action do you choose?
+        #             Reply only with a JSON object in this format: {{'action': X}}
+        #             where X must be one of {legal_actions}.
+        #         """}
+        #     ]
+        #     return tokenizer.apply_chat_template(messages, return_tensors=None)
+        # else:
+        #     # Use plain-text formatting for non-chat models
+
+        prompt_string = (
+        f"You are Player {agent_id} in the game {self.game_name}.\n"
+        f"The board state is: {self.state.observation_string(agent_id)}\n"
+        f"This is move number: {self.state.move_number()}\n"
+        f"Available actions:\n\n{self.state.legal_actions(agent_id)}\n"
+        "\nWhat action do you choose? Reply only with the available action number."
+    )
+
+        formatted_prompt = format_prompt(prompt_string)
+        return formatted_prompt
 
     def _solve_chance_nodes(self) -> None:
         """Automatically plays chance nodes by selecting outcomes based on probabilities.

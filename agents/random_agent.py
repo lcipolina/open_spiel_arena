@@ -36,4 +36,18 @@ class RandomAgent(BaseAgent):
         Returns:
             int: A randomly selected action.
         """
+
+        #TODO: see if we can change to OS' native bot:
+        '''
+        game = pyspiel.load_game("kuhn_poker")  # Example: Tic-Tac-Toe
+        state = game.new_initial_state()
+        # Create a uniform random bot (player 0) with a fixed seed
+        bot = pyspiel.make_uniform_random_bot(0, 42)
+        action = bot.step(state) --> chooses a random action
+        print(action)
+
+
+        '''
+
+
         return self.random_generator.choice(observation["legal_actions"])

@@ -1,18 +1,22 @@
 import litellm
+import os
 
-def generate_text(prompt: str, model: str = "gpt2") -> str:
-    """Generate text using LiteLLM in CPU mode.
+# Set API keys via environment variables (for OpenAI, Anthropic, etc.)
+os.environ["OPENAI_API_KEY"] = "your_openai_api_key"
+os.environ["HUGGINGFACE_API_KEY"] = "your_huggingface_api_key"
+
+def generate_text(prompt: str, model: str = "gpt-3.5-turbo") -> str:
+    """Generate text using LiteLLM.
 
     Args:
         prompt: The input text to generate a response for.
-        model: The Hugging Face model name.
+        model: The model name (e.g., OpenAI or Hugging Face model).
 
     Returns:
-        str: The generated text.
+        str: The generated response.
     """
     response = litellm.completion(
         model=model,
-        model_provider="huggingface",  # Fix: Explicitly specify Hugging Face
         messages=[{"role": "user", "content": prompt}],
         max_tokens=100
     )

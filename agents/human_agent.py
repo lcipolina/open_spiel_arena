@@ -4,10 +4,11 @@ human_agent.py
 Implements an agent that asks the user for input to choose an action.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional, List
 from .base_agent import BaseAgent
-from agents.llm_utils import generate_prompt
+#from agents.llm_utils import generate_prompt #TODO: fix this - the prompt for human agents!!
 
+#TODO: the human agents also need a prompt! but not on the HTML format!
 
 class HumanAgent(BaseAgent):
     """An agent that queries the user for an action."""
@@ -34,11 +35,11 @@ class HumanAgent(BaseAgent):
         legal_actions=observation["legal_actions"]
         state=observation.get("state_string")
         info = observation.get("info",None)
-        prompt= observation.get("prompt",None)
+       # prompt= observation.get("prompt",None)  #TODO: fix this for human agents!!
 
         # Same prompt as the LLM agent
-        if prompt is None:
-           prompt = generate_prompt(self.game_name, str(state), legal_actions, info = info)
+        #if prompt is None:
+        prompt = generate_prompt(self.game_name, str(state), legal_actions, info = info)
 
         print(prompt)
         while True:
@@ -49,3 +50,30 @@ class HumanAgent(BaseAgent):
             except ValueError:
                 pass
             print("Invalid action. Please choose from:", legal_actions)
+
+
+def generate_prompt(game_name: str,
+                    state: str,
+                    legal_actions: List[int],
+                    info: Optional[str] = None) -> str:
+    """Generate a natural language prompt for the LLM to decide the next move.
+
+    Args:
+        game_name (str): The name of the game.
+        state (str): The current game state as a string.
+        legal_actions (List[int]): The list of legal actions available to the player.
+        info (Optional[str]): Additional information to include in the prompt (optional).
+
+    Returns:
+        str: A prompt string for the LLM.
+    """
+    info_text = f"{info}\n" if info else ""
+
+    return (
+        f"You are playing the Game: {game_name}\n"
+        f"State:\n{state}\n"
+        f"Legal actions: {legal_actions}\n"
+        f"{info_text}"
+        "Your task is to choose the next action. Provide only the number of "
+        "your next move from the list of legal actions."
+    )
