@@ -118,7 +118,7 @@ class OpenSpielEnv(ABC):
 
         # If the game is finished, store final scores; otherwise, update current player
         if self.terminated or self.truncated:
-            self.info["final_scores"] = self.state.returns() #TODO: this is never used!
+            # Final rewards are corectly updated by the OpenSpiel rewards tracker.
             observation_dict = {agentID: None for agentID in list(action_dict.keys())} # No observation when the game ends
         else:
             observation_dict = self._state_to_observation() # Get next observation for all agents

@@ -105,13 +105,13 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
            # Step forward in the environment #TODO: check if this works for turn-based games (track the agent playing)
             if not truncated:
-                observation_dict, rewards, terminated, truncated, _ = env.step(actions)
+                observation_dict, rewards_dict, terminated, truncated, _ = env.step(actions)
                 turn += 1
 
     # Logging
     game_status = "truncated" if truncated else "terminated"
 
-    for agent_id, reward in rewards.items():
+    for agent_id, reward in rewards_dict.items():
         policy_key = policy_mapping_fn(agent_id)
         agent_logger = agent_loggers_dict[policy_key]
         agent_logger.log_game_result(

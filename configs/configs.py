@@ -13,8 +13,8 @@ def default_simulation_config() -> Dict[str, Any]:
     return {
         "env_configs": [  # A list of game-specific configurations
             {
-                "game_name": "connect_four",
-                "max_game_rounds": None,
+                "game_name": "kuhn_poker",  # connect_four, kuhn_poker, tic_tac_toe
+                "max_game_rounds": 1,
             # Additional game-specific parameters
             },
            # {

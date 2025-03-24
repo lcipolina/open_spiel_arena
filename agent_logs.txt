@@ -25,3 +25,12 @@
 2025-03-14 14:42:43,009 - simulate - INFO - Episode 1 started.
 2025-03-14 14:44:35,083 - simulate - INFO - Simulation for connect_four, Episode 1 completed.
 2025-03-14 14:44:35,084 - __main__ - INFO - Simulation results for connect_four saved to results/connect_four_simulation_results.json
+2025-03-24 19:15:42,797 - simulate - INFO - Initializing environment for connect_four with seed 42.
+2025-03-24 19:15:42,873 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-24 19:18:51,065 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-24 19:18:51,066 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-24 19:18:53,166 - simulate - INFO - Episode 1 started.
+2025-03-24 20:15:08,851 - simulate - INFO - Simulation for connect_four, Episode 1 completed.
+2025-03-24 20:15:08,878 - __main__ - INFO - Simulation results for connect_four saved to results/connect_four_simulation_results.json
+2025-03-24 20:23:05,081 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-24 20:23:05,224 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
