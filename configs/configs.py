@@ -14,16 +14,16 @@ def default_simulation_config() -> Dict[str, Any]:
         "env_configs": [  # A list of game-specific configurations
             {
                 "game_name": "kuhn_poker",  # connect_four, kuhn_poker, tic_tac_toe
-                "max_game_rounds": 1,
+                "max_game_rounds": None,  # Only use this for iterated games
             # Additional game-specific parameters
             },
            # {
-           #     "game_name": "kuhn_poker",
-           #     "max_game_rounds": 100,
+           #     "game_name": "connect_four",
+           #     "max_game_rounds": None,  # Only use this for iterated games
            # },
            #{
            #     "game_name": "tic_tac_toe",
-           #     "max_game_rounds": 50,
+           #     "max_game_rounds": None,  # Only use this for iterated games
            # }
         ],
         "num_episodes": 1,
