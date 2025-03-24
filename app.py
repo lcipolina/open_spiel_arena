@@ -15,11 +15,11 @@ def find_or_download_db():
     if not os.path.exists(db_dir):
         os.makedirs(db_dir)
     db_files = glob.glob(os.path.join(db_dir, "*.db"))
-    
+
     # Ensure the random bot database exists
     if "results/random_None.db" not in db_files:
         raise FileNotFoundError("Please upload results for the random agent in a file named 'random_None.db'.")
-    
+
     return db_files
 
 def extract_agent_info(filename: str):
@@ -36,7 +36,7 @@ def get_available_games(include_aggregated=True) -> List[str]:
     """Extracts all unique game names from all SQLite databases. Includes 'Aggregated Performance' only when required."""
     db_files = find_or_download_db()
     game_names = set()
-    
+
     for db_file in db_files:
         conn = sqlite3.connect(db_file)
         try:
@@ -47,32 +47,55 @@ def get_available_games(include_aggregated=True) -> List[str]:
             pass  # Ignore errors if table doesn't exist
         finally:
             conn.close()
-    
+
     game_list = sorted(game_names) if game_names else ["No Games Found"]
     if include_aggregated:
         game_list.insert(0, "Aggregated Performance")  # Ensure 'Aggregated Performance' is always first
     return game_list
 
+def extract_illegal_moves_summary()-> pd.DataFrame:
+    """Extracts the number of illegal moves made by each LLM agent.
+
+    Returns:
+        pd.DataFrame: DataFrame with columns [agent_name, illegal_moves].
+    """
+    db_files = find_or_download_db()
+    summary = []
+    for db_file in db_files:
+        agent_type, model_name = extract_agent_info(db_file)
+        if agent_type == "random":
+            continue # Skip the random agent from this analysis
+        conn = sqlite3.connect(db_file)
+        try:
+            # Count number of illegal moves from the illegal_moves table
+            df = pd.read_sql_query("SELECT COUNT(*) AS illegal_moves FROM illegal_moves", conn)
+            count = int(df["illegal_moves"].iloc[0]) if not df.empty else 0
+        except Exception:
+            count = 0 # If the table does not exist or error occurs
+        summary.append({"agent_name": model_name, "illegal_moves": count})
+        conn.close()
+    return pd.DataFrame(summary)
+
 def extract_leaderboard_stats(game_name: str) -> pd.DataFrame:
     """Extract and aggregate leaderboard stats from all SQLite databases."""
     db_files = find_or_download_db()
     all_stats = []
-    
+
     for db_file in db_files:
         conn = sqlite3.connect(db_file)
         agent_type, model_name = extract_agent_info(db_file)
-        
+
         # Skip random agent rows
         if agent_type == "random":
             conn.close()
             continue
-        
+
         if game_name == "Aggregated Performance":
             query = "SELECT COUNT(DISTINCT episode) AS games_played, " \
                     "SUM(reward) AS total_rewards " \
                     "FROM game_results"
             df = pd.read_sql_query(query, conn)
-            
+
             # Use avg_generation_time from a specific game (e.g., Kuhn Poker)
             game_query = "SELECT AVG(generation_time) FROM moves WHERE game_name = 'kuhn_poker'"
             avg_gen_time = conn.execute(game_query).fetchone()[0] or 0
@@ -81,17 +104,17 @@ def extract_leaderboard_stats(game_name: str) -> pd.DataFrame:
                     "SUM(reward) AS total_rewards " \
                     "FROM game_results WHERE game_name = ?"
             df = pd.read_sql_query(query, conn, params=(game_name,))
-            
+
             # Fetch average generation time from moves table
             gen_time_query = "SELECT AVG(generation_time) FROM moves WHERE game_name = ?"
             avg_gen_time = conn.execute(gen_time_query, (game_name,)).fetchone()[0] or 0
-        
+
         # Keep division by 2 for total rewards
         df["total_rewards"] = df["total_rewards"].fillna(0).astype(float) / 2
-        
+
         # Ensure avg_gen_time has decimals
         avg_gen_time = round(avg_gen_time, 3)
-        
+
         # Calculate win rate against random bot using moves table
         vs_random_query = """
             SELECT COUNT(DISTINCT gr.episode) FROM game_results gr
@@ -106,22 +129,24 @@ def extract_leaderboard_stats(game_name: str) -> pd.DataFrame:
         wins_vs_random = conn.execute(vs_random_query).fetchone()[0] or 0
         total_vs_random = conn.execute(total_vs_random_query).fetchone()[0] or 0
         vs_random_rate = (wins_vs_random / total_vs_random * 100) if total_vs_random > 0 else 0
-        
+
         df.insert(0, "agent_name", model_name)  # Ensure agent_name is the first column
         df.insert(1, "agent_type", agent_type)  # Ensure agent_type is second column
         df["avg_generation_time (sec)"] = avg_gen_time
         df["win vs_random (%)"] = round(vs_random_rate, 2)
-        
+
         all_stats.append(df)
         conn.close()
-    
+
     leaderboard_df = pd.concat(all_stats, ignore_index=True) if all_stats else pd.DataFrame()
-    
+
     if leaderboard_df.empty:
         leaderboard_df = pd.DataFrame(columns=["agent_name", "agent_type", "# games", "total rewards", "avg_generation_time (sec)", "win-rate", "win vs_random (%)"])
-    
+
     return leaderboard_df
 
+
+##########################################################
 with gr.Blocks() as interface:
     # Tab for playing games against LLMs
     with gr.Tab("Game Arena"):
@@ -134,10 +159,10 @@ with gr.Blocks() as interface:
         play_button = gr.Button("Start Game")
         # Textbox to display the game log
         game_output = gr.Textbox(label="Game Log")
-        
+
         # Event to start the game when the button is clicked
         play_button.click(lambda game, opponent: f"Game {game} started against {opponent}", inputs=[game_dropdown, opponent_dropdown], outputs=[game_output])
-    
+
     # Tab for leaderboard and performance tracking
     with gr.Tab("Leaderboard"):
         gr.Markdown("# LLM Model Leaderboard\nTrack performance across different games!")
@@ -147,7 +172,56 @@ with gr.Blocks() as interface:
         leaderboard_table = gr.Dataframe(value=extract_leaderboard_stats("Aggregated Performance"), headers=["agent_name", "agent_type", "# games", "total rewards", "avg_generation_time (sec)", "win-rate", "win vs_random (%)"], every=5)
         # Update the leaderboard when a new game is selected
         leaderboard_game_dropdown.change(fn=extract_leaderboard_stats, inputs=[leaderboard_game_dropdown], outputs=[leaderboard_table])
-    
+
+    # Tab for visual insights and performance metrics
+    with gr.Tab("Metrics Dashboard"):
+        gr.Markdown("# 📊 Metrics Dashboard\nVisual summaries of LLM performance across games.")
+
+        # Extract data for visualizations
+        metrics_df = extract_leaderboard_stats("Aggregated Performance")
+
+        with gr.Row():
+            gr.BarPlot(
+                value=metrics_df,
+                x="agent_name",
+                y="win vs_random (%)",
+                title="Win Rate vs Random Bot",
+                x_label="LLM Model",
+                y_label="Win Rate (%)"
+            )
+
+        with gr.Row():
+            gr.BarPlot(
+                value=metrics_df,
+                x="agent_name",
+                y="avg_generation_time (sec)",
+                title="Average Generation Time",
+                x_label="LLM Model",
+                y_label="Time (sec)"
+            )
+
+        with gr.Row():
+            gr.Dataframe(value=metrics_df, label="Performance Summary")
+
+    # Tab for LLM reasoning and illegal move analysis
+    with gr.Tab("Analysis of LLM Reasoning"):
+        gr.Markdown("# 🧠 Analysis of LLM Reasoning\nInsights into move legality and decision behavior.")
+
+        # Load illegal move stats using global function
+        illegal_df = extract_illegal_moves_summary()
+
+        with gr.Row():
+            gr.BarPlot(
+                value=illegal_df,
+                x="agent_name",
+                y="illegal_moves",
+                title="Illegal Moves by Model",
+                x_label="LLM Model",
+                y_label="# of Illegal Moves"
+            )
+
+        with gr.Row():
+            gr.Dataframe(value=illegal_df, label="Illegal Move Summary")
+
     # Launch the Gradio interface
     interface.launch()
-
