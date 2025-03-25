@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from wordcloud import WordCloud
+import numpy as np
 import re
 import os
 from typing import List, Optional
@@ -51,7 +52,7 @@ class LLMReasoningAnalyzer:
     def summarize_reasoning(self) -> None:
         """Generate a short summary for each reasoning entry (simple heuristic).
 
-        Note: You can replace this with LLM compression later.
+        OBS: Later we can replace this with LLM compression later.
         """
         def summarize(reasoning: str) -> str:
             if "." in reasoning:
@@ -61,6 +62,47 @@ class LLMReasoningAnalyzer:
             return " ".join(first.strip().split()[:10])
 
         self.df['summary'] = self.df['reasoning'].apply(summarize)
+
+    def compute_metrics(self, output_csv: str = "agent_metrics_summary.csv", plot_dir: str = "plots") -> None:
+            """Compute reasoning metrics per agent and save CSV + plots.
+
+            Args:
+                output_csv: Where to store the final summary CSV.
+                plot_dir: Directory to store visualizations.
+            """
+            os.makedirs(plot_dir, exist_ok=True)
+            rows = []
+            for agent in self.df['agent_name'].unique():
+                if agent.startswith("random"):
+                    continue
+                agent_df = self.df[self.df['agent_name'] == agent]
+                total = len(agent_df)
+                opponent_mentions = agent_df['reasoning'].str.lower().str.contains("opponent").sum()
+                reasoning_len_avg = agent_df['reasoning'].apply(lambda r: len(r.split())).mean()
+                unique_types = agent_df['reasoning_type'].nunique()
+                type_counts = agent_df['reasoning_type'].value_counts(normalize=True).to_dict()
+                entropy = -sum(p * np.log2(p) for p in type_counts.values() if p > 0)
+
+                rows.append({
+                    "agent_name": agent,
+                    "total_moves": total,
+                    "avg_reasoning_length": reasoning_len_avg,
+                    "%_opponent_mentions": opponent_mentions / total,
+                    "reasoning_diversity": unique_types,
+                    "reasoning_entropy": entropy
+                })
+
+                # Plot reasoning type distribution pie chart
+                plt.figure()
+                agent_df['reasoning_type'].value_counts().plot.pie(autopct='%1.1f%%')
+                plt.title(f"Reasoning Type Distribution - {agent}")
+                plt.ylabel("")
+                plt.tight_layout()
+                plt.savefig(os.path.join(plot_dir, f"pie_reasoning_type_{agent}.png"))
+                plt.close()
+
+           # pd.DataFrame(rows).to_csv(output_csv, index=False) # Commented out to avoid writing to disk
+
 
     def plot_heatmaps_by_agent(self, output_dir: str = "plots") -> None:
         """Plot heatmaps of reasoning types per turn for each agent.
@@ -120,10 +162,12 @@ class LLMReasoningAnalyzer:
 
 
 if __name__ == "__main__":
-    fpath= "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/results/merged_logs_20250325_193951.csv"
+    fpath= "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/results/merged_logs_20250325_221921.csv"
     analyzer = LLMReasoningAnalyzer(fpath)
     analyzer.categorize_reasoning()
-    analyzer.summarize_reasoning()
+    analyzer.summarize_reasoning() # makes phrases shorter for ease of analysis (not super needed)
+    analyzer.compute_metrics()
     analyzer.plot_heatmaps_by_agent()
     analyzer.plot_wordclouds_by_agent()
     analyzer.save_output("augmented_reasoning_output.csv")
+    print('Done reasoning analysis.')
