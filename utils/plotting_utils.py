@@ -11,6 +11,7 @@ import logging
 from tabulate import tabulate
 from games.registry import registry
 from typing import Dict, Any, List
+import matplotlib.pyplot as plt
 
 
 #TODO: there 3 functions are not used but useful! it contains the state history!
@@ -70,7 +71,7 @@ def get_win_rate(db_conn, llm_name):  #TODO: use this!
     win_rate = (total_wins / total_games) * 100 if total_games > 0 else 0
     return win_rate
 
-import matplotlib.pyplot as plt
+
 
 def plot_action_distribution(db_conn, llm_name): #TODO: use this!
     """Plots the distribution of LLM's chosen actions."""

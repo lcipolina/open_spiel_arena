@@ -109,3 +109,24 @@
 2025-03-25 20:39:49,371 - __main__ - INFO - Simulation results for kuhn_poker saved to results/kuhn_poker_simulation_results.json
 2025-03-25 20:39:49,372 - __main__ - INFO - Simulation results for connect_four saved to results/connect_four_simulation_results.json
 2025-03-25 20:39:49,374 - __main__ - INFO - Simulation results for tic_tac_toe saved to results/tic_tac_toe_simulation_results.json
+2025-03-25 23:16:32,086 - simulate - INFO - Initializing environment for kuhn_poker with seed 42.
+2025-03-25 23:16:32,189 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-25 23:18:50,743 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-25 23:18:50,743 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-25 23:18:53,465 - simulate - INFO - Episode 1 started.
+2025-03-25 23:18:55,562 - simulate - INFO - Simulation for kuhn_poker, Episode 1 completed.
+2025-03-25 23:18:55,563 - simulate - INFO - Initializing environment for connect_four with seed 42.
+2025-03-25 23:18:55,563 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-25 23:18:55,563 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-25 23:18:55,564 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-25 23:18:56,410 - simulate - INFO - Episode 1 started.
+2025-03-25 23:19:08,012 - simulate - INFO - Simulation for connect_four, Episode 1 completed.
+2025-03-25 23:19:08,013 - simulate - INFO - Initializing environment for tic_tac_toe with seed 42.
+2025-03-25 23:19:08,013 - agents.policy_manager - INFO - Agent setup completed for mode: llm_vs_random. Assigned agents: {0: {'type': 'llm', 'model': 'codegemma-7b-it'}, 1: {'type': 'random', 'model': 'None'}}
+2025-03-25 23:19:08,013 - agents.policy_manager - INFO - Assigned: policy_0 -> LLM (codegemma-7b-it)
+2025-03-25 23:19:08,013 - agents.policy_manager - INFO - Assigned: policy_1 -> RANDOM (None)
+2025-03-25 23:19:08,840 - simulate - INFO - Episode 1 started.
+2025-03-25 23:19:18,679 - simulate - INFO - Simulation for tic_tac_toe, Episode 1 completed.
+2025-03-25 23:19:18,679 - __main__ - INFO - Simulation results for kuhn_poker saved to results/kuhn_poker_simulation_results.json
+2025-03-25 23:19:18,680 - __main__ - INFO - Simulation results for connect_four saved to results/connect_four_simulation_results.json
+2025-03-25 23:19:18,681 - __main__ - INFO - Simulation results for tic_tac_toe saved to results/tic_tac_toe_simulation_results.json

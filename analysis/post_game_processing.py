@@ -43,7 +43,9 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
         # Retrieve move logs and save as DataFrame
         try:
             df_moves = pd.read_sql_query(
-                "SELECT game_name, episode, turn, action, reasoning, generation_time, opponent FROM moves",
+                """SELECT game_name, episode, turn, action, reasoning,
+                          generation_time, opponent, timestamp, run_id
+                   FROM moves""",
                 conn
             )
             df_moves["agent_name"] = agent_name # Add agent name as a column
@@ -55,7 +57,8 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
         # Retrieve game results (includes rewards)
         try:
             df_results = pd.read_sql_query(
-                "SELECT game_name, episode, status, reward FROM game_results",
+                """SELECT game_name, episode, status, reward, timestamp AS result_timestamp, run_id
+                   FROM game_results""",
                 conn
             )
             df_results["agent_name"] = agent_name
@@ -75,12 +78,12 @@ def merge_sqlite_logs(log_dir: str = "results/") -> pd.DataFrame:
 
     # Merge moves with game results (which includes rewards)
     if not df_results.empty:
-        df_full = df_moves.merge(df_results, on=["game_name", "episode", "agent_name"], how="left")
+        df_full = df_moves.merge(df_results, on=["game_name", "episode", "agent_name", "run_id"], how="left")
     else:
-        df_full = df_moves.copy() # I don't understand this line
+        df_full = df_moves.copy()  # If no results exist, just return the moves alone
 
     # Drop duplicates before returning (final safeguard)
-    df_full = df_full.drop_duplicates() 
+    df_full = df_full.drop_duplicates()
 
     return df_full
 
@@ -152,6 +155,7 @@ def main():
     # Save logs for review - saves the reasoning behind each move !
     os.makedirs("results", exist_ok=True)
     merged_csv = os.path.join("results", f"merged_logs_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv")
+    merged_df = merged_df.drop(columns=["result_timestamp"], errors="ignore")     # Drop verbose or unnecessary fields
     merged_df.to_csv(merged_csv, index=False)
     print(f"Merged logs saved as CSV to {merged_csv}")
 
