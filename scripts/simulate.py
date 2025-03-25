@@ -35,6 +35,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
      # Initialize loggers for all agents
     logger.info(f"Initializing environment for {game_name} with seed {seed}.")
+    print(f"Initializing environment for {game_name} with seed {seed}.")
 
     policies_dict = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 

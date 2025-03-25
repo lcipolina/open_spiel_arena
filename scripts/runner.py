@@ -9,6 +9,9 @@ Handles Ray initialization, SLURM environment variables, and orchestration.
 # Suppress errors from DynamoRIO - TODO: delete this!!
 import torch._dynamo
 torch._dynamo.config.suppress_errors = True
+import sys
+sys.path.insert(0, "/p/project1/ccstdl/cipolina-kun1/open_spiel_arena")
+
 
 import json
 import argparse

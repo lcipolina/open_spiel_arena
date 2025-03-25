@@ -17,14 +17,18 @@ def default_simulation_config() -> Dict[str, Any]:
                 "max_game_rounds": None,  # Only use this for iterated games
             # Additional game-specific parameters
             },
-           # {
-           #     "game_name": "connect_four",
+            {
+                "game_name": "connect_four",
+                "max_game_rounds": None,  # Only use this for iterated games
+            },
+           {
+                "game_name": "tic_tac_toe",
+                "max_game_rounds": None,  # Only use this for iterated games
+            },
+           #     {
+           #     "game_name": "matching_pennies",
            #     "max_game_rounds": None,  # Only use this for iterated games
-           # },
-           #{
-           #     "game_name": "tic_tac_toe",
-           #     "max_game_rounds": None,  # Only use this for iterated games
-           # }
+          #  },
         ],
         "num_episodes": 1,
         "seed": 42,
