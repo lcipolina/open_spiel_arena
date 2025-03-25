@@ -13,7 +13,7 @@ class GameRegistration:
         name: str,
         module_path: str,
         class_name: str,
-        simulator_path: str,
+        environment_path: str,
         display_name: str
     ) -> Callable[[Type], Type]:
         def decorator(cls: Type) -> Type:
@@ -22,7 +22,7 @@ class GameRegistration:
             self._registry[name] = {
                 "module_path": module_path,
                 "class_name": class_name,
-                "simulator_path": simulator_path,
+                "environment_path": environment_path,
                 "display_name": display_name,
                 "config_class": cls
             }
@@ -43,7 +43,7 @@ class GameRegistration:
         cls = getattr(import_module(module_path), class_name)
         return getattr(cls, method_name)
 
-    def get_simulator_instance(self,
+    def get_env_instance(self,
                                game_name: str,
                                game: Any,
                                player_types: List[str],
@@ -55,9 +55,9 @@ class GameRegistration:
             if game_name not in self._registry:
                 available = ", ".join(self._registry.keys())
                 raise ValueError(f"Game '{game_name}' not found. Available games: {available}")
-        module_path, class_name = self._registry[game_name]["simulator_path"].rsplit(".", 1)
-        simulator_class = getattr(import_module(module_path), class_name)
-        return simulator_class(game, game_name, player_types, max_game_rounds, seed)
+        module_path, class_name = self._registry[game_name]["environment_path"].rsplit(".", 1)
+        environment_class = getattr(import_module(module_path), class_name)
+        return environment_class(game, game_name, player_types, max_game_rounds, seed)
 
     def make_env(self, game_name: str, config: Dict[str, Any]) -> Any:
         """
@@ -79,8 +79,8 @@ class GameRegistration:
         # Call the static load() method.
         loader = self.get_game_loader(game_name)()
 
-        # Retrieve the simulator instance.
-        env = self.get_simulator_instance(
+        # Retrieve the environment simulator instance.
+        env = self.get_env_instance(
             game_name=game_name,
             game=loader,
             player_types=player_types,  #TODO: see if this is still needed

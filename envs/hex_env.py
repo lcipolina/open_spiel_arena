@@ -1,14 +1,14 @@
-"""Simulator for Connect Four.
+"""Simulator for Hex.
 
-This module implements the ConnectFourSimulator class, which simulates games of
-Connect Four using the OpenSpiel framework.
+This module implements the TicTacToeSimulator class, which simulates games of
+Hex using the OpenSpiel framework.
 """
 
 from typing import Any, Dict, Optional
 from envs.open_spiel_env import OpenSpielEnv
 
-class ConnectFourSimulator(OpenSpielEnv):
-    """Environment Simulator for Connect Four (turn based game)."""
+class HexEnv(OpenSpielEnv):
+    """Environment Simulator for Hex."""
 
     def __init__(self, game: Any,
                  game_name: str,
@@ -24,3 +24,15 @@ class ConnectFourSimulator(OpenSpielEnv):
                              for iterated games (optional, default is None).
         """
         super().__init__(game, game_name, player_types, max_game_rounds, seed)
+
+
+    def get_player_symbol(self, agent_id: int) -> str:
+        """Returns the symbol used by a Tic Tac Toe player.
+
+        Args:
+            agent_id (int): The player's ID.
+
+        Returns:
+            str: 'x' for player 0, 'o' for player 1.
+        """
+        return "x" if agent_id == 0 else "o"

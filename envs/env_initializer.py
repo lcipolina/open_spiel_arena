@@ -39,8 +39,8 @@ def env_creator(game_name:str,config: Dict[str, Any]) -> OpenSpielEnv:
 
     game_loader = game_loader_cls()
 
-    # Retrieve the simulator instance configured for the game
-    env = registry.get_simulator_instance(
+    # Retrieve the environment simulator instance configured for the game
+    env = registry.get_env_instance(
         game_name=game_name,
         game=game_loader,
         player_types=player_types,  #TODO: see if the environment really needs this!

@@ -1,1 +1,1 @@
-Games-sepcific logic
+Games-specific playing logic

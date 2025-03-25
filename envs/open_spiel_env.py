@@ -189,6 +189,30 @@ class OpenSpielEnv(ABC):
             }
         }
 
+    def get_player_symbol(self, agent_id: int) -> str:
+        """Returns the symbol or marker used by a player in the current game.
+
+        Args:
+            agent_id (int): The player's ID (usually 0 or 1).
+
+        Returns:
+            str: A symbol, label, or description associated with the player.
+            This defaults to 'Player {id}'
+        """
+        return f"Player {agent_id}"
+
+    def describe_legal_actions(self, agent_id: int) -> str:
+        """Returns a human-readable description of legal actions.
+
+        Args:
+            agent_id (int): The player's ID.
+
+        Returns:
+            str: A textual description of the available actions.
+        """
+        legal = self.state.legal_actions(agent_id)
+        return f"{legal}"  # default raw list
+
     def _generate_prompt(self, agent_id: int) -> str:
         """Generates a structured prompt for chat-based or non-chat models.
 
@@ -202,6 +226,7 @@ class OpenSpielEnv(ABC):
         if self.state.is_chance_node():
             return ""
 
+        # TODO: later review and delete this if needed
         # Generate prompt based on model type
         #model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
         # tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -227,16 +252,18 @@ class OpenSpielEnv(ABC):
         # else:
         #     # Use plain-text formatting for non-chat models
 
+        player_symbol = self.get_player_symbol(agent_id)
+
         prompt_string = (
-        f"You are Player {agent_id} in the game {self.game_name}.\n"
-        f"The board state is: {self.state.observation_string(agent_id)}\n"
-        f"This is move number: {self.state.move_number()}\n"
-        f"Available actions:\n\n{self.state.legal_actions(agent_id)}\n"
-        "\nWhat action do you choose? Reply only with the available action number."
+        f"You are playing as {player_symbol}.\n\n"
+        f"Game: {self.game_name}\n"
+        f"Move number: {self.state.move_number()}\n"
+        f"Board state:\n{self.state.observation_string(agent_id)}\n\n"
+        f"Available actions:\n{self.describe_legal_actions(agent_id)}\n\n"
+        "What action do you choose? Reply only with the available action number."
     )
 
-        formatted_prompt = format_prompt(prompt_string)
-        return formatted_prompt
+        return format_prompt(prompt_string)
 
     def _solve_chance_nodes(self) -> None:
         """Automatically plays chance nodes by selecting outcomes based on probabilities.

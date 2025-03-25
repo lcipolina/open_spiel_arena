@@ -1,6 +1,6 @@
 """Simulator for Matrix Games.
 
-This module implements the MatrixGameSimulator class, which handles various
+This module implements the MatrixGameEnvclass, which handles various
 matrix games like Rock-Paper-Scissors and Prisoner's Dilemma using the OpenSpiel
 framework.
 """
@@ -8,7 +8,7 @@ framework.
 from typing import Any, Dict, List, Optional
 from envs.open_spiel_env import OpenSpielEnv
 
-class MatrixGameSimulator(OpenSpielEnv):
+class MatrixGameEnv(OpenSpielEnv):
     """Environment Simulator for Matrix Games."""
 
     def __init__(self, game: Any,

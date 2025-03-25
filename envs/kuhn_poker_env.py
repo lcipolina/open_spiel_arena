@@ -1,4 +1,4 @@
-"""This module implements the KuhnPokerSimulator class, which simulates games of
+"""This module implements the KuhnPokerEnv class, which simulates games of
 Kuhn Poker using the OpenSpiel framework.
 
 For Kuhn Poker, the game mechanics involve:
@@ -14,8 +14,8 @@ from agents.llm_utils import format_prompt
 from transformers import AutoTokenizer
 
 
-class KuhnPokerSimulator(OpenSpielEnv):
-    """Simulator for Kuhn Poker."""
+class KuhnPokerEnv(OpenSpielEnv):
+    """Environment Simulator for Kuhn Poker."""
 
     def __init__(self, game: Any,
                  game_name: str,

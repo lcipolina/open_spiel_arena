@@ -17,7 +17,7 @@ class GameLoader:
     name="prisoners_dilemma",
     module_path="games.loaders",
     class_name="PrisonersDilemmaLoader",
-    simulator_path="envs.prisoners_dilemma_simulator.PrisonersDilemmaSimulator",
+    environment_path="envs.prisoners_dilemma_env.PrisonersDilemmaEnv",
     display_name="Iterated Prisoner's Dilemma"
 )
 class PrisonersDilemmaLoader(GameLoader):
@@ -29,7 +29,7 @@ class PrisonersDilemmaLoader(GameLoader):
     name="tic_tac_toe",
     module_path="games.loaders",
     class_name="TicTacToeLoader",
-    simulator_path="envs.tic_tac_toe_simulator.TicTacToeSimulator",
+    environment_path="envs.tic_tac_toe_env.TicTacToeEnv",
     display_name="Tic-Tac-Toe"
 )
 class TicTacToeLoader(GameLoader):
@@ -41,7 +41,7 @@ class TicTacToeLoader(GameLoader):
     name="connect_four",
     module_path="games.loaders",
     class_name="ConnectFourLoader",
-    simulator_path="envs.connect_four_simulator.ConnectFourSimulator",
+    environment_path="envs.connect_four_env.ConnectFourEnv",
     display_name="Connect Four"
 )
 class ConnectFourLoader(GameLoader):
@@ -53,7 +53,7 @@ class ConnectFourLoader(GameLoader):
     name="kuhn_poker",
     module_path="games.loaders",
     class_name="KuhnPokerLoader",
-    simulator_path="envs.kuhn_poker_simulator.KuhnPokerSimulator",
+    environment_path="envs.kuhn_poker_env.KuhnPokerEnv",
     display_name="Kuhn Poker"
 )
 class KuhnPokerLoader(GameLoader):
@@ -68,7 +68,7 @@ class KuhnPokerLoader(GameLoader):
     name="matrix_pd",
     module_path="games.loaders",
     class_name="MatrixPDLoader",
-    simulator_path="envs.matrix_game_simulator.MatrixGameSimulator",
+    environment_path="envs.matrix_game_env.MatrixGameEnv",
     display_name="Matrix Prisoner's Dilemma"
 )
 class MatrixPDLoader(GameLoader):
@@ -80,7 +80,7 @@ class MatrixPDLoader(GameLoader):
     name="matching_pennies",
     module_path="games.loaders", #pyspiel loader
     class_name="MatchingPenniesLoader",
-    simulator_path="envs.matrix_game_simulator.MatrixGameSimulator", # environment
+    environment_path="envs.matrix_game_env.MatrixGameEnv", # environment
     display_name="Matching Pennies (3P)"
 )
 class MatchingPenniesLoader(GameLoader):
@@ -92,7 +92,7 @@ class MatchingPenniesLoader(GameLoader):
     name="matrix_rps",
     module_path="games.loaders",
     class_name="MatrixRPSLoader",
-    simulator_path="envs.matrix_game_simulator.MatrixGameSimulator",
+    environment_path="envs.matrix_game_env.MatrixGameEnv",
     display_name="Matrix Rock-Paper-Scissors"
 )
 class MatrixRPSLoader(GameLoader):
