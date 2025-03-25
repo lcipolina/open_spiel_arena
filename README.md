@@ -79,7 +79,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 
 ### Packages
 - **`games/`**: Game loaders.
-- **`simulators/`**: Simulator logic for each game.
+- **`envs/`**: Environment simulator logic for each game.
 - **`utils/`**: Shared utility functions (e.g., prompt generation, LLM integration).
 
 ### Results
@@ -92,7 +92,7 @@ This project explores how LLMs interpret game states, make strategic decisions, 
 - **`tests/`**: Unit tests for utilities and simulators.
 
 ### Game Registry
-- **`games_registry.py`**: Centralized file for managing all available games and their simulators.
+- **`games_registry.py`**: Centralized file for managing all available games and their environment simulators.
 
 ---
 

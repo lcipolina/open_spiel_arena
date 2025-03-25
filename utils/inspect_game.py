@@ -45,18 +45,12 @@ def inspect_game(game_name: str):
         print("\n Board state after move:")
         print(state.to_string())
 
-       # print(f"\n Observation for player {pid}:")
-       # try:
-       #     obs = state.observation_string(pid)
-       #     print(obs)
-       # except Exception as e:
-       #     print(f"  Failed to get observation: {e}")
-
     print("\n\n")
 
 
 def main():
     symbolic_games = [
+        "chess",
         "tic_tac_toe",
         "connect_four",
         "breakthrough",
