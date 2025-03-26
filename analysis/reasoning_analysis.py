@@ -7,6 +7,7 @@ import re
 import os
 from typing import List, Optional
 import glob
+from transformers import pipeline
 
 
 REASONING_RULES = {
@@ -23,7 +24,15 @@ REASONING_RULES = {
     "Random/Unjustified": [re.compile(r"\brandom\b"), re.compile(r"\bguess\b")]
 }
 
-
+LLM_PROMPT_TEMPLATE = (
+    "You are a reasoning classifier. Your job is to categorize a move explanation into one of the following types:\n"
+    "- Positional\n- Blocking\n- Opponent Modeling\n- Winning Logic\n- Heuristic\n- Rule-Based\n- Random/Unjustified\n\n"
+    "Examples:\n"
+    "REASONING: I placed in the center square to prevent the opponent from winning.\nCATEGORY: Blocking\n\n"
+    "REASONING: The center square gives me the best control.\nCATEGORY: Positional\n\n"
+    "Now classify this:\n"
+    "REASONING: {reasoning}\nCATEGORY:"
+)
 
 class LLMReasoningAnalyzer:
     def __init__(self, csv_path: str):
@@ -34,6 +43,7 @@ class LLMReasoningAnalyzer:
         """
         self.df = pd.read_csv(csv_path)
         self._preprocess()
+        self.llm_pipe = pipeline("text2text-generation", model="google/flan-t5-small")
 
     @staticmethod
     def find_latest_log(folder: str) -> str:
@@ -80,11 +90,31 @@ class LLMReasoningAnalyzer:
             lambda row: classify(row['reasoning'], row['agent_name']), axis=1
         )
 
+    def categorize_with_llm(self, max_samples: Optional[int] = None) -> None:
+            """Use a Hugging Face model to categorize reasoning types using natural language.
+
+            Args:
+                max_samples: Optional limit for debugging or testing with a subset.
+            """
+            if max_samples:
+                df_subset = self.df.head(max_samples).copy()
+            else:
+                df_subset = self.df.copy()
+
+            def classify_llm(reasoning: str) -> str:
+                prompt = LLM_PROMPT_TEMPLATE.format(reasoning=reasoning)
+                response = self.llm_pipe(prompt, max_new_tokens=10)[0]['generated_text']
+                return response.strip().split("\n")[0].replace("CATEGORY:", "").strip()
+
+            self.df['reasoning_type_llm'] = self.df.apply(
+                lambda row: classify_llm(row['reasoning']) if row['reasoning'] and not row['agent_name'].startswith("random") else "Uncategorized",
+                axis=1
+            )
 
     def summarize_reasoning(self) -> None:
         """Generate a short summary for each reasoning entry (simple heuristic).
 
-        OBS: Later we can replace this with LLM compression later.
+        OBS: Later we can replace this with LLM compression.
         """
         def summarize(reasoning: str) -> str:
             if "." in reasoning:
@@ -316,7 +346,11 @@ class LLMReasoningAnalyzer:
 if __name__ == "__main__":
     latest_csv = LLMReasoningAnalyzer.find_latest_log("results")
     analyzer = LLMReasoningAnalyzer(latest_csv)
+
+    # Choose one of the methods below to analyze the reasoning data
     analyzer.categorize_reasoning()
+    #analyzer.categorize_with_llm(max_samples=50)  # or remove limit for full analysis
+
     analyzer.compute_metrics()
     analyzer.plot_heatmaps_by_agent()
     analyzer.plot_wordclouds_by_agent()
