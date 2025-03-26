@@ -151,7 +151,7 @@ class LLMReasoningAnalyzer:
             plt.figure(figsize=(10, 6))
             sns.heatmap(pivot, cmap="YlGnBu", annot=True)
             games = df_agent['game_name'].unique()
-            plt.title(f"Reasoning Type by Turn - {agent}\nAll Games:\n{', '.join(games)}")
+            plt.title(f"Reasoning Type by Turn - {agent}\n Games:\n{', '.join(games)}")
             plt.ylabel("Turn")
             plt.xlabel("Reasoning Type")
             plt.tight_layout()
@@ -172,7 +172,7 @@ class LLMReasoningAnalyzer:
             game_list = ", ".join(games)
             title = (
                 f"Reasoning Word Cloud - {agent}\n"
-                f"All Games:{game_list}"
+                f"Games:{game_list}"
             )
             plt.title(title)
             plt.tight_layout()
