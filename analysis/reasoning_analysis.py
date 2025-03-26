@@ -6,17 +6,23 @@ import numpy as np
 import re
 import os
 from typing import List, Optional
+import glob
 
 
 REASONING_RULES = {
-    "Positional": ["center column", "center square", "corner", "edge"],
-    "Blocking": ["block", "prevent", "stop opponent", "avoid opponent", "counter"],
-    "Opponent Modeling": ["opponent", "they are trying", "their strategy", "their move"],
-    "Winning Logic": ["win", "winning move", "connect", "fork", "threat", "chance of winning"],
-    "Heuristic": ["best move", "most likely", "advantageous", "better chance"],
-    "Rule-Based": ["according to", "rule", "strategy"],
-    "Random/Unjustified": ["random", "guess"]
+    "Positional": [re.compile(r"\bcenter column\b"), re.compile(r"\bcenter square\b"), re.compile(r"\bcorner\b"), re.compile(r"\bedge\b")],
+    "Blocking": [re.compile(r"\bblock\b"), re.compile(r"\bblocking\b"), re.compile(r"\bprevent\b"),
+                 re.compile(r"\bstop opponent\b"), re.compile(r"\bavoid opponent\b"), re.compile(r"\bcounter\b")],
+    "Opponent Modeling": [re.compile(r"\bopponent\b"), re.compile(r"\bthey are trying\b"),
+                          re.compile(r"\btheir strategy\b"), re.compile(r"\btheir move\b")],
+    "Winning Logic": [re.compile(r"\bwin\b"), re.compile(r"\bwinning move\b"), re.compile(r"\bconnect\b"),
+                      re.compile(r"\bfork\b"), re.compile(r"\bthreat\b"), re.compile(r"\bchance of winning\b")],
+    "Heuristic": [re.compile(r"\bbest move\b"), re.compile(r"\bmost likely\b"), re.compile(r"\badvantageous\b"),
+                  re.compile(r"\bbetter chance\b")],
+    "Rule-Based": [re.compile(r"\baccording to\b"), re.compile(r"\brule\b"), re.compile(r"\bstrategy\b")],
+    "Random/Unjustified": [re.compile(r"\brandom\b"), re.compile(r"\bguess\b")]
 }
+
 
 
 class LLMReasoningAnalyzer:
@@ -29,25 +35,51 @@ class LLMReasoningAnalyzer:
         self.df = pd.read_csv(csv_path)
         self._preprocess()
 
+    @staticmethod
+    def find_latest_log(folder: str) -> str:
+        """Find the most recent log file in the given folder.
+
+        Args:
+            folder: Directory where the merged_logs_*.csv files are stored.
+
+        Returns:
+            Path to the most recent CSV file.
+        """
+        files = glob.glob(os.path.join(folder, "merged_logs_*.csv"))
+        if not files:
+            raise FileNotFoundError("No log files found in folder")
+        files.sort(key=lambda f: os.path.basename(f).split("_")[2], reverse=True)
+        return files[0]
+
     def _preprocess(self) -> None:
         """Prepare the DataFrame by filling NaNs and stripping whitespace."""
         self.df['reasoning'] = self.df['reasoning'].fillna("").astype(str)
         self.df['reasoning'] = self.df['reasoning'].str.strip()
 
     def categorize_reasoning(self) -> None:
-        """Assign a reasoning category to each reasoning entry."""
+        """Assign a reasoning category to each reasoning entry using scoring and precompiled regexes.
+
+        This version scores each reasoning type by the number of matching
+        patterns and assigns the category with the highest score.
+        """
         def classify(reasoning: str, agent: str) -> str:
             if not reasoning or agent.startswith("random"):
                 return "Uncategorized"
-            for label, keywords in REASONING_RULES.items():
-                for kw in keywords:
-                    if re.search(rf"\b{re.escape(kw)}\b", reasoning.lower()):
-                        return label
-            return "Uncategorized"
+
+            text = reasoning.lower()
+            scores = {}
+
+            for label, patterns in REASONING_RULES.items():
+                match_count = sum(1 for pattern in patterns if pattern.search(text))
+                if match_count > 0:
+                    scores[label] = match_count
+
+            return max(scores.items(), key=lambda x: x[1])[0] if scores else "Uncategorized"
 
         self.df['reasoning_type'] = self.df.apply(
             lambda row: classify(row['reasoning'], row['agent_name']), axis=1
         )
+
 
     def summarize_reasoning(self) -> None:
         """Generate a short summary for each reasoning entry (simple heuristic).
@@ -63,111 +95,233 @@ class LLMReasoningAnalyzer:
 
         self.df['summary'] = self.df['reasoning'].apply(summarize)
 
+    def summarize_games(self, output_csv: str = "game_summary.csv") -> pd.DataFrame:
+        """Summarize the reasoning data by game and agent."""
+        summary = self.df.groupby(["game_name", "agent_name"]).agg(
+            episodes=('episode', 'nunique'),
+            turns=('turn', 'count')
+        ).reset_index()
+        summary.to_csv(output_csv, index=False)
+        return summary
+
     def compute_metrics(self, output_csv: str = "agent_metrics_summary.csv", plot_dir: str = "plots") -> None:
-            """Compute reasoning metrics per agent and save CSV + plots.
+        """Compute metrics for each agent and game."""
 
-            Args:
-                output_csv: Where to store the final summary CSV.
-                plot_dir: Directory to store visualizations.
-            """
-            os.makedirs(plot_dir, exist_ok=True)
-            rows = []
-            for agent in self.df['agent_name'].unique():
-                if agent.startswith("random"):
-                    continue
-                agent_df = self.df[self.df['agent_name'] == agent]
-                total = len(agent_df)
-                opponent_mentions = agent_df['reasoning'].str.lower().str.contains("opponent").sum()
-                reasoning_len_avg = agent_df['reasoning'].apply(lambda r: len(r.split())).mean()
-                unique_types = agent_df['reasoning_type'].nunique()
-                type_counts = agent_df['reasoning_type'].value_counts(normalize=True).to_dict()
-                entropy = -sum(p * np.log2(p) for p in type_counts.values() if p > 0)
-
-                rows.append({
-                    "agent_name": agent,
-                    "total_moves": total,
-                    "avg_reasoning_length": reasoning_len_avg,
-                    "%_opponent_mentions": opponent_mentions / total,
-                    "reasoning_diversity": unique_types,
-                    "reasoning_entropy": entropy
-                })
-
-                # Plot reasoning type distribution pie chart
-                plt.figure()
-                agent_df['reasoning_type'].value_counts().plot.pie(autopct='%1.1f%%')
-                plt.title(f"Reasoning Type Distribution - {agent}")
-                plt.ylabel("")
-                plt.tight_layout()
-                plt.savefig(os.path.join(plot_dir, f"pie_reasoning_type_{agent}.png"))
-                plt.close()
-
-           # pd.DataFrame(rows).to_csv(output_csv, index=False) # Commented out to avoid writing to disk
-
-
-    def plot_heatmaps_by_agent(self, output_dir: str = "plots") -> None:
-        """Plot heatmaps of reasoning types per turn for each agent.
-
-        Args:
-            output_dir: Directory to save the heatmap plots.
-        """
-        os.makedirs(output_dir, exist_ok=True)
-        for agent in self.df['agent_name'].unique():
+        os.makedirs(plot_dir, exist_ok=True)
+        game_summary = self.summarize_games()
+        rows = []
+        for (game, agent), group_df in self.df.groupby(["game_name", "agent_name"]):
             if agent.startswith("random"):
                 continue
-            df_agent = self.df[self.df['agent_name'] == agent]
+            total = len(group_df)
+            opponent_mentions = group_df['reasoning'].str.lower().str.contains("opponent").sum()
+            reasoning_len_avg = group_df['reasoning'].apply(lambda r: len(r.split())).mean()
+            unique_types = group_df['reasoning_type'].nunique()
+            type_counts = group_df['reasoning_type'].value_counts(normalize=True).to_dict()
+            entropy = -sum(p * np.log2(p) for p in type_counts.values() if p > 0)
+
+            rows.append({
+                "agent_name": agent,
+                "game_name": game,
+                "total_moves": total,
+                "avg_reasoning_length": reasoning_len_avg,
+                "%_opponent_mentions": opponent_mentions / total,
+                "reasoning_diversity": unique_types,
+                "reasoning_entropy": entropy
+            })
+
+            # Pie chart for this (agent, game)
+            type_dist = group_df['reasoning_type'].value_counts()
+            plt.figure()
+            type_dist.plot.pie(autopct='%1.1f%%')
+            plt.title(f"Reasoning Type Distribution - {agent}\n(Game: {game})")
+            plt.ylabel("")
+            plt.tight_layout()
+            plt.savefig(os.path.join(plot_dir, f"pie_reasoning_type_{agent}_{game}.png"))
+            plt.close()
+
+    # Aggregate heatmap for each agent across all games
+        for agent, df_agent in self.df.groupby("agent_name"):
+            if agent.startswith("random"):
+                continue
             pivot = df_agent.pivot_table(
                 index="turn", columns="reasoning_type", values="agent_name",
                 aggfunc="count", fill_value=0
             )
             plt.figure(figsize=(10, 6))
             sns.heatmap(pivot, cmap="YlGnBu", annot=True)
-            plt.title(f"Reasoning Type by Turn - {agent}")
+            games = df_agent['game_name'].unique()
+            plt.title(f"Reasoning Type by Turn - {agent}\nAll Games:\n{', '.join(games)}")
             plt.ylabel("Turn")
             plt.xlabel("Reasoning Type")
             plt.tight_layout()
-            out_path = os.path.join(output_dir, f"heatmap_{agent}.png")
+            out_path = os.path.join(plot_dir, f"heatmap_{agent}_all_games.png")
             plt.savefig(out_path)
             plt.close()
 
-    def plot_wordclouds_by_agent(self, output_dir: str = "plots") -> None:
-        """Generate word clouds for each agent's reasoning.
-
-        Args:
-            output_dir: Directory to save the plots.
-        """
-        os.makedirs(output_dir, exist_ok=True)
-        for agent in self.df['agent_name'].unique():
+        # Aggregate by agent across all games
+        for agent, agent_df in self.df.groupby("agent_name"):
             if agent.startswith("random"):
                 continue
-            agent_df = self.df[self.df['agent_name'] == agent]
             text = " ".join(agent_df['reasoning'].tolist())
             wc = WordCloud(width=800, height=400, background_color='white').generate(text)
             plt.figure(figsize=(10, 5))
             plt.imshow(wc, interpolation='bilinear')
             plt.axis("off")
-            title = f"Reasoning Word Cloud - {agent}"
+            games = agent_df['game_name'].unique()
+            game_list = ", ".join(games)
+            title = (
+                f"Reasoning Word Cloud - {agent}\n"
+                f"All Games:{game_list}"
+            )
             plt.title(title)
             plt.tight_layout()
-            out_path = os.path.join(output_dir, f"wordcloud_{agent}.png")
+            out_path = os.path.join(plot_dir, f"wordcloud_{agent}_all_games.png")
             plt.savefig(out_path)
             plt.close()
 
-    def save_output(self, path: str) -> None:
-        """Save the augmented DataFrame to a CSV.
+      #  pd.DataFrame(rows).to_csv(output_csv, index=False) # Uncomment to save the metrics to a CSV
 
-        Args:
-            path: Output file path.
+
+    def plot_heatmaps_by_agent(self, output_dir: str = "plots") -> None:
+        """Plot per-agent heatmaps and one aggregated heatmap across all games.
+
+        Individual heatmaps are saved per agent-game pair. This also includes
+        a general heatmap per agent showing all turns merged across all games.
+        Useful for seeing broad reasoning type patterns.
         """
+        os.makedirs(output_dir, exist_ok=True)
+        for (agent, game), df_agent in self.df.groupby(["agent_name", "game_name"]):
+            if agent.startswith("random"):
+                continue
+            pivot = df_agent.pivot_table(
+                index="turn", columns="reasoning_type", values="agent_name",
+                aggfunc="count", fill_value=0
+            )
+            plt.figure(figsize=(10, 6))
+            sns.heatmap(pivot, cmap="YlGnBu", annot=True)
+            plt.title(f"Reasoning Type by Turn - {agent} (Game: {game})")
+            plt.ylabel("Turn")
+            plt.xlabel("Reasoning Type")
+            plt.tight_layout()
+            out_path = os.path.join(output_dir, f"heatmap_{agent}_{game}.png")
+            plt.savefig(out_path)
+            plt.close()
+
+    def plot_wordclouds_by_agent(self, output_dir: str = "plots") -> None:
+        """Plot per-agent word clouds and one aggregated word cloud across all games.
+
+        Word clouds are created per agent-game pair and also aggregated per agent
+        over all games. The full version helps summarize LLM behavior globally.
+        """
+
+        os.makedirs(output_dir, exist_ok=True)
+        for (agent, game), agent_df in self.df.groupby(["agent_name", "game_name"]):
+            if agent.startswith("random"):
+                continue
+            text = " ".join(agent_df['reasoning'].tolist())
+            wc = WordCloud(width=800, height=400, background_color='white').generate(text)
+            plt.figure(figsize=(10, 5))
+            plt.imshow(wc, interpolation='bilinear')
+            plt.axis("off")
+            title = f"Reasoning Word Cloud - {agent} (Game: {game})"
+            plt.title(title)
+            plt.tight_layout()
+            out_path = os.path.join(output_dir, f"wordcloud_{agent}_{game}.png")
+            plt.savefig(out_path)
+            plt.close()
+
+    def plot_entropy_trendlines(self, output_dir: str = "plots") -> None:
+        """Plot entropy over turns for each agent-game pair.
+
+        This shows how each LLM agent's reasoning diversity evolves
+        throughout the game, based on Shannon entropy of reasoning types.
+        Higher entropy means more varied reasoning types.
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        for (agent, game), df_group in self.df.groupby(["agent_name", "game_name"]):
+            if agent.startswith("random"):
+                continue
+            entropy_by_turn = (
+                df_group.groupby("turn")["reasoning_type"]
+                .apply(lambda s: -sum((v := s.value_counts(normalize=True)).apply(lambda p: p * np.log2(p))))
+            )
+            plt.figure()
+            entropy_by_turn.plot(marker='o')
+            plt.title(f"Reasoning Entropy by Turn - {agent} (Game: {game})")
+            plt.xlabel("Turn")
+            plt.ylabel("Entropy")
+            plt.grid(True)
+            plt.tight_layout()
+            out_path = os.path.join(output_dir, f"entropy_trend_{agent}_{game}.png")
+            plt.savefig(out_path)
+            plt.close()
+
+    def plot_entropy_by_turn_across_agents(self, output_dir: str = "plots") -> None:
+        """Plot entropy over turns across all agents per game.
+
+        This compares how different LLM agents behave during the same game,
+        highlighting agents that adapt their reasoning more flexibly.
+        Useful to detect which models generalize or explore more.
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        for game, df_game in self.df.groupby("game_name"):
+            plt.figure()
+            for agent, df_agent in df_game.groupby("agent_name"):
+                if agent.startswith("random"):
+                    continue
+                entropy_by_turn = (
+                    df_agent.groupby("turn")["reasoning_type"]
+                    .apply(lambda s: -sum((v := s.value_counts(normalize=True)).apply(lambda p: p * np.log2(p))))
+                )
+                entropy_by_turn.plot(label=agent)
+            plt.title(f"Entropy by Turn Across Agents - {game}")
+            plt.xlabel("Turn")
+            plt.ylabel("Entropy")
+            plt.legend()
+            plt.grid(True)
+            plt.tight_layout()
+            out_path = os.path.join(output_dir, f"entropy_by_turn_all_agents_{game}.png")
+            plt.savefig(out_path)
+            plt.close()
+
+    def plot_avg_entropy_across_games(self, output_dir: str = "plots") -> None:
+        """Plot average reasoning entropy over time across all games and agents.
+        This reveals the general trend of reasoning diversity (entropy) per turn
+        for all agents collectively, helping to understand how LLM reasoning
+        evolves globally across gameplay.
+        """
+
+        os.makedirs(output_dir, exist_ok=True)
+        plt.figure()
+        df_all = self.df[~self.df['agent_name'].str.startswith("random")]
+        avg_entropy = (
+            df_all.groupby("turn")["reasoning_type"]
+            .apply(lambda s: -sum((v := s.value_counts(normalize=True)).apply(lambda p: p * np.log2(p))))
+        )
+        avg_entropy.plot(marker='o')
+        plt.title("Average Reasoning Entropy Across All Games and Agents")
+        plt.xlabel("Turn")
+        plt.ylabel("Entropy")
+        plt.grid(True)
+        plt.tight_layout()
+        out_path = os.path.join(output_dir, "avg_entropy_all_games.png")
+        plt.savefig(out_path)
+        plt.close()
+
+    def save_output(self, path: str) -> None:
         self.df.to_csv(path, index=False)
 
 
 if __name__ == "__main__":
-    fpath= "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/results/merged_logs_20250325_221921.csv"
-    analyzer = LLMReasoningAnalyzer(fpath)
+    latest_csv = LLMReasoningAnalyzer.find_latest_log("results")
+    analyzer = LLMReasoningAnalyzer(latest_csv)
     analyzer.categorize_reasoning()
-    analyzer.summarize_reasoning() # makes phrases shorter for ease of analysis (not super needed)
     analyzer.compute_metrics()
     analyzer.plot_heatmaps_by_agent()
     analyzer.plot_wordclouds_by_agent()
+   # analyzer.plot_entropy_trendlines()
+   # analyzer.plot_entropy_by_turn_across_agents()
+    analyzer.plot_avg_entropy_across_games()
     analyzer.save_output("augmented_reasoning_output.csv")
-    print('Done reasoning analysis.')
+    print("ANALYSIS COMPLETED SUCCESSFULLY!!.")

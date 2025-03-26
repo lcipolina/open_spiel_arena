@@ -1,0 +1,7 @@
+game_name,agent_name,episodes,turns
+connect_four,llm_codegemma_7b_it,1,4
+connect_four,random_None,1,3
+kuhn_poker,llm_codegemma_7b_it,1,1
+kuhn_poker,random_None,1,1
+tic_tac_toe,llm_codegemma_7b_it,1,4
+tic_tac_toe,random_None,1,3
