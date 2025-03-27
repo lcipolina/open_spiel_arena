@@ -56,7 +56,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
         observation_dict, _ = env.reset(seed=seed + episode)
         terminated = truncated = False
 
-        logger.info(f"Episode {episode + 1} started.")
+        logger.info(f"Episode {episode + 1} started with seed{seed}.")
         turn = 0
 
         while not (terminated or truncated):
@@ -102,7 +102,8 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                     opponent= opponents,  # Get all opponents
                     generation_time=duration,
                     agent_type=agent_type,
-                    agent_model=agent_model
+                    agent_model=agent_model,
+                    seed = seed
                 )
             print('reasoning:', reasoning) if agent_type == "llm" else None #TODO: delete this only for debugging
             print('chosen_action:', chosen_action) if agent_type == "llm" else None #TODO: delete this only for debugging

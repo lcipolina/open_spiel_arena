@@ -110,7 +110,7 @@ class SQLiteLogger:
 
     def log_move(self, game_name: str, episode: int, turn: int, action: int,
                  reasoning: str, opponent: str, generation_time: float,
-                 agent_type: str, agent_model: str):
+                 agent_type: str, agent_model: str, seed: int):
         """
         Logs an agent's move into the table 'moves'
 
@@ -124,18 +124,19 @@ class SQLiteLogger:
             generation_time (float): Time taken to generate the move.
             agent_type (str): Type of agent (e.g., "llm", "random", "human").
             agent_model (str): Specific model name for LLMs.
+            seed (int): Random seed used for the episode.
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
         cursor.execute("""
             INSERT INTO moves (game_name, episode, turn, action, reasoning,
-                            opponent, generation_time, agent_type, agent_model, timestamp, run_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            opponent, generation_time, agent_type, agent_model, timestamp, run_id,seed)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
         """, (
             game_name, episode, turn, action, reasoning,
             opponent, generation_time, agent_type, agent_model,
-            datetime.now().isoformat(), self.run_id
+            datetime.now().isoformat(), self.run_id, seed
         ))
 
         conn.commit()
