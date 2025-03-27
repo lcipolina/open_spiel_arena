@@ -1,6 +1,6 @@
 """Simulator for Tic-Tac-Toe.
 
-This module implements the TicTacToeSimulator class, which simulates games of
+This module implements the TicTacToeEnv class, which simulates games of
 Tic-Tac-Toe using the OpenSpiel framework.
 """
 

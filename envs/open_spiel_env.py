@@ -35,7 +35,7 @@ class OpenSpielEnv(ABC):
         self.game = game
         self.game_name = game_name
         self.player_types = player_types # List of strings
-        self.max_game_rounds = max_game_rounds  # For iterated games
+        self.max_game_rounds = max_game_rounds  # For iterated games only
         self.state = None
         self.info = {}
         self.terminated, self.truncated = False, False
@@ -63,7 +63,7 @@ class OpenSpielEnv(ABC):
         if hasattr(self.game, "set_seed"):
             self.game.set_seed(seed)
 
-        self.state = self.game.new_initial_state() # Instantiates a pyspiel game
+        self.state = self.game.new_initial_state() # Instantiates the pyspiel game state
         self.terminated = False
         self.truncated = False
         self.info = {}

@@ -39,6 +39,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
     policies_dict = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
+    # Initialize loggers and writers for all agents
     agent_loggers_dict = {
         policy_name: SQLiteLogger(
             agent_type=config["agents"][agent_id]["type"],
@@ -46,11 +47,11 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
         )
         for agent_id, policy_name in enumerate(policies_dict.keys())
     }
-
     writer = SummaryWriter(log_dir=f"runs/{game_name}") # Tensorboard writer
 
     # Run the simulation loop
-    env = registry.make_env(game_name, config)
+    env = registry.make_env(game_name, config) # Loads the pyspiel game and the env simulator
+    
     for episode in range(config["num_episodes"]):
         observation_dict, _ = env.reset(seed=seed + episode)
         terminated = truncated = False

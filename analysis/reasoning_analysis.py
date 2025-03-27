@@ -8,6 +8,7 @@ import os
 from typing import List, Optional
 import glob
 from transformers import pipeline
+from pathlib import Path
 
 
 REASONING_RULES = {
@@ -344,6 +345,7 @@ class LLMReasoningAnalyzer:
 
 
 if __name__ == "__main__":
+    output_dir = '/p/project/ccstdl/cipolina-kun1/open_spiel_arena/results'
     latest_csv = LLMReasoningAnalyzer.find_latest_log("results")
     analyzer = LLMReasoningAnalyzer(latest_csv)
 
@@ -357,5 +359,7 @@ if __name__ == "__main__":
    # analyzer.plot_entropy_trendlines()
    # analyzer.plot_entropy_by_turn_across_agents()
     analyzer.plot_avg_entropy_across_games()
-    analyzer.save_output("augmented_reasoning_output.csv")
-    print("ANALYSIS COMPLETED SUCCESSFULLY!!.")
+    output_path = Path(__file__).resolve().parent.parent.parent / 'results'
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    analyzer.save_output(output_path / 'augmented_reasoning_output.csv')
+    print("Analysis completed successfully!.")

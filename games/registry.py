@@ -79,7 +79,7 @@ class GameRegistration:
         # Call the static load() method.
         loader = self.get_game_loader(game_name)()
 
-        # Retrieve the environment simulator instance.
+        # Retrieve the environment simulator class.
         env = self.get_env_instance(
             game_name=game_name,
             game=loader,
