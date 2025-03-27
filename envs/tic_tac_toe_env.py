@@ -54,32 +54,26 @@ class TicTacToeEnv(OpenSpielEnv):
             "-----------\n"
             " 6 | 7 | 8\n"
         )
-        return f"{legal} (cell indices)\n\nCell layout:\n{mapping_grid}"
+        #return f"{legal} (cell indices)\n\nCell layout:\n{mapping_grid}"
+        return f"{legal} (cell indices)\n" #TODO: this is a test to see what works better for the agent
 
-    def render_board_with_indices(self, agent_id: int) -> str:
-        """Renders the board showing symbols and open cell indices.
+    def render_board(self, agent_id: int) -> str:
+        """Renders the Tic-Tac-Toe board with separators and legend.
 
         Args:
-            agent_id (int): The player's ID (ignored here).
+            agent_id (int): The player's ID.
 
         Returns:
-            str: A 3x3 board with current moves and legal move indices.
+            str: A board using 'x', 'o', '.', with a readable layout.
         """
-        legal = set(self.state.legal_actions(agent_id))
-        board = self.state.observation_tensor(agent_id)
+        legend = "Legend: x = Player 0, o = Player 1, . = empty cell\n"
+        raw = self.state.observation_string(agent_id)
+        # Flatten and extract only meaningful symbols
+        flat = [char for char in raw if char in ("x", "o", ".")]
 
-        # OpenSpiel uses one-hot for each cell: x=0, o=1, empty=2
         rows = []
-        for row in range(3):
-            cells = []
-            for col in range(3):
-                idx = row * 3 + col
-                offset = idx * 3
-                if board[offset] == 1:  # Player 0 (x)
-                    cells.append("x")
-                elif board[offset + 1] == 1:  # Player 1 (o)
-                    cells.append("o")
-                else:
-                    cells.append(str(idx) if idx in legal else ".")
-            rows.append(" " + " | ".join(cells))
-        return "\n-----------\n".join(rows)
+        for i in range(0, 9, 3):
+            rows.append(" " + " | ".join(flat[i:i+3]))
+        board = "\n-----------\n".join(rows)
+    #    return f"\n{board} \n{legend}"
+        return f"\n{raw} \n" # TODO: this is a test to see what works better for the agent

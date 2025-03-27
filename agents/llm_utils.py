@@ -19,12 +19,14 @@ from agents.llm_registry import LLM_REGISTRY
 # Set environment variable to allow PyTorch to dynamically allocate more memory on GPUs
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-#TODO: add model_name on the arguments
+#TODO: add model_name on the arguments so we can try different models
 def format_prompt(input_text:str,request_explanation=True)->str:
-    """Formats the input prompt using Hugging Face's chat template function.
+    """Formats the input prompt for reasoning-first output, using Hugging Face's
+    chat template function.
 
     Args:
         input_text (str): The game prompt.
+        request_explanation (bool): Whether to request the model's reasoning.
 
     Returns:
         str: The correctly formatted prompt for the model.
@@ -33,17 +35,22 @@ def format_prompt(input_text:str,request_explanation=True)->str:
     # TODO: construir esto con el model name nomas y el model path del OS
     model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
 
-    print("Using hardcoded codegemma-7b-it, fix me!!!!")
+    print("'llm_utils.py': Using hardcoded codegemma-7b-it, for the prompt tokenizer ! fix me!!")
+
+    print('format_prompt(prompt_string):', input_text) #TODO: delete this! just for debugging
+
+    # If explanation is requested, add a message.
+    if request_explanation:
+       input_text += (
+            "\n\nFirst, think through the game strategy and explain your reasoning."
+            "\nOnly after that, decide on the best action to take."
+        )
 
     # Modify prompt to request structured JSON output
     json_instruction = (
-            "\n\nReply in the following JSON format:\n"
-            "{\n  'action': <int>,\n  'reasoning': <str>\n}\n"
-        )
-
-    # If explanation is requested, add a second message after the model's first response
-    if request_explanation:
-       input_text += "\n\nAdditionally, explain your chain of thought behind this action."
+        "\n\nReply in the following JSON format:\n"
+        "{\n  'reasoning': <str>,\n  'action': <int>\n}"
+    )
 
     input_text += json_instruction  # Append JSON request
     messages = [{"role": "user", "content": input_text}]

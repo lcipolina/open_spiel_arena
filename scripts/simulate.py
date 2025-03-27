@@ -51,7 +51,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
     # Run the simulation loop
     env = registry.make_env(game_name, config) # Loads the pyspiel game and the env simulator
-    
+
     for episode in range(config["num_episodes"]):
         observation_dict, _ = env.reset(seed=seed + episode)
         terminated = truncated = False
@@ -104,8 +104,10 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                     agent_type=agent_type,
                     agent_model=agent_model
                 )
+            print('reasoning:', reasoning) if agent_type == "llm" else None #TODO: delete this only for debugging
+            print('chosen_action:', chosen_action) if agent_type == "llm" else None #TODO: delete this only for debugging
 
-           # Step forward in the environment #TODO: check if this works for turn-based games (track the agent playing)
+            # Step forward in the environment #TODO: check if this works for turn-based games (track the agent playing)
             if not truncated:
                 observation_dict, rewards_dict, terminated, truncated, _ = env.step(actions)
                 turn += 1

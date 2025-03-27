@@ -119,7 +119,7 @@ class OpenSpielEnv(ABC):
         # If the game is finished, store final scores; otherwise, update current player
         if self.terminated or self.truncated:
             print("game terminated" if self.terminated else "game truncated")
-            # Final rewards are corectly updated by the OpenSpiel rewards tracker.
+            # Note: final rewards are corectly updated by the OpenSpiel rewards tracker.
             observation_dict = {agentID: None for agentID in list(action_dict.keys())} # No observation when the game ends
         else:
             observation_dict = self._state_to_observation() # Get next observation for all agents
@@ -146,7 +146,7 @@ class OpenSpielEnv(ABC):
 
         self.seed_value = seed  # Store the seed for tracking
 
-    # TODO: use this!
+    # TODO: use this somewhere!
     def detect_illegal_moves(self, actions_dict: Dict[int, int]) -> int:
         """
         Detects illegal moves by comparing chosen actions with OpenSpiel's legal actions.
@@ -201,8 +201,8 @@ class OpenSpielEnv(ABC):
         """
         return f"Player {agent_id}"
 
-    def render_board_with_indices(self, agent_id: int) -> str:
-        """Renders the game board with indices for available actions.
+    def render_board(self, agent_id: int) -> str:
+        """Renders the game board with formatting.
         Should be implemented in the child class. Defaults to a simple board
 
         Args:
@@ -265,14 +265,14 @@ class OpenSpielEnv(ABC):
         #     # Use plain-text formatting for non-chat models
 
         prompt_string = (
-        f"You are playing as {self.get_player_symbol(agent_id)}.\n\n"
-        f"the game: {self.game_name}\n"
+        f"You are playing the game: {self.game_name}\n"
+        f"You are player: {agent_id}\n"
+        f"and you are playing with the {self.get_player_symbol(agent_id)}.\n\n"
         f"the current move number is: {self.state.move_number()}\n"
-        f"Board state:\n{self.render_board_with_indices(agent_id)}"
-        f"Available actions:\n{self.describe_legal_actions(agent_id)}\n\n"
+        f"Board state:\n{self.render_board(agent_id)}\n"
+        f"Available actions:{self.describe_legal_actions(agent_id)}\n\n"
         "What action do you choose? Reply only with the available action number."
     )
-
         return format_prompt(prompt_string)
 
     def _solve_chance_nodes(self) -> None:

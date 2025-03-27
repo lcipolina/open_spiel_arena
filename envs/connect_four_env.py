@@ -49,34 +49,22 @@ class ConnectFourEnv(OpenSpielEnv):
         legal = self.state.legal_actions(agent_id)
         return f"{legal} (column numbers)"
 
-    def render_board_with_indices(self, agent_id: int) -> str:
-        """Renders Connect Four board with checker positions and column indices.
+
+    def render_board(self, agent_id: int) -> str:
+        """Renders the Connect Four board with grid and legend.
 
         Args:
-            agent_id (int): The player's ID (ignored here).
+            agent_id (int): The player's ID.
 
         Returns:
-            str: A grid showing board state and column numbers for LLM clarity.
+            str: A formatted 6x7 board with x/o/., visual separators, and a legend.
         """
-        # Assume board is 6 rows (bottom to top), 7 columns
+        legend = "Legend: x = Player 0, o = Player 1, . = empty cell\n"
+        raw = self.state.observation_string(agent_id)
+        symbols = [char for char in raw if char in ("x", "o", ".")]
+
         rows = []
-        tensor = self.state.observation_tensor(agent_id)
-        # OpenSpiel stores board as one-hot per cell: [player0, player1, empty]
-        num_rows, num_cols = 6, 7
-
-        for row in reversed(range(num_rows)):
-            row_str = []
-            for col in range(num_cols):
-                idx = (row * num_cols + col) * 3
-                if tensor[idx] == 1:  # Player 0
-                    row_str.append("x")
-                elif tensor[idx + 1] == 1:  # Player 1
-                    row_str.append("o")
-                else:
-                    row_str.append(".")
-            rows.append(" " + " | ".join(row_str))
-
-        grid = "\n" + "\n" + "\n".join(rows)
-        col_indices = " " + "   ".join(str(c) for c in range(num_cols))
-        return f"{grid}\n\nColumn indices:\n{col_indices}"
-
+        for i in range(0, 42, 7):  # 6 rows * 7 columns
+            rows.append(" " + " | ".join(symbols[i:i+7]))
+        board = "\n-----------\n".join(rows)
+        return f"{legend}\n{board}"

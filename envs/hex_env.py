@@ -61,33 +61,27 @@ class HexEnv(OpenSpielEnv):
         index_grid = "\n".join(grid)
         return f"{legal} (board indices)\n\nBoard index layout:\n{index_grid}"
 
-    def render_board_with_indices(self, agent_id: int) -> str:
-        """Renders Hex board showing moves and legal action indices.
+    def render_board(self, agent_id: int) -> str:
+        """Renders the Hex board with diagonal layout and legend.
 
         Args:
             agent_id (int): The player's ID.
 
         Returns:
-            str: A hex-aligned board with pieces and index references.
+            str: A diagonally-aligned board with y/o/., and a legend.
         """
-        legal = set(self.state.legal_actions(agent_id))
-        tensor = self.state.observation_tensor(agent_id)
-        size = self.game.board_size  # e.g., 11
+        legend = "Legend: y = Player 0, o = Player 1, . = empty cell\n"
+        raw = self.state.observation_string(agent_id)
+        symbols = [char for char in raw if char in ("y", "o", ".")]
 
+        size = self.game.board_size  # typically 11
         rows = []
+        idx = 0
         for row in range(size):
             indent = "  " * row
-            row_cells = []
-            for col in range(size):
-                idx = row * size + col
-                offset = idx * 3
-                if tensor[offset] == 1:  # Player 0 (y)
-                    row_cells.append("y")
-                elif tensor[offset + 1] == 1:  # Player 1 (o)
-                    row_cells.append("o")
-                elif idx in legal:
-                    row_cells.append(f"{idx}")
-                else:
-                    row_cells.append(".")
-            rows.append(indent + " ".join(f"{c:>2}" for c in row_cells))
-        return "\n".join(rows)
+            row_cells = symbols[idx:idx+size]
+            rows.append(indent + " ".join(row_cells))
+            idx += size
+
+        board = "\n".join(rows)
+        return f"{legend}\n{board}"

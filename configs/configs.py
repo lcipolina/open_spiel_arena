@@ -30,7 +30,7 @@ def default_simulation_config() -> Dict[str, Any]:
            #     "max_game_rounds": None,  # Only use this for iterated games
           #  },
         ],
-        "num_episodes": 1,
+        "num_episodes": 5,
         "seed": 42,
         "use_ray": False,
         "mode": "llm_vs_random",  # "manual", "llm_vs_llm"

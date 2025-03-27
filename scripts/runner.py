@@ -12,9 +12,10 @@ torch._dynamo.config.suppress_errors = True
 import sys
 sys.path.insert(0, "/p/project1/ccstdl/cipolina-kun1/open_spiel_arena")
 
-
+import os
 import json
 import argparse
+import subprocess 
 import logging
 from typing import Dict, Any, List, Tuple
 import ray
@@ -102,12 +103,10 @@ if __name__ == "__main__":
     try:
         run_simulation(args)
         print("Running post-game processing...")
-        import subprocess
-        subprocess.run(
-            ["python", "/p/project/ccstdl/cipolina-kun1/open_spiel_arena/analysis/post_game_processing.py"],
-            check=True
-        )
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(current_dir, "..", "analysis", "post_game_processing.py")
+        subprocess.run(["python", script_path], check=True)
 
         print("Simulation completed.")
     finally:
-        full_cleanup() # this doesn't seem to end!
+       full_cleanup()
