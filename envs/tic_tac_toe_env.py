@@ -36,3 +36,50 @@ class TicTacToeEnv(OpenSpielEnv):
             str: 'x' for player 0, 'o' for player 1.
         """
         return "x" if agent_id == 0 else "o"
+
+    def describe_legal_actions(self, agent_id: int) -> str:
+        """Describes legal actions as board positions in a 3x3 grid.
+
+        Args:
+            agent_id (int): The player's ID.
+
+        Returns:
+            str: A list of legal action numbers with positional meaning.
+        """
+        legal = self.state.legal_actions(agent_id)
+        mapping_grid = (
+            " 0 | 1 | 2\n"
+            "-----------\n"
+            " 3 | 4 | 5\n"
+            "-----------\n"
+            " 6 | 7 | 8\n"
+        )
+        return f"{legal} (cell indices)\n\nCell layout:\n{mapping_grid}"
+
+    def render_board_with_indices(self, agent_id: int) -> str:
+        """Renders the board showing symbols and open cell indices.
+
+        Args:
+            agent_id (int): The player's ID (ignored here).
+
+        Returns:
+            str: A 3x3 board with current moves and legal move indices.
+        """
+        legal = set(self.state.legal_actions(agent_id))
+        board = self.state.observation_tensor(agent_id)
+
+        # OpenSpiel uses one-hot for each cell: x=0, o=1, empty=2
+        rows = []
+        for row in range(3):
+            cells = []
+            for col in range(3):
+                idx = row * 3 + col
+                offset = idx * 3
+                if board[offset] == 1:  # Player 0 (x)
+                    cells.append("x")
+                elif board[offset + 1] == 1:  # Player 1 (o)
+                    cells.append("o")
+                else:
+                    cells.append(str(idx) if idx in legal else ".")
+            rows.append(" " + " | ".join(cells))
+        return "\n-----------\n".join(rows)

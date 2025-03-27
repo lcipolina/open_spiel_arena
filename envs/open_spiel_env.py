@@ -201,6 +201,18 @@ class OpenSpielEnv(ABC):
         """
         return f"Player {agent_id}"
 
+    def render_board_with_indices(self, agent_id: int) -> str:
+        """Renders the game board with indices for available actions.
+        Should be implemented in the child class. Defaults to a simple board
+
+        Args:
+            agent_id (int): The player's ID.
+
+        Returns:
+            str: A string representation of the game board with action indices.
+        """
+        raise self.state.observation_string(agent_id)
+
     def describe_legal_actions(self, agent_id: int) -> str:
         """Returns a human-readable description of legal actions.
 
@@ -258,7 +270,7 @@ class OpenSpielEnv(ABC):
         f"You are playing as {player_symbol}.\n\n"
         f"Game: {self.game_name}\n"
         f"Move number: {self.state.move_number()}\n"
-        f"Board state:\n{self.state.observation_string(agent_id)}\n\n"
+        f"Board state:\n{self.render_board_with_indices(agent_id)}"
         f"Available actions:\n{self.describe_legal_actions(agent_id)}\n\n"
         "What action do you choose? Reply only with the available action number."
     )
