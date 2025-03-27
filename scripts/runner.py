@@ -11,11 +11,15 @@ import torch._dynamo
 torch._dynamo.config.suppress_errors = True
 import sys
 sys.path.insert(0, "/p/project1/ccstdl/cipolina-kun1/open_spiel_arena")
+# Set the soft and hard core file size limits to 0 (disable core dumps) ADD this in the SLURM!
+import resource
+resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+
 
 import os
 import json
 import argparse
-import subprocess 
+import subprocess
 import logging
 from typing import Dict, Any, List, Tuple
 import ray
