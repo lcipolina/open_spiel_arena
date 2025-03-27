@@ -264,12 +264,10 @@ class OpenSpielEnv(ABC):
         # else:
         #     # Use plain-text formatting for non-chat models
 
-        player_symbol = self.get_player_symbol(agent_id)
-
         prompt_string = (
-        f"You are playing as {player_symbol}.\n\n"
-        f"Game: {self.game_name}\n"
-        f"Move number: {self.state.move_number()}\n"
+        f"You are playing as {self.get_player_symbol(agent_id)}.\n\n"
+        f"the game: {self.game_name}\n"
+        f"the current move number is: {self.state.move_number()}\n"
         f"Board state:\n{self.render_board_with_indices(agent_id)}"
         f"Available actions:\n{self.describe_legal_actions(agent_id)}\n\n"
         "What action do you choose? Reply only with the available action number."
