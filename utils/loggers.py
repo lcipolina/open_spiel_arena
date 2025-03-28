@@ -57,17 +57,21 @@ class SQLiteLogger:
             )
         """)
 
-        # Create 'illegal_moves' table (records illegal moves made during the game)
+        # Create 'illegal_moves' table
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS illegal_moves (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                game_name TEXT,
-                episode INTEGER,
-                illegal_action INTEGER,
-                timestamp TEXT,
-                run_id TEXT
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS illegal_moves (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            game_name TEXT,
+            episode INTEGER,
+            turn INTEGER,
+            agent_id INTEGER,
+            illegal_action INTEGER,
+            reason TEXT,
+            board_state TEXT,
+            timestamp TEXT,
+            run_id TEXT
+        )
+    """)
 
         # Create 'game_results' table (stores final results of games played)
         # TODO: add opponents to this table !
@@ -165,19 +169,20 @@ class SQLiteLogger:
         conn.commit()
         conn.close()
 
-    def log_illegal_move(self, game_name: str, episode: int, illegal_action: int):
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO illegal_moves (
-                    game_name, episode, illegal_action, timestamp, run_id
-                ) VALUES (?, ?, ?, ?, ?)
-            """, (
-                game_name, episode, illegal_action,
-                datetime.now().isoformat(), self.run_id
-            ))
-            conn.commit()
-            conn.close()
+    def log_illegal_move(self, game_name: str, episode: int, turn: int, agent_id: int, illegal_action: int, reason: str,board_state: str):
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO illegal_moves (
+                game_name, episode, turn, agent_id, illegal_action,
+                reason, board_state, timestamp, run_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            game_name, episode, turn, agent_id, illegal_action,
+            reason, board_state, datetime.now().isoformat(), self.run_id
+        ))
+        conn.commit()
+        conn.close()
 
     def get_agent_moves(self):
         """

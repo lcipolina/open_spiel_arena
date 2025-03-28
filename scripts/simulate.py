@@ -18,6 +18,16 @@ from torch.utils.tensorboard import SummaryWriter
 
 logger = logging.getLogger(__name__)
 
+def log_llm_action(agent_id: int,agent_model: str,observation: Dict[str, Any],chosen_action: int,reasoning: str,flag: bool = False) -> None:
+    """Logs the LLM agent's decision."""
+    logger.info(f"Board state: \n{observation['state_string']}")
+    logger.info(f"Legal actions: {observation['legal_actions']}")
+    logger.info(f"Agent {agent_id} ({agent_model}) chose action: {chosen_action} with reasoning: {reasoning}")
+    if flag == True:
+       logger.error(f"Terminated due to illegal move: {chosen_action}.")
+
+
+
 
 def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
     """
@@ -82,9 +92,13 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
                 # Check if the chosen action is legal
                 if chosen_action is None or chosen_action not in observation["legal_actions"]:
-                    logging.error(f"Game {game_name}, Episode {episode + 1} terminated due to illegal move: {chosen_action}.")
+                    if agent_type == "llm":
+                       log_llm_action(agent_id, agent_model, observation, chosen_action, reasoning, flag = True)
+                    agent_logger.log_illegal_move(game_name=game_name, episode=episode + 1,turn=turn,
+                                                   agent_id=agent_id, illegal_action=chosen_action,
+                                                   reason=reasoning, board_state=observation["state_string"])
                     truncated = True
-                    break  # Exit the loop
+                    break  # exit the for-loop over agents
 
                 # Loggins
                 opponents = ", ".join(
@@ -106,35 +120,34 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                 )
 
                 if agent_type == "llm":
-                   logger.info(f"Board state: \n{observation['state_string']}")
-                   logger.info(f"Legal actions: {observation['legal_actions']}")
-                   logger.info(f"Agent {agent_id} ({agent_model}) chose action: {chosen_action} with reasoning: {reasoning}")
+                   log_llm_action(agent_id, agent_model, observation, chosen_action, reasoning)
 
             # Step forward in the environment #TODO: check if this works for turn-based games (track the agent playing)
             if not truncated:
                 observation_dict, rewards_dict, terminated, truncated, _ = env.step(actions)
                 turn += 1
 
-    # Logging
-    game_status = "truncated" if truncated else "terminated"
+        # Logging
+        game_status = "truncated" if truncated else "terminated"
+        logger.info(f"Game status: {game_status} with rewards dict: {rewards_dict}")
 
-    for agent_id, reward in rewards_dict.items():
-        policy_key = policy_mapping_fn(agent_id)
-        agent_logger = agent_loggers_dict[policy_key]
-        agent_logger.log_game_result(
-                game_name=game_name,
-                episode=episode + 1,
-                status=game_status,
-                reward=reward
-            )
-        # Tensorboard logging
-        agent_type = config["agents"][agent_id]["type"]
-        agent_model = config["agents"][agent_id].get("model", "N/A").replace("-", "_")
-        tensorboard_key = f"{agent_type}_{agent_model}"
-        writer.add_scalar(f"Rewards/{tensorboard_key}", reward, episode + 1)
+        for agent_id, reward in rewards_dict.items():
+            policy_key = policy_mapping_fn(agent_id)
+            agent_logger = agent_loggers_dict[policy_key]
+            agent_logger.log_game_result(
+                    game_name=game_name,
+                    episode=episode + 1,
+                    status=game_status,
+                    reward=reward
+                )
+            # Tensorboard logging
+            agent_type = config["agents"][agent_id]["type"]
+            agent_model = config["agents"][agent_id].get("model", "N/A").replace("-", "_")
+            tensorboard_key = f"{agent_type}_{agent_model}"
+            writer.add_scalar(f"Rewards/{tensorboard_key}", reward, episode + 1)
 
+        logger.info(f"Simulation for game {game_name}, Episode {episode + 1} completed.")
     writer.close()
-    logger.info(f"Simulation for {game_name}, Episode {episode + 1} completed.")
     return "Simulation Completed"
 
 # start tensorboard from the terminal:
