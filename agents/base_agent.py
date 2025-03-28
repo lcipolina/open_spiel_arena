@@ -5,16 +5,9 @@ Defines a base class for all agents, which can then be subclassed by
 HumanAgent, RandomAgent, LLMAgent, etc.
 """
 
-import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-# Configure logging
-logging.basicConfig(
-    filename="agent_logs.txt",
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 
 
 class BaseAgent(ABC):

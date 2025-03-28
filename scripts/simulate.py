@@ -17,7 +17,7 @@ from utils.loggers import SQLiteLogger
 from torch.utils.tensorboard import SummaryWriter
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
 
 def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
     """
@@ -35,7 +35,6 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
      # Initialize loggers for all agents
     logger.info(f"Initializing environment for {game_name} with seed {seed}.")
-    print(f"Initializing environment for {game_name} with seed {seed}.")
 
     policies_dict = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
@@ -83,9 +82,9 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
 
                 # Check if the chosen action is legal
                 if chosen_action is None or chosen_action not in observation["legal_actions"]:
-                    logging.error(f"Game {game_name}, Episode {episode + 1} terminated due to illegal move.")
+                    logging.error(f"Game {game_name}, Episode {episode + 1} terminated due to illegal move: {chosen_action}.")
                     truncated = True
-                    break  # Exit the loop immediately
+                    break  # Exit the loop
 
                 # Log the action to the database
                 opponents = ", ".join(
@@ -105,8 +104,10 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                     agent_model=agent_model,
                     seed = seed
                 )
-            print('reasoning:', reasoning) if agent_type == "llm" else None #TODO: delete this only for debugging
-            print('chosen_action:', chosen_action) if agent_type == "llm" else None #TODO: delete this only for debugging
+
+            logger.info(f"Reasoning: {reasoning}") if agent_type == "llm" else None
+            logger.info(f"Chosen action: {chosen_action}") if agent_type == "llm" else None
+
 
             # Step forward in the environment #TODO: check if this works for turn-based games (track the agent playing)
             if not truncated:

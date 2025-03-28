@@ -37,8 +37,6 @@ def format_prompt(input_text:str,request_explanation=True)->str:
 
     print("'llm_utils.py': Using hardcoded codegemma-7b-it, for the prompt tokenizer ! fix me!!")
 
-    print('format_prompt(prompt_string):', input_text) #TODO: delete this! just for debugging
-
     # If explanation is requested, add a message.
     if request_explanation:
        input_text += (

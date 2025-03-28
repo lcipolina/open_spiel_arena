@@ -12,12 +12,11 @@ torch._dynamo.config.suppress_errors = True
 import sys
 sys.path.insert(0, "/p/project1/ccstdl/cipolina-kun1/open_spiel_arena")
 # Set the soft and hard core file size limits to 0 (disable core dumps) ADD this in the SLURM!
-import resource
-resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+#import resource
+#resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
 
 import os
-import json
 import argparse
 import subprocess
 import logging
@@ -28,8 +27,16 @@ from utils.cleanup import full_cleanup
 from utils.seeding import set_seed
 from simulate import simulate_game
 
+# Configure logging
+logging.basicConfig(
+    filename="agent_logs.txt",
+    filemode="w",
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
+
 
 def initialize_ray():
     """Initializes Ray if not already initialized."""
@@ -87,13 +94,7 @@ def run_simulation(args):
     if use_ray:
         results = ray.get(simulation_tasks)
 
-    # Save results per game
-    for game_result, game_config in zip(results, game_configs):
-        output_path = game_config.get("output_path", f"results/{game_config['game_name']}_simulation_results.json")
-        with open(output_path, "w") as f:
-            json.dump(game_result, f, indent=4)
-        logger.info(f"Simulation results for {game_config['game_name']} saved to {output_path}")
-
+        logger.info(f"Simulation results for {game_config['game_name']} ended")
     return results
 
 if __name__ == "__main__":
