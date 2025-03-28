@@ -17,5 +17,5 @@ core.*
 
 # Results
 results/*_simulation_results.json
-results/merged_logs_20250328_025355.csv
-results/merged_logs_20250328_054844.csv
+results/merged_logs_*.csv
+results/llm_codegemma_7b_it.db
