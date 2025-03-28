@@ -13,8 +13,7 @@ from agents.llm_utils import format_prompt
 class OpenSpielEnv(ABC):
     """Environment for OpenSpiel.
 
-    Handles common functionality like state transitions, outcomes recording,
-    and logging.
+    Handles common functionality like state transitions, outcomes recording.
     """
 
     def __init__(self,

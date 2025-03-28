@@ -55,7 +55,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
         observation_dict, _ = env.reset(seed=seed + episode)
         terminated = truncated = False
 
-        logger.info(f"Episode {episode + 1} started with seed{seed}.")
+        logger.info(f"Episode {episode + 1} started with seed {seed}.")
         turn = 0
 
         while not (terminated or truncated):
@@ -71,10 +71,10 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                 action_metadata =  policy(observation) #Calls `__call__()` -> `_process_action()` -> `log_move()`
                 duration = time.perf_counter() - start_time
 
-                if isinstance(action_metadata, int):
+                if isinstance(action_metadata, int): # Non-LLM agents
                     chosen_action = action_metadata
                     reasoning = "N/A"  # No reasoning for non-LLM agents
-                else:
+                else: # LLM agents
                     chosen_action = action_metadata.get("action", -1)  # Default to -1 if missing
                     reasoning = str(action_metadata.get("reasoning", "N/A") or "N/A")
 
@@ -86,7 +86,7 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                     truncated = True
                     break  # Exit the loop
 
-                # Log the action to the database
+                # Loggins
                 opponents = ", ".join(
                     f"{config['agents'][a_id]['type']}_{config['agents'][a_id].get('model', 'N/A').replace('-', '_')}"
                     for a_id in config["agents"] if a_id != agent_id
@@ -105,9 +105,10 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                     seed = seed
                 )
 
-            logger.info(f"Reasoning: {reasoning}") if agent_type == "llm" else None
-            logger.info(f"Chosen action: {chosen_action}") if agent_type == "llm" else None
-
+                if agent_type == "llm":
+                   logger.info(f"Board state: {observation['state_string']}")
+                   logger.info(f"Legal actions: {observation['legal_actions']}")
+                   logger.info(f"Agent {agent_id} ({agent_model}) chose action: {chosen_action} with reasoning: {reasoning}")
 
             # Step forward in the environment #TODO: check if this works for turn-based games (track the agent playing)
             if not truncated:

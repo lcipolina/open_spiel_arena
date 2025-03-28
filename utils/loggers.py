@@ -40,7 +40,8 @@ class SQLiteLogger:
                 agent_type TEXT,
                 agent_model TEXT,
                 timestamp TEXT,
-                run_id TEXT
+                run_id TEXT,
+                seed INTEGER
             )
         """)
 

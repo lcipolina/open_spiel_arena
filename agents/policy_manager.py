@@ -94,5 +94,4 @@ def policy_mapping_fn(agent_id: str) -> str:
     agent_id_str = str(agent_id)
     index = agent_id_str.split("_")[-1]
     policy_key = f"policy_{index}"
-    logger.debug(f"Mapping agent {agent_id_str} -> {policy_key}")
     return policy_key

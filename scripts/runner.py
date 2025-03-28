@@ -7,8 +7,10 @@ Handles Ray initialization, SLURM environment variables, and orchestration.
 """
 
 # Suppress errors from DynamoRIO - TODO: delete this!!
-import torch._dynamo
+import torch._dynamo, os
 torch._dynamo.config.suppress_errors = True
+os.environ["TORCHDYNAMO_DISABLE"] = "1"
+
 import sys
 sys.path.insert(0, "/p/project1/ccstdl/cipolina-kun1/open_spiel_arena")
 # Set the soft and hard core file size limits to 0 (disable core dumps) ADD this in the SLURM!
@@ -29,7 +31,7 @@ from simulate import simulate_game
 
 # Configure logging
 logging.basicConfig(
-    filename="agent_logs.txt",
+    filename="run_logs.txt",
     filemode="w",
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
