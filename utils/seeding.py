@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 def set_seed(seed: int) -> None:
-    """Sets the seed for reproducibility across all used random number generators.
+    """Sets the global seed for reproducibility across all used random number generators.
 
     Args:
         seed (int): The seed value to be used for all random operations.

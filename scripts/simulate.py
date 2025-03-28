@@ -31,10 +31,9 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
     Returns:
         str: Confirmation that the simulation is complete.
     """
-    set_seed(seed)
 
      # Initialize loggers for all agents
-    logger.info(f"Initializing environment for {game_name} with seed {seed}.")
+    logger.info(f"Initializing environment for {game_name}.")
 
     policies_dict = initialize_policies(config, game_name, seed) # Assign LLMs to players in the game and loads the LLMs into GPU memory. TODO: see how we assign different models into different GPUs.
 
@@ -52,10 +51,11 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
     env = registry.make_env(game_name, config) # Loads the pyspiel game and the env simulator
 
     for episode in range(config["num_episodes"]):
-        observation_dict, _ = env.reset(seed=seed + episode)
+        episode_seed = seed + episode
+        observation_dict, _ = env.reset(seed=episode_seed)
         terminated = truncated = False
 
-        logger.info(f"Episode {episode + 1} started with seed {seed}.")
+        logger.info(f"Episode {episode + 1} started with seed {episode_seed}.")
         turn = 0
 
         while not (terminated or truncated):
@@ -102,11 +102,11 @@ def simulate_game(game_name: str, config: Dict[str, Any], seed: int) -> str:
                     generation_time=duration,
                     agent_type=agent_type,
                     agent_model=agent_model,
-                    seed = seed
+                    seed = episode_seed
                 )
 
                 if agent_type == "llm":
-                   logger.info(f"Board state: {observation['state_string']}")
+                   logger.info(f"Board state: \n{observation['state_string']}")
                    logger.info(f"Legal actions: {observation['legal_actions']}")
                    logger.info(f"Agent {agent_id} ({agent_model}) chose action: {chosen_action} with reasoning: {reasoning}")
 

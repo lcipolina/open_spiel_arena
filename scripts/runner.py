@@ -39,7 +39,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
 def initialize_ray():
     """Initializes Ray if not already initialized."""
     if not ray.is_initialized():
