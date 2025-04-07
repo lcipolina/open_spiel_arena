@@ -33,9 +33,11 @@ def format_prompt(input_text:str,request_explanation=True)->str:
     """
 
     # TODO: construir esto con el model name nomas y el model path del OS
-    model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
+   # model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
+   # model_path = "/p/data1/mmlaion/marianna/models/mistralai/Mistral-7B-v0.1"
+    model_path = "/p/data1/mmlaion/marianna/models/Qwen/Qwen2-7B-Instruct"
 
-    print("'llm_utils.py': Using hardcoded codegemma-7b-it, for the prompt tokenizer ! fix me!!")
+    print("'llm_utils.py': Using hardcoded Qwen2-7B-Instruct , for the prompt tokenizer ! fix me!!")
 
     # If explanation is requested, add a message.
     if request_explanation:
@@ -55,6 +57,17 @@ def format_prompt(input_text:str,request_explanation=True)->str:
 
     # Format using apply_chat_template
     tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+    # Patch a simple chat template if missing
+    if not hasattr(tokenizer, "chat_template") or tokenizer.chat_template is None:
+        tokenizer.chat_template = (
+            "{% for message in messages %}"
+            "{{ '<|user|>\\n' + message['content'] + '<|end|>' if message['role'] == 'user' "
+            "else '<|assistant|>\\n' + message['content'] + '<|end|>' }}"
+            "{% endfor %}"
+        )
+
+
     formatted_prompt = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )

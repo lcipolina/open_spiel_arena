@@ -12,10 +12,15 @@ scratch*.py
 # TensorBoard logs
 runs/**/events.out.tfevents.*
 
-# Core dumps
+# Core dumps and logs
 core.*
+run_logs.txt
+run_logs_connect_four.txt
+run_logs-Kuhn.txt
 
 # Results
+results/*.db
 results/*_simulation_results.json
 results/merged_logs_*.csv
-results/llm_codegemma_7b_it.db
+results/augmented_reasoning_output.csv
+plots/*.png

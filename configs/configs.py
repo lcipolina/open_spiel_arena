@@ -12,15 +12,15 @@ def default_simulation_config() -> Dict[str, Any]:
     """Returns the default simulation configuration for multiple games."""
     return {
         "env_configs": [  # A list of game-specific configurations
-            # {
-            #    "game_name": "kuhn_poker",  # ok
-            #     "max_game_rounds": None,  # Only use this for iterated games
-            # # Additional game-specific parameters
-           # },
-             {
-                "game_name": "connect_four",
+            {
+                "game_name": "kuhn_poker",  # ok
                 "max_game_rounds": None,  # Only use this for iterated games
+            # # Additional game-specific parameters
             },
+            #  {
+            #     "game_name": "connect_four", #ok
+            #     "max_game_rounds": None,  # Only use this for iterated games
+            # },
         #    {
         #         "game_name": "tic_tac_toe",  #ok
         #         "max_game_rounds": None,  # Only use this for iterated games

@@ -213,7 +213,6 @@ class LLMReasoningAnalyzer:
 
       #  pd.DataFrame(rows).to_csv(output_csv, index=False) # Uncomment to save the metrics to a CSV
 
-
     def plot_heatmaps_by_agent(self, output_dir: str = "plots") -> None:
         """Plot per-agent heatmaps and one aggregated heatmap across all games.
 
@@ -359,7 +358,8 @@ if __name__ == "__main__":
    # analyzer.plot_entropy_trendlines()
    # analyzer.plot_entropy_by_turn_across_agents()
     analyzer.plot_avg_entropy_across_games()
-    output_path = Path(__file__).resolve().parent.parent.parent / 'results'
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    analyzer.save_output(output_path / 'augmented_reasoning_output.csv')
+   # output_path = Path(__file__).resolve().parent.parent.parent / 'results'
+    output_path = '/p/project/ccstdl/cipolina-kun1/open_spiel_arena/results/' #TODO: change this!
+    #output_path.parent.mkdir(parents=True, exist_ok=True)
+    analyzer.save_output(output_path + 'augmented_reasoning_output.csv')
     print("Analysis completed successfully!.")

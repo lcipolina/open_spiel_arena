@@ -182,7 +182,9 @@ def load_vllm_model(model_name: str) -> vLLM:
 
     model_path = f"{MODELS_DIR}/{model_name}"
 
-    model_name = 'gemma-2-27b-it' #'Mistral-7B-Instruct-v0.1' #TODO: later delete this!
+    #model_name = 'gemma-2-27b-it' #'Mistral-7B-Instruct-v0.1' #TODO: later delete this!
+    model_path = '/p/data1/mmlaion/marianna/models/Qwen/'
+    model_name = 'Qwen2-7B-Instruct'
 
     num_params = detect_model_size(model_name)  # Get the model size
     quantization = detect_quantization(model_path)
@@ -214,8 +216,11 @@ def load_vllm_model(model_name: str) -> vLLM:
 
     print(f" Loading {model_name} on GPUs [{assigned_gpus_str}] with TP={tensor_parallel_size}")
 
-    #model_path = "/p/data1/mmlaion/marianna/models/Mistral-7B-Instruct-v0.1"
-    model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
+    model_path = "/p/data1/mmlaion/marianna/models/mistralai/Mistral-7B-v0.1"
+    #model_path = "/p/data1/mmlaion/marianna/models/google/codegemma-7b-it"
+
+    print("'llm_registry.py': Using hardcoded Mistral-7B-v0.1 for the model path! fix me!!")
+
     tensor_parallel_size = 2 # TODO: needs to be an even number!
     return vLLM(
         model=model_path,
